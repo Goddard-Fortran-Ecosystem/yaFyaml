@@ -1,5 +1,5 @@
-# yaFyaml
-Yet Another Fortran YAML
+# yaFyaml: yet another Fortran (implementation of) YAML
+
 
 There is at least one other open source Fortran-based YAML parser.  
 

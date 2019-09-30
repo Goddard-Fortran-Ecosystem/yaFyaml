@@ -1,0 +1,115 @@
+module Test_File
+  use yaFyaml
+  use funit
+  implicit none
+
+  character(*), parameter :: TMP_FILE = '.tmp_file'
+contains
+
+  @before
+  subroutine setup()
+    logical :: exists
+    integer :: unit
+    inquire(file=TMP_FILE, exist=exists)
+    if (exists) then
+       open(file=TMP_FILE, newunit=unit, status='unknown')
+       close(unit, status='delete')
+    end if
+  end subroutine setup
+
+  @after
+  subroutine teardown()
+    integer :: unit
+    logical :: exists
+
+    inquire(file=TMP_FILE, exist=exists)
+    if (exists) then
+       open(file=TMP_FILE, newunit=unit, status='unknown')
+       close(unit, status='delete')
+    end if
+  end subroutine teardown
+
+  @test
+  subroutine test_read_line()
+    type(File) :: f
+    character(:), allocatable :: line
+    
+    f = File(TMP_FILE,mode='w')
+    call f%write_line('1')
+    call f%close()
+
+    f = File(TMP_FILE, mode='r')
+    line = f%read_line()
+    call f%close()
+
+    @assert_that(line,is(equal_to('1')))
+
+  end subroutine test_read_line
+
+  @test
+  subroutine test_multiple_lines()
+    type(File) :: f
+    character(:), allocatable :: line
+    
+    f = File(TMP_FILE,mode='w')
+    call f%write_line('1')
+    call f%write_line('a b c ')
+    call f%write_line('   ')
+    call f%close()
+
+    f = File(TMP_FILE, mode='r')
+    line = f%read_line()
+    @assert_that(line,is(equal_to('1')))
+
+    ! Check for trailing blanks - should be preserved!
+    line = f%read_line()
+    @assert_that(line,is(equal_to('a b c ')))
+
+    ! all blanks
+    line = f%read_line()
+    @assert_that(line,is(equal_to('   ')))
+
+    call f%close()
+
+  end subroutine test_multiple_lines
+
+  @test
+  subroutine read_empty_line()
+    type(File) :: f
+    character(:), allocatable :: line
+    f = File(TMP_FILE,mode='w')
+    call f%write_line('')
+    call f%close()
+
+    f = File(TMP_FILE, mode='r')
+    line = f%read_line()
+    @assert_that(line,is(equal_to('')))
+
+    call f%close()
+  end subroutine read_empty_line
+
+  @test
+  subroutine test_end_of_file()
+    type(File) :: f
+    character(:), allocatable :: line
+    
+    f = File(TMP_FILE,mode='w')
+    call f%write_line('1')
+    call f%write_line('a b c ')
+    call f%write_line('   ')
+    call f%write_line(' ')
+    call f%close()
+
+    f = File(TMP_FILE, mode='r')
+    line = f%read_line()
+    line = f%read_line()
+    @assert_that(f%end_of_file(),is(false()))
+    line = f%read_line()
+    @assert_that(f%end_of_file(),is(false()))
+    line = f%read_line()
+    @assert_that(f%end_of_file(),is(true()))
+
+    call f%close()
+  end subroutine test_end_of_file
+
+end module Test_File

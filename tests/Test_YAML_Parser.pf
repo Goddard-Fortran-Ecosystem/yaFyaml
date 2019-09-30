@@ -1,0 +1,55 @@
+module Test_YAML_Parser
+  use funit
+  use MockFile_mod
+  use yafyaml
+  implicit none
+
+contains
+
+  @test
+  subroutine test_parse_single_node_scalar_int()
+    type(YAML_Parser) :: p
+    type(Configuration) :: config
+
+    type(MockFile) :: f
+    character(:), allocatable :: line
+    integer :: i
+
+    f = MockFile()
+    call f%write_line('5')
+    call f%rewind
+
+    p = YAML_Parser()
+    call p%load(f, config)
+
+    i = config
+    print*,'i'
+    @assert_that(i,is(equal_to(5)))
+    call f%close(delete=.true.)
+    
+  end subroutine test_parse_single_node_scalar_int
+
+  @test
+  subroutine test_parse_single_node_scalar_int_b()
+    type(YAML_Parser) :: p
+    type(Configuration) :: config
+
+    type(MockFile) :: f
+    character(:), allocatable :: line
+    integer :: i
+
+    f = MockFile()
+    call f%write_line('3')
+    call f%rewind
+
+    p = YAML_Parser()
+    call p%load(f, config)
+
+    i = config
+    print*,'i'
+    @assert_that(i,is(equal_to(3)))
+    call f%close(delete=.true.)
+    
+  end subroutine test_parse_single_node_scalar_int_b
+
+end module Test_YAML_Parser

@@ -1,0 +1,414 @@
+module Test_Configuration_casting
+  use funit
+  use yafyaml
+  use gFTL_UnlimitedVector
+  use gFTL_StringUnlimitedMap
+  use, intrinsic :: iso_fortran_env, only: INT32
+  use, intrinsic :: iso_fortran_env, only: REAL32
+  implicit none
+
+contains
+
+  @test
+  subroutine test_assign_to_logical_scalar()
+    logical :: found
+    
+    found = Configuration(node=.true.) ! needs overloaded assignment
+    @assert_that(found, is(True()))
+    
+  end subroutine test_assign_to_logical_scalar
+
+  @test
+  subroutine test_assign_to_integer_scalar()
+    integer :: found
+
+    type (Configuration) :: c
+    call c%set(1)
+    found = Configuration(node=1) ! needs overloaded assignment
+    @assert_that(found,is(equal_to(1)))
+    
+    found = Configuration(node=2) ! needs overloaded assignment
+    @assert_that(found,is(equal_to(2)))
+
+  end subroutine test_assign_to_integer_scalar
+
+  @test
+  subroutine test_assign_to_real_scalar()
+    real :: found
+    real :: expected = 1.23
+
+    found = Configuration(node=expected) ! needs overloaded assignment
+    @assert_that(found,is(equal_to(expected)))
+    
+  end subroutine test_assign_to_real_scalar
+  
+  @test
+  ! Type-mismatch
+  subroutine test_assign_to_integer_fail_set_default()
+    integer :: found
+    real :: expected = 1.23
+
+    found = Configuration(node=expected)
+    @assert_that(found,is(equal_to(-huge(1_INT32))))
+
+  end subroutine test_assign_to_integer_fail_set_default
+
+  @test
+  subroutine test_assign_to_string_scalar()
+    type(Configuration) :: c
+    character(:), allocatable :: found
+    character(*), parameter :: expected = 'dog'
+
+    c = Configuration(node=expected)
+    found = c ! overloaded assignment
+  end subroutine test_assign_to_string_scalar
+
+
+  @test
+  subroutine test_assign_to_logical_array()
+    logical, allocatable :: found(:)
+
+    found = Configuration(node=[.true.,.false.]) ! needs overloaded assignment
+    @assert_that(found,is(equal_to([.true.,.false.])))
+    
+  end subroutine test_assign_to_logical_array
+
+  @test
+  subroutine test_assign_to_logical_array_from_unlimited_vector()
+    logical, allocatable :: found(:)
+    type (UnlimitedVector) :: v
+
+    call v%push_back(.false.)
+    call v%push_back(.true.)
+    call v%push_back(.false.)
+    
+    found = Configuration(node=v)
+    @assert_that(found,is(equal_to([.false.,.true.,.false.])))
+    
+  end subroutine test_assign_to_logical_array_from_unlimited_vector
+
+  @test
+  subroutine test_assign_to_logical_array_fail()
+    logical, allocatable :: found(:)
+    type (UnlimitedVector) :: v
+
+    ! type mismatch
+    found = Configuration(node=[1.,3.])
+    @assert_that(found, is(empty_array()))
+    
+    ! category mismatch
+    deallocate(found)
+    found = Configuration(node=1)
+    @assert_that(found, is(empty_array()))
+
+    ! mixed types in unlimited
+    call v%push_back(3)
+    call v%push_back(.true.)
+    deallocate(found)
+    found = Configuration(node=v)
+    @assert_that(found, is(empty_array()))
+    
+  end subroutine test_assign_to_logical_array_fail
+  
+  
+  @test
+  subroutine test_assign_to_integer_array()
+    integer, allocatable :: found(:)
+
+    found = Configuration(node=[1,3]) ! needs overloaded assignment
+    @assert_that(found,is(equal_to([1,3])))
+    
+  end subroutine test_assign_to_integer_array
+
+  @test
+  subroutine test_assign_to_integer_array_from_unlimited_vector()
+    integer, allocatable :: found(:)
+    type (UnlimitedVector) :: v
+
+    call v%push_back(3)
+    call v%push_back(2)
+    call v%push_back(1)
+    
+    found = Configuration(node=v)
+    @assert_that(found,is(equal_to([3,2,1])))
+    
+  end subroutine test_assign_to_integer_array_from_unlimited_vector
+
+  @test
+  subroutine test_assign_to_integer_array_fail()
+    integer, allocatable :: found(:)
+    type (UnlimitedVector) :: v
+
+    ! type mismatch
+    found = Configuration(node=[1.,3.])
+    @assert_that(found, is(empty_array()))
+    
+    ! category mismatch
+    deallocate(found)
+    found = Configuration(node=1)
+    @assert_that(found, is(empty_array()))
+
+    ! mixed types in unlimited
+    call v%push_back(3)
+    call v%push_back(2.)
+    deallocate(found)
+    found = Configuration(node=v)
+    @assert_that(found, is(empty_array()))
+    
+  end subroutine test_assign_to_integer_array_fail
+  
+  
+  @test
+  subroutine test_assign_to_real_array()
+    real, allocatable :: found(:)
+
+    found = Configuration(node=[1.,3.]) ! needs overloaded assignment
+    @assert_that(found,is(equal_to([1.,3.])))
+    
+  end subroutine test_assign_to_real_array
+
+  @test
+  subroutine test_assign_to_real_array_from_unlimited_vector()
+    real, allocatable :: found(:)
+    type (UnlimitedVector) :: v
+
+    call v%push_back(3.)
+    call v%push_back(2.)
+    call v%push_back(1.)
+    
+    found = Configuration(v)
+    @assert_that(found,is(equal_to([3.,2.,1.])))
+    
+  end subroutine test_assign_to_real_array_from_unlimited_vector
+
+  @test
+  subroutine test_assign_to_real_array_fail()
+    real, allocatable :: found(:)
+
+    ! type mismatch
+    found = Configuration(node=[1,3])
+    @assert_that(found, is(empty_array()))
+    
+    ! category mismatch
+    deallocate(found)
+    found = Configuration(node=1)
+    @assert_that(found, is(empty_array()))
+
+  end subroutine test_assign_to_real_array_fail
+  
+
+  @test
+  subroutine test_assign_to_string_array()
+    character(:), allocatable :: found(:)
+
+    found = Configuration(node=[character(4) :: 'cat', 'food'])
+    @assert_that(found,is(equal_to(['cat ','food'])))
+    
+  end subroutine test_assign_to_string_array
+
+  ! Support varying length strings with StringVector
+  @test
+  subroutine test_assign_to_string_vector()
+    use gFTL_StringVector
+    type (StringVector) :: found
+    type (UnlimitedVector) :: expected
+    integer :: n
+
+    ! This way pads ...
+    found = Configuration(node=[character(4) :: 'cat', 'food'])
+    @assert_that(int(found%size()), is(equal_to(2)))
+    @assert_that(found%at(1), is(equal_to('cat ')))
+    @assert_that(found%at(2), is(equal_to('food')))
+
+    ! This way does not ...
+    call expected%push_back('cat')
+    call expected%push_back('food')
+    found = Configuration(node=expected)
+    @assert_that(int(found%size()), is(equal_to(2)))
+    @assert_that(found%at(1), is(equal_to('cat')))
+    @assert_that(found%at(2), is(equal_to('food')))
+    
+  end subroutine test_assign_to_string_vector
+
+  @test
+  subroutine test_assign_to_string_array_from_unlimited_vector()
+    character(:), allocatable :: found(:)
+    type (UnlimitedVector) :: v
+
+    call v%push_back('cat')
+    call v%push_back('food')
+    call v%push_back('')
+    
+    found = Configuration(v)
+    @assert_that(found,is(equal_to(['cat ','food','    '])))
+    
+  end subroutine test_assign_to_string_array_from_unlimited_vector
+
+  @test
+  subroutine test_assign_to_string_array_fail()
+    character(:), allocatable :: found(:)
+    type (UnlimitedVector) :: v
+
+    ! type mismatch
+    found = Configuration(node=[1,3])
+    @assert_that(found, is(empty_array()))
+    
+    ! partial mismatch
+    call v%push_back('a')
+    call v%push_back(1)
+    found = Configuration(node=v)
+    @assert_that(found, is(empty_array()))
+    
+    ! category mismatch
+    deallocate(found)
+    found = Configuration(node=1)
+    @assert_that(found, is(empty_array()))
+
+  end subroutine test_assign_to_string_array_fail
+
+  @test
+  subroutine test_at_key_not_a_map()
+    type(Configuration) :: c
+    type(Configuration) :: sub
+
+    c = Configuration(node=1)
+    sub = c%at('non-existent-key') ! should "fail"
+    @assert_that(sub%is_null(), is(true()))
+    
+  end subroutine test_at_key_not_a_map
+
+  @test
+  subroutine test_at_key_not_a_key()
+    type(Configuration) :: c
+    type(Configuration) :: sub
+    type(StringUnlimitedMap) :: map
+
+    call map%insert('a',1)
+    call map%insert('b',.true.)
+    c = Configuration(node=map)
+    sub = c%at('non-existent-key') ! should "fail"
+    @assert_that(sub%is_null(), is(true()))
+    
+  end subroutine test_at_key_not_a_key
+
+  @test
+  subroutine test_at_key_integer()
+    type(Configuration) :: c
+    type(StringUnlimitedMap) :: map
+    integer :: found
+    
+    call map%insert('a',1)
+    call map%insert('b',2)
+    c = Configuration(map)
+    found = c%at('b')
+    @assert_that(found,is(equal_to(2)))
+  end subroutine test_at_key_integer
+
+  @test
+  subroutine test_at_key_logical()
+    type(Configuration) :: c
+    type(StringUnlimitedMap) :: map
+    logical :: found
+    
+    call map%insert('a',1)
+    call map%insert('b',.false.)
+    c = Configuration(map)
+    found = c%at('b')
+    @assert_that(found,is(false()))
+  end subroutine test_at_key_logical
+
+  @test
+  subroutine test_at_key_map()
+    type(Configuration) :: c
+    type(StringUnlimitedMap) :: map1, map2
+    type(StringUnlimitedMap) :: found_map
+
+    call map1%insert('triangle',3)
+    call map1%insert('quadrilateral',4)
+
+    call map2%insert('a',1)
+    call map2%insert('b',map1)
+
+    c = Configuration(map2)
+    found_map = c%at('b')
+    @assert_that(found_map%at('triangle'),is(equal_to(3)))
+
+  end subroutine test_at_key_map
+
+  @test
+  subroutine test_at_index_not_a_vector()
+    type(Configuration) :: c
+    type(Configuration) :: sub
+
+    c = Configuration(node=1)
+    sub = c%at(5) ! should "fail"
+    @assert_that(sub%is_null(), is(true()))
+    
+  end subroutine test_at_index_not_a_vector
+  
+  @test
+  subroutine test_at_index_out_of_range()
+    type(Configuration) :: c
+    type(Configuration) :: sub
+    type(UnlimitedVector) :: v
+
+    call v%push_back(1)
+    call v%push_back(7.)
+    c = Configuration(node=v)
+
+    sub = c%at(5) ! should "fail"
+    @assert_that(sub%is_null(), is(true()))
+    
+  end subroutine test_at_index_out_of_range
+  
+  @test
+  subroutine test_at_index()
+    type(Configuration) :: c
+    type(UnlimitedVector) :: vector
+    logical :: found_logical
+    integer :: found_integer
+    real :: found_real
+    character(:), allocatable :: found_string
+    
+    call vector%push_back(.true.)
+    call vector%push_back(1)
+    call vector%push_back(1.234)
+    call vector%push_back('foo')
+    c = Configuration(vector)
+
+    found_logical = c%at(1)
+    @assert_that(found_logical,is(true()))
+
+    found_integer = c%at(2)
+    @assert_that(found_integer,is(equal_to(1)))
+
+    found_real = c%at(3)
+    @assert_that(found_real,is(equal_to(1.234)))
+
+    found_string = c%at(4)
+    @assert_that(found_string,is(equal_to('foo')))
+
+  end subroutine test_at_index
+
+  @test
+  subroutine test_at_index_map()
+    type(Configuration) :: c
+    type(StringUnlimitedMap) :: map
+    type(UnlimitedVector) :: v
+    type(StringUnlimitedMap) :: found_map
+
+    call map%insert('triangle',3)
+    call map%insert('quadrilateral',4)
+
+    call v%push_back(1)
+    call v%push_back(map)
+    call v%push_back(2.)
+
+    c = Configuration(v)
+    found_map = c%at(2)
+    @assert_that(found_map%at('triangle'),is(equal_to(3)))
+    @assert_that(found_map%at('quadrilateral'),is(equal_to(4)))
+
+  end subroutine test_at_index_map
+
+end module Test_Configuration_casting

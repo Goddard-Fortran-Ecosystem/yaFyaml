@@ -13,7 +13,7 @@ contains
   subroutine test_assign_to_logical_scalar()
     logical :: found
     
-    found = Configuration(node=.true.) ! needs overloaded assignment
+    found = Configuration(scalar=.true.) ! needs overloaded assignment
     @assert_that(found, is(True()))
     
   end subroutine test_assign_to_logical_scalar
@@ -22,12 +22,10 @@ contains
   subroutine test_assign_to_integer_scalar()
     integer :: found
 
-    type (Configuration) :: c
-    call c%set(1)
-    found = Configuration(node=1) ! needs overloaded assignment
+    found = Configuration(scalar=1) ! needs overloaded assignment
     @assert_that(found,is(equal_to(1)))
     
-    found = Configuration(node=2) ! needs overloaded assignment
+    found = Configuration(scalar=2) ! needs overloaded assignment
     @assert_that(found,is(equal_to(2)))
 
   end subroutine test_assign_to_integer_scalar
@@ -37,7 +35,7 @@ contains
     real :: found
     real :: expected = 1.23
 
-    found = Configuration(node=expected) ! needs overloaded assignment
+    found = Configuration(scalar=expected) ! needs overloaded assignment
     @assert_that(found,is(equal_to(expected)))
     
   end subroutine test_assign_to_real_scalar
@@ -48,7 +46,7 @@ contains
     integer :: found
     real :: expected = 1.23
 
-    found = Configuration(node=expected)
+    found = Configuration(scalar=expected)
     @assert_that(found,is(equal_to(-huge(1_INT32))))
 
   end subroutine test_assign_to_integer_fail_set_default
@@ -59,7 +57,7 @@ contains
     character(:), allocatable :: found
     character(*), parameter :: expected = 'dog'
 
-    c = Configuration(node=expected)
+    c = Configuration(scalar=expected)
     found = c ! overloaded assignment
   end subroutine test_assign_to_string_scalar
 
@@ -68,7 +66,7 @@ contains
   subroutine test_assign_to_logical_array()
     logical, allocatable :: found(:)
 
-    found = Configuration(node=[.true.,.false.]) ! needs overloaded assignment
+    found = Configuration(array=[.true.,.false.]) ! needs overloaded assignment
     @assert_that(found,is(equal_to([.true.,.false.])))
     
   end subroutine test_assign_to_logical_array
@@ -82,7 +80,7 @@ contains
     call v%push_back(.true.)
     call v%push_back(.false.)
     
-    found = Configuration(node=v)
+    found = Configuration(scalar=v)
     @assert_that(found,is(equal_to([.false.,.true.,.false.])))
     
   end subroutine test_assign_to_logical_array_from_unlimited_vector
@@ -93,19 +91,19 @@ contains
     type (UnlimitedVector) :: v
 
     ! type mismatch
-    found = Configuration(node=[1.,3.])
+    found = Configuration(array=[1.,3.])
     @assert_that(found, is(empty_array()))
     
     ! category mismatch
     deallocate(found)
-    found = Configuration(node=1)
+    found = Configuration(scalar=1)
     @assert_that(found, is(empty_array()))
 
     ! mixed types in unlimited
     call v%push_back(3)
     call v%push_back(.true.)
     deallocate(found)
-    found = Configuration(node=v)
+    found = Configuration(scalar=v)
     @assert_that(found, is(empty_array()))
     
   end subroutine test_assign_to_logical_array_fail
@@ -115,7 +113,7 @@ contains
   subroutine test_assign_to_integer_array()
     integer, allocatable :: found(:)
 
-    found = Configuration(node=[1,3]) ! needs overloaded assignment
+    found = Configuration(array=[1,3]) ! needs overloaded assignment
     @assert_that(found,is(equal_to([1,3])))
     
   end subroutine test_assign_to_integer_array
@@ -129,7 +127,7 @@ contains
     call v%push_back(2)
     call v%push_back(1)
     
-    found = Configuration(node=v)
+    found = Configuration(scalar=v)
     @assert_that(found,is(equal_to([3,2,1])))
     
   end subroutine test_assign_to_integer_array_from_unlimited_vector
@@ -140,19 +138,19 @@ contains
     type (UnlimitedVector) :: v
 
     ! type mismatch
-    found = Configuration(node=[1.,3.])
+    found = Configuration(array=[1.,3.])
     @assert_that(found, is(empty_array()))
     
     ! category mismatch
     deallocate(found)
-    found = Configuration(node=1)
+    found = Configuration(scalar=1)
     @assert_that(found, is(empty_array()))
 
     ! mixed types in unlimited
     call v%push_back(3)
     call v%push_back(2.)
     deallocate(found)
-    found = Configuration(node=v)
+    found = Configuration(scalar=v)
     @assert_that(found, is(empty_array()))
     
   end subroutine test_assign_to_integer_array_fail
@@ -162,7 +160,7 @@ contains
   subroutine test_assign_to_real_array()
     real, allocatable :: found(:)
 
-    found = Configuration(node=[1.,3.]) ! needs overloaded assignment
+    found = Configuration(array=[1.,3.]) ! needs overloaded assignment
     @assert_that(found,is(equal_to([1.,3.])))
     
   end subroutine test_assign_to_real_array
@@ -176,7 +174,7 @@ contains
     call v%push_back(2.)
     call v%push_back(1.)
     
-    found = Configuration(v)
+    found = Configuration(scalar=v)
     @assert_that(found,is(equal_to([3.,2.,1.])))
     
   end subroutine test_assign_to_real_array_from_unlimited_vector
@@ -186,12 +184,12 @@ contains
     real, allocatable :: found(:)
 
     ! type mismatch
-    found = Configuration(node=[1,3])
+    found = Configuration(array=[1,3])
     @assert_that(found, is(empty_array()))
     
     ! category mismatch
     deallocate(found)
-    found = Configuration(node=1)
+    found = Configuration(scalar=1)
     @assert_that(found, is(empty_array()))
 
   end subroutine test_assign_to_real_array_fail
@@ -201,7 +199,7 @@ contains
   subroutine test_assign_to_string_array()
     character(:), allocatable :: found(:)
 
-    found = Configuration(node=[character(4) :: 'cat', 'food'])
+    found = Configuration(array=[character(4) :: 'cat', 'food'])
     @assert_that(found,is(equal_to(['cat ','food'])))
     
   end subroutine test_assign_to_string_array
@@ -215,7 +213,7 @@ contains
     integer :: n
 
     ! This way pads ...
-    found = Configuration(node=[character(4) :: 'cat', 'food'])
+    found = Configuration(array=[character(4) :: 'cat', 'food'])
     @assert_that(int(found%size()), is(equal_to(2)))
     @assert_that(found%at(1), is(equal_to('cat ')))
     @assert_that(found%at(2), is(equal_to('food')))
@@ -223,7 +221,7 @@ contains
     ! This way does not ...
     call expected%push_back('cat')
     call expected%push_back('food')
-    found = Configuration(node=expected)
+    found = Configuration(scalar=expected)
     @assert_that(int(found%size()), is(equal_to(2)))
     @assert_that(found%at(1), is(equal_to('cat')))
     @assert_that(found%at(2), is(equal_to('food')))
@@ -250,18 +248,18 @@ contains
     type (UnlimitedVector) :: v
 
     ! type mismatch
-    found = Configuration(node=[1,3])
+    found = Configuration(array=[1,3])
     @assert_that(found, is(empty_array()))
     
     ! partial mismatch
     call v%push_back('a')
     call v%push_back(1)
-    found = Configuration(node=v)
+    found = Configuration(scalar=v)
     @assert_that(found, is(empty_array()))
     
     ! category mismatch
     deallocate(found)
-    found = Configuration(node=1)
+    found = Configuration(scalar=1)
     @assert_that(found, is(empty_array()))
 
   end subroutine test_assign_to_string_array_fail
@@ -271,7 +269,7 @@ contains
     type(Configuration) :: c
     type(Configuration) :: sub
 
-    c = Configuration(node=1)
+    c = Configuration(scalar=1)
     sub = c%at('non-existent-key') ! should "fail"
     @assert_that(sub%is_null(), is(true()))
     
@@ -285,7 +283,7 @@ contains
 
     call map%insert('a',1)
     call map%insert('b',.true.)
-    c = Configuration(node=map)
+    c = Configuration(scalar=map)
     sub = c%at('non-existent-key') ! should "fail"
     @assert_that(sub%is_null(), is(true()))
     
@@ -340,7 +338,7 @@ contains
     type(Configuration) :: c
     type(Configuration) :: sub
 
-    c = Configuration(node=1)
+    c = Configuration(scalar=1)
     sub = c%at(5) ! should "fail"
     @assert_that(sub%is_null(), is(true()))
     
@@ -354,7 +352,7 @@ contains
 
     call v%push_back(1)
     call v%push_back(7.)
-    c = Configuration(node=v)
+    c = Configuration(scalar=v)
 
     sub = c%at(5) ! should "fail"
     @assert_that(sub%is_null(), is(true()))

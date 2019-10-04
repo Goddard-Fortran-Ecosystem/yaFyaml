@@ -9,7 +9,7 @@ module fy_Configuration
   private
 
   public :: Configuration
-  public :: NULL_OBJECT
+  public :: NULL
 
   public :: YAFYAML_SUCCESS
   public :: YAFYAML_TYPE_MISMATCH
@@ -21,15 +21,16 @@ module fy_Configuration
   integer, parameter :: YAFYAML_NOT_AN_ARRAY = 2
   integer, parameter :: YAFYAML_NOT_A_SCALAR = 3
 
-  type :: NotAnObject
-  end type NotAnObject
-  type (NotAnObject) :: NULL_OBJECT
+  type :: NullObject
+  end type NullObject
+  type (NullObject), target :: NULL
 
+  ! Use this class for memory management
   type :: Configuration
      private
-     class(*), allocatable :: node
+     class(*), pointer :: node
    contains
-     procedure :: set
+
      procedure :: is_null
      generic :: assignment(=) => to_logical
      generic :: assignment(=) => to_integer_int32
@@ -66,6 +67,7 @@ module fy_Configuration
   end type Configuration
 
 
+
   interface Configuration
      module procedure new_Configuration_scalar
      module procedure new_Configuration_array
@@ -73,29 +75,74 @@ module fy_Configuration
 
 contains
 
-  function new_Configuration_scalar(node) result(config)
+  ! TODO: need to implement a FINAL method (but it is risky)
+  function new_Configuration_scalar(scalar) result(config)
     type (Configuration) :: config
-    class(*), intent(in) :: node
+    class(*), intent(in) :: scalar
 
-    config%node = node
+    allocate(config%node, source=scalar)
+
   end function new_Configuration_scalar
 
-  function new_Configuration_array(node) result(config)
-    type (Configuration) :: config
-    class(*), intent(in) :: node(:)
 
-    config%node = ArrayWrapper(node)
+  function new_Configuration_array(array) result(config)
+    type (Configuration) :: config
+    class(*), intent(in) :: array(:)
+
+    type :: Workaround
+       class(*), allocatable :: q
+    end type Workaround
+    type (Workaround), pointer :: x
+
+    allocate(x)
+    x%q = ArrayWrapper(array)
+    config%node => x%q
+
+
+!!$    type(ArrayWrapper) :: wrapper
+!!$
+!!$    wrapper = ArrayWrapper(array)
+!!$    allocate(config%node, source=wrapper)
+!!$    select type (array)
+!!$    type is (logical)
+!!$       print*, 'raw: ', array
+!!$    end select
+!!$    select type (q => config%node)
+!!$    type is (logical)
+!!$       print*, 'node inside: ', q
+!!$    end select
+!!$    select type (q => wrapper%elements)
+!!$    type is (logical)
+!!$       print*, 'wrapper inside: ', q
+!!$    end select
   end function new_Configuration_array
 
-  pure logical function is_null(this)
+
+  function get(this) result(config)
     class(Configuration), intent(in) :: this
-    is_null = same_type_as(this%node, NULL_OBJECT)
+    type(Configuration) :: config
+
+    config%node => this%node
+
+  end function get
+
+    
+    
+  logical function is_null(this)
+    class(Configuration), intent(in) :: this
+!!$    is_null = same_type_as(this%node, NULL)
+    is_null = associated(this%node, NULL)
   end function is_null
 
-  pure subroutine to_logical(value, this)
+  subroutine to_logical(value, this)
     logical, intent(out) :: value
     class(Configuration), intent(in) :: this
 
+!!$    class(*), pointer :: q
+!!$
+!!$    q => this%node
+!!$    
+!!$    select type(q)
     select type(q => this%node)
     type is (logical)
        value = q
@@ -105,7 +152,7 @@ contains
 
   end subroutine to_logical
 
-  pure subroutine to_integer_int32(value, this)
+  subroutine to_integer_int32(value, this)
     integer, intent(out) :: value
     class(Configuration), intent(in) :: this
 
@@ -118,7 +165,7 @@ contains
 
   end subroutine to_integer_int32
 
-  pure subroutine to_real_real32(value, this)
+  subroutine to_real_real32(value, this)
     real, intent(out) :: value
     class(Configuration), intent(in) :: this
 
@@ -131,7 +178,7 @@ contains
 
   end subroutine to_real_real32
   
-  pure subroutine to_string(value, this)
+  subroutine to_string(value, this)
     character(:), allocatable, intent(out) :: value
     class(Configuration), intent(in) :: this
 
@@ -154,6 +201,7 @@ contains
     type is (ArrayWrapper)
        select type(qq => q%elements)
        type is (logical)
+          print*,'qq: ', qq
           values = qq
        class default ! type mismatch
           values = [logical :: ] ! empty array
@@ -383,14 +431,14 @@ contains
     select type (q => this%node)
     type is (StringUnlimitedMap)
        if (q%count(key) > 0) then
-          sub_config%node = q%at(key)
+          sub_config%node => q%at(key)
        else
           ! sub_config is empty
-          sub_config%node = NULL_OBJECT ! YAFYAML_NO_SUCH_KEY
+          sub_config%node => NULL ! YAFYAML_NO_SUCH_KEY
        end if
     class default
        ! sub_config is empty
-       sub_config%node = NULL_OBJECT ! YAFYAML_NOT_A_MAP
+       sub_config%node => NULL ! YAFYAML_NOT_A_MAP
     end select
 
   end function at_key
@@ -404,42 +452,38 @@ contains
     select type (q => this%node)
     type is (UnlimitedVector)
        if (index >= 1 .and. index <= q%size()) then
-          sub_config%node = q%at(index)
+          sub_config%node => q%at(index)
        else
           ! sub_config is empty
-          sub_config%node = NULL_OBJECT ! YAFYAML_INDEX_OUT_OF_BOUNDS
+          sub_config%node => NULL ! YAFYAML_INDEX_OUT_OF_BOUNDS
        end if
     class default
        ! sub_config is empty
-       sub_config%node = NULL_OBJECT ! YAFYAML_NOT_A_VECTOR
+       sub_config%node => NULL ! YAFYAML_NOT_A_VECTOR
     end select
   end function at_index
 
 
 
-  pure logical function default_logical()
+  logical function default_logical()
     default_logical = .false.
   end function default_logical
 
-  pure integer(kind=INT32) function default_int32()
+  integer(kind=INT32) function default_int32()
     default_int32 = -HUGE(1)
   end function default_int32
   
-  pure real(kind=REAL32) function default_real32()
+  real(kind=REAL32) function default_real32()
     use, intrinsic :: ieee_arithmetic
     default_real32 = ieee_value(1._REAL32,  IEEE_QUIET_NAN)
   end function default_real32
 
-  pure function default_string() result(s)
+  function default_string() result(s)
     character(0) :: s
     s = ''
   end function default_string
 
-  subroutine set(this, value)
-    class(Configuration), intent(inout) :: this
-    class(*), intent(in) :: value
-    this%node = value
-  end subroutine set
+
 
 end module fy_Configuration
 

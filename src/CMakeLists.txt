@@ -2,6 +2,11 @@ add_library (yafyaml
   ArrayWrapper.F90
   AbstractFile.F90
   File.F90
+
+  AbstractTextStream.F90
+  StringStream.F90
+  FileStream.F90
+
   Configuration.F90
   KeywordEnforcer.F90
   YAML_Parser.F90

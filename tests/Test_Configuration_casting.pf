@@ -53,7 +53,7 @@ contains
 
   @test
   subroutine test_assign_to_string_scalar()
-    type(Configuration) :: c
+    type(AllocatableConfiguration) :: c
     character(:), allocatable :: found
     character(*), parameter :: expected = 'dog'
 
@@ -266,32 +266,32 @@ contains
 
   @test
   subroutine test_at_key_not_a_map()
-    type(Configuration) :: c
-    type(Configuration) :: sub
+    type(AllocatableConfiguration) :: c
+    type(PointerConfiguration) :: sub
 
     c = Configuration(scalar=1)
     sub = c%at('non-existent-key') ! should "fail"
-    @assert_that(sub%is_null(), is(true()))
+    @assert_that(sub%is_none(), is(true()))
     
   end subroutine test_at_key_not_a_map
 
   @test
   subroutine test_at_key_not_a_key()
-    type(Configuration) :: c
-    type(Configuration) :: sub
+    type(AllocatableConfiguration) :: c
+    type(PointerConfiguration) :: sub
     type(StringUnlimitedMap) :: map
 
     call map%insert('a',1)
     call map%insert('b',.true.)
     c = Configuration(scalar=map)
     sub = c%at('non-existent-key') ! should "fail"
-    @assert_that(sub%is_null(), is(true()))
+    @assert_that(sub%is_none(), is(true()))
     
   end subroutine test_at_key_not_a_key
 
   @test
   subroutine test_at_key_integer()
-    type(Configuration) :: c
+    type(AllocatableConfiguration) :: c
     type(StringUnlimitedMap) :: map
     integer :: found
     
@@ -304,7 +304,7 @@ contains
 
   @test
   subroutine test_at_key_logical()
-    type(Configuration) :: c
+    type(AllocatableConfiguration) :: c
     type(StringUnlimitedMap) :: map
     logical :: found
     
@@ -317,7 +317,7 @@ contains
 
   @test
   subroutine test_at_key_map()
-    type(Configuration) :: c
+    type(AllocatableConfiguration) :: c
     type(StringUnlimitedMap) :: map1, map2
     type(StringUnlimitedMap) :: found_map
 
@@ -335,19 +335,19 @@ contains
 
   @test
   subroutine test_at_index_not_a_vector()
-    type(Configuration) :: c
-    type(Configuration) :: sub
+    type(AllocatableConfiguration) :: c
+    type(PointerConfiguration) :: sub
 
     c = Configuration(scalar=1)
     sub = c%at(5) ! should "fail"
-    @assert_that(sub%is_null(), is(true()))
+    @assert_that(sub%is_none(), is(true()))
     
   end subroutine test_at_index_not_a_vector
   
   @test
   subroutine test_at_index_out_of_range()
-    type(Configuration) :: c
-    type(Configuration) :: sub
+    type(AllocatableConfiguration) :: c
+    type(PointerConfiguration) :: sub
     type(UnlimitedVector) :: v
 
     call v%push_back(1)
@@ -355,13 +355,13 @@ contains
     c = Configuration(scalar=v)
 
     sub = c%at(5) ! should "fail"
-    @assert_that(sub%is_null(), is(true()))
+    @assert_that(sub%is_none(), is(true()))
     
   end subroutine test_at_index_out_of_range
   
   @test
   subroutine test_at_index()
-    type(Configuration) :: c
+    type(AllocatableConfiguration) :: c
     type(UnlimitedVector) :: vector
     logical :: found_logical
     integer :: found_integer
@@ -390,7 +390,7 @@ contains
 
   @test
   subroutine test_at_index_map()
-    type(Configuration) :: c
+    type(AllocatableConfiguration) :: c
     type(StringUnlimitedMap) :: map
     type(UnlimitedVector) :: v
     type(StringUnlimitedMap) :: found_map

@@ -9,7 +9,9 @@ module fy_Configuration
   private
 
   public :: Configuration
-  public :: NULL
+  public :: AllocatableConfiguration
+  public :: PointerConfiguration
+  public :: NONE
 
   public :: YAFYAML_SUCCESS
   public :: YAFYAML_TYPE_MISMATCH
@@ -21,17 +23,19 @@ module fy_Configuration
   integer, parameter :: YAFYAML_NOT_AN_ARRAY = 2
   integer, parameter :: YAFYAML_NOT_A_SCALAR = 3
 
-  type :: NullObject
-  end type NullObject
-  type (NullObject), target :: NULL
+  type :: NoneObject
+  end type NoneObject
+  type (NoneObject), target :: NONE
 
   ! Use this class for memory management
-  type :: Configuration
+  type, abstract :: Configuration
      private
-     class(*), pointer :: node
+!!$     class(*), pointer :: node
    contains
 
-     procedure :: is_null
+     procedure(get_node_interface), deferred :: get_node
+
+     procedure :: is_none
      generic :: assignment(=) => to_logical
      generic :: assignment(=) => to_integer_int32
      generic :: assignment(=) => to_real_real32
@@ -67,38 +71,74 @@ module fy_Configuration
   end type Configuration
 
 
+  type, extends(Configuration) :: AllocatableConfiguration
+     private
+     class(*), allocatable :: node
+   contains
+     procedure :: get_node => get_node_alloc
+  end type AllocatableConfiguration
+
+  type, extends(Configuration) :: PointerConfiguration
+     private
+     class(*), pointer :: node => null()
+   contains
+     procedure :: get_node => get_node_pointer
+  end type PointerConfiguration
 
   interface Configuration
      module procedure new_Configuration_scalar
      module procedure new_Configuration_array
   end interface Configuration
 
+  abstract interface
+     subroutine get_node_interface(this, node)
+       import Configuration
+       class(Configuration), target, intent(in) :: this
+       class(*), pointer :: node
+     end subroutine get_node_interface
+  end interface
+
 contains
 
-  ! TODO: need to implement a FINAL method (but it is risky)
+  subroutine get_node_alloc(this, node)
+    class(AllocatableConfiguration), target, intent(in) :: this
+    class(*), pointer :: node
+
+    node => this%node
+  end subroutine get_node_alloc
+
+  subroutine get_node_pointer(this, node)
+    class(PointerConfiguration), target, intent(in) :: this
+    class(*), pointer :: node
+
+    node => this%node
+  end subroutine get_node_pointer
+
   function new_Configuration_scalar(scalar) result(config)
-    type (Configuration) :: config
+    type (AllocatableConfiguration) :: config
     class(*), intent(in) :: scalar
 
-    allocate(config%node, source=scalar)
+    config%node = scalar
+!!$    allocate(config%node, source=scalar)
 
   end function new_Configuration_scalar
 
 
   function new_Configuration_array(array) result(config)
-    type (Configuration) :: config
+    type (AllocatableConfiguration) :: config
     class(*), intent(in) :: array(:)
 
-    type :: Workaround
-       class(*), allocatable :: q
-    end type Workaround
-    type (Workaround), pointer :: x
-
-    allocate(x)
-    x%q = ArrayWrapper(array)
-    config%node => x%q
-
-
+    config%node = ArrayWrapper(array)
+!!$    type :: Workaround
+!!$       class(*), allocatable :: q
+!!$    end type Workaround
+!!$    type (Workaround), pointer :: x
+!!$
+!!$    allocate(x)
+!!$    x%q = ArrayWrapper(array)
+!!$    config%node => x%q
+!!$
+!!$
 !!$    type(ArrayWrapper) :: wrapper
 !!$
 !!$    wrapper = ArrayWrapper(array)
@@ -118,32 +158,35 @@ contains
   end function new_Configuration_array
 
 
-  function get(this) result(config)
-    class(Configuration), intent(in) :: this
-    type(Configuration) :: config
-
-    config%node => this%node
-
-  end function get
-
+!!$  function get(this) result(config)
+!!$    class(Configuration), intent(in) :: this
+!!$    type(Configuration) :: config
+!!$
+!!$    config%node => this%node
+!!$
+!!$  end function get
+!!$
     
     
-  logical function is_null(this)
-    class(Configuration), intent(in) :: this
-!!$    is_null = same_type_as(this%node, NULL)
-    is_null = associated(this%node, NULL)
-  end function is_null
+  logical function is_none(this)
+    class(Configuration), target, intent(in) :: this
+
+    class(*), pointer :: node
+
+    call this%get_node(node)
+    is_none = same_type_as(node, NONE)
+!!$    is_none = associated(this%node, NONE)
+  end function is_none
 
   subroutine to_logical(value, this)
     logical, intent(out) :: value
     class(Configuration), intent(in) :: this
 
-!!$    class(*), pointer :: q
-!!$
-!!$    q => this%node
-!!$    
-!!$    select type(q)
-    select type(q => this%node)
+    class(*), pointer :: node
+    call this%get_node(node)
+
+!!$    select type(node)
+    select type(q => node)
     type is (logical)
        value = q
     class default
@@ -156,7 +199,10 @@ contains
     integer, intent(out) :: value
     class(Configuration), intent(in) :: this
 
-    select type(q => this%node)
+    class(*), pointer :: node
+    call this%get_node(node)
+
+    select type(q => node)
     type is (integer(kind=INT32))
        value = q
     class default
@@ -169,7 +215,10 @@ contains
     real, intent(out) :: value
     class(Configuration), intent(in) :: this
 
-    select type(q => this%node)
+    class(*), pointer :: node
+    call this%get_node(node)
+
+    select type(q => node)
     type is (real(kind=REAL32))
        value = q
     class default
@@ -182,7 +231,10 @@ contains
     character(:), allocatable, intent(out) :: value
     class(Configuration), intent(in) :: this
 
-    select type(q => this%node)
+    class(*), pointer :: node
+    call this%get_node(node)
+
+    select type(q => node)
     type is (character(*))
        value = q
     class default
@@ -197,7 +249,10 @@ contains
 
     integer :: i, n
 
-    select type(q => this%node)
+    class(*), pointer :: node
+    call this%get_node(node)
+
+    select type(q => node)
     type is (ArrayWrapper)
        select type(qq => q%elements)
        type is (logical)
@@ -237,7 +292,10 @@ contains
 
     integer :: i, n
 
-    select type(q => this%node)
+    class(*), pointer :: node
+    call this%get_node(node)
+
+    select type(q => node)
     type is (ArrayWrapper)
        select type(qq => q%elements)
        type is (integer(kind=INT32))
@@ -276,7 +334,10 @@ contains
 
     integer :: i, n
 
-    select type(q => this%node)
+    class(*), pointer :: node
+    call this%get_node(node)
+
+    select type(q => node)
     type is (ArrayWrapper)
        select type(qq => q%elements)
        type is (real(kind=REAL32))
@@ -316,7 +377,10 @@ contains
     integer :: i, n
     integer :: maxlen
 
-    select type(q => this%node)
+    class(*), pointer :: node
+    call this%get_node(node)
+
+    select type(q => node)
     type is (ArrayWrapper)
        select type(qq => q%elements)
        type is (character(*))
@@ -358,7 +422,10 @@ contains
 
     integer :: i, n
 
-    select type(q => this%node)
+    class(*), pointer :: node
+    call this%get_node(node)
+
+    select type(q => node)
     type is (ArrayWrapper)
        select type(qq => q%elements)
        type is (character(*))
@@ -397,7 +464,10 @@ contains
     type (StringUnlimitedMap), intent(out) :: values
     class(Configuration), intent(in) :: this
 
-    select type(q => this%node)
+    class(*), pointer :: node
+    call this%get_node(node)
+
+    select type(q => node)
     type is (StringUnlimitedMap)
        values = q
     class default
@@ -416,7 +486,10 @@ contains
     type (Logical), optional, intent(in) :: is_present
     integer, optional, intent(out) :: rc
 
-    select type (q => this%node)
+    class(*), pointer :: node
+    call this%get_node(node)
+
+    select type(q => node)
     type is (logical)
     end select
     
@@ -424,42 +497,48 @@ contains
 
 
   function at_key(this, key) result(sub_config)
-    type(Configuration) :: sub_config
+    type(PointerConfiguration) :: sub_config
     class(Configuration), intent(in) :: this
     character(*), intent(in) :: key
 
-    select type (q => this%node)
+    class(*), pointer :: node
+    call this%get_node(node)
+
+    select type(q => node)
     type is (StringUnlimitedMap)
        if (q%count(key) > 0) then
           sub_config%node => q%at(key)
        else
           ! sub_config is empty
-          sub_config%node => NULL ! YAFYAML_NO_SUCH_KEY
+          sub_config%node => NONE ! YAFYAML_NO_SUCH_KEY
        end if
     class default
        ! sub_config is empty
-       sub_config%node => NULL ! YAFYAML_NOT_A_MAP
+       sub_config%node => NONE ! YAFYAML_NOT_A_MAP
     end select
 
   end function at_key
 
 
   function at_index(this, index) result(sub_config)
-    type(Configuration) :: sub_config
+    type(PointerConfiguration) :: sub_config
     class(Configuration), intent(in) :: this
     integer, intent(in) :: index
 
-    select type (q => this%node)
+    class(*), pointer :: node
+    call this%get_node(node)
+
+    select type(q => node)
     type is (UnlimitedVector)
        if (index >= 1 .and. index <= q%size()) then
           sub_config%node => q%at(index)
        else
           ! sub_config is empty
-          sub_config%node => NULL ! YAFYAML_INDEX_OUT_OF_BOUNDS
+          sub_config%node => NONE ! YAFYAML_INDEX_OUT_OF_BOUNDS
        end if
     class default
        ! sub_config is empty
-       sub_config%node => NULL ! YAFYAML_NOT_A_VECTOR
+       sub_config%node => NONE ! YAFYAML_NOT_A_VECTOR
     end select
   end function at_index
 

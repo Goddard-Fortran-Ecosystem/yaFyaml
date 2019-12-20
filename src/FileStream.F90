@@ -1,5 +1,6 @@
 module fy_FileStream
   use fy_AbstractTextStream
+  use, intrinsic :: iso_c_binding, only: NL => C_NEW_LINE
   use, intrinsic :: iso_fortran_env, only: IOSTAT_EOR
   use, intrinsic :: iso_fortran_env, only: IOSTAT_END
   implicit none
@@ -47,33 +48,30 @@ contains
     allocate(character(n_characters) :: tmp)
     status = 0
     i = 0
-    print*,'enter'
-    do 
 
+    do 
        if (status == IOSTAT_END .or. i == n_characters) then
           buffer = tmp(1:i)
-          print*,'return: ', i, buffer
           return
        end if
 
        read(this%unit,iostat=status) char
+
        if (status == 0 .or. status == IOSTAT_EOR) then
           i = i + 1
-          if (status == 0) then
+          if (status == 0) then ! normal character
              tmp(i:i) = char
-          else
-             tmp(i:i) = new_line('a')
+          else ! new line
+             tmp(i:i) = NL
           end if
        end if
 
     end do
-       
     
   end function read
 
   subroutine close(this)
     class(FileStream), intent(inout) :: this
-
     close(this%unit)
   end subroutine close
   

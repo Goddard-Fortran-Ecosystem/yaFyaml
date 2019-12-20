@@ -3,9 +3,13 @@ add_library (yafyaml
   AbstractFile.F90
   File.F90
 
+  Tokens.F90
+  TokenVector.F90
   AbstractTextStream.F90
-  StringStream.F90
+  TextStream.F90
   FileStream.F90
+  Reader.F90
+  Lexer.F90
 
   Configuration.F90
   KeywordEnforcer.F90

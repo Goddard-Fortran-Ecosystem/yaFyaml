@@ -1,11 +1,12 @@
 module fy_AbstractTextStream
+  use, intrinsic :: iso_c_binding, only: C_NEW_LINE, C_CARRIAGE_RETURN
+  implicit none
   private
 
   public :: AbstractTextStream
 
   type, abstract :: AbstractTextStream
      private
-     character(:), allocatable :: buffer
    contains
      procedure(read), deferred :: read
   end type AbstractTextStream
@@ -13,6 +14,7 @@ module fy_AbstractTextStream
 
   abstract interface
 
+     ! An empty read indicated EOF to clients
      function read(this, n_characters) result(buffer)
        import AbstractTextStream
        character(:), allocatable :: buffer
@@ -21,5 +23,6 @@ module fy_AbstractTextStream
      end function read
 
   end interface
+
 
 end module fy_AbstractTextStream

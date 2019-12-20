@@ -32,7 +32,6 @@ contains
     character(:), allocatable :: buffer
 
     f = FileStream(TMP_FILE)
-
     buffer = f%read(1)
     @assert_that(buffer,is(equal_to('a')))
 
@@ -41,7 +40,6 @@ contains
 
     buffer = f%read(3)
     @assert_that(len(buffer),is(equal_to(2)))
-    print*,__FILE__,__LINE__
     @assert_that(buffer,is(equal_to(N//'a')))
     call f%close()
 

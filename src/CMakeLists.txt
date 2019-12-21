@@ -7,6 +7,7 @@ add_library (yafyaml
   TokenVector.F90
   AbstractTextStream.F90
   TextStream.F90
+  EscapedTextStream.F90
   FileStream.F90
   Reader.F90
   Lexer.F90

@@ -15,10 +15,14 @@ module fy_Tokens
   public :: FlowSequenceEndToken
   public :: FlowMappingStartToken
   public :: FlowMappingEndToken
+  public :: FlowNextEntryToken
 
-  public :: ScalarToken
   public :: BlockSequenceStartToken
   public :: BlockSequenceEndToken
+  public :: BlockNextEntryToken
+
+  public :: ValueToken
+  public :: ScalarToken
 
   type, abstract :: AbstractToken
      private
@@ -46,6 +50,7 @@ module fy_Tokens
   ! setters/getters.  These are mostly "structs", not real classes.
   type, extends(AbstractToken) :: ScalarToken
      character(:), allocatable :: value
+     logical :: is_plain
   end type ScalarToken
 
   interface ScalarToken
@@ -62,9 +67,17 @@ module fy_Tokens
   type, extends(AbstractToken) :: BlockSequenceEndToken
   end type BlockSequenceEndToken
 
+  type, extends(AbstractToken) :: BlockNextEntryToken
+  end type BlockNextEntryToken
+
   interface BlockSequenceEndToken
      module procedure new_BlockSequenceEndToken
   end interface BlockSequenceEndToken
+
+  interface BlockNextEntryToken
+     module procedure new_BlockNextEntryToken
+  end interface BlockNextEntryToken
+
 
   ! Used when a function must return a token, but an error has
   ! occurred.
@@ -92,6 +105,9 @@ module fy_Tokens
   type, extends(AbstractToken) :: FlowMappingEndToken
   end type FlowMappingEndToken
 
+  type, extends(AbstractToken) :: FlowNextEntryToken
+  end type FlowNextEntryToken
+
   interface DocumentStartToken
      module procedure new_DocumentStartToken
   end interface DocumentStartToken
@@ -116,10 +132,19 @@ module fy_Tokens
   interface FlowMappingEndToken
      module procedure new_FlowMappingEndToken
   end interface FlowMappingEndToken
+
+  interface FlowNextEntryToken
+     module procedure new_FlowNextEntryToken
+  end interface FlowNextEntryToken
   
-  
-!!$  type, extends(AbstractToken) :: ValueToken
-!!$  end type ValueToken
+ 
+  type, extends(AbstractToken) :: ValueToken
+  end type ValueToken
+
+  interface ValueToken
+     module procedure new_ValueToken
+  end interface ValueToken
+
 !!$
 !!$  type, extends(AbstractToken) :: BlockMappingStartToken
 !!$  end type BlockMappingStartToken
@@ -143,12 +168,15 @@ module fy_Tokens
   character(*), parameter, public :: COMMENT_INDICATOR = '#'
 
   character(*), parameter, public :: FLOW_SEQUENCE_START_INDICATOR = '['
-  character(*), parameter, public :: FLOW_MAPPING_START_INDICATOR = '{'
   character(*), parameter, public :: FLOW_SEQUENCE_END_INDICATOR = ']'
-  character(*), parameter, public :: FLOW_MAPPING_END_INDICATOR = '}'
 
-  character(*), parameter, public :: BLOCK_ENTRY_INDICATOR = '-'
-  character(*), parameter, public :: FLOW_ENTRY_INDICATOR = ','
+  character(*), parameter, public :: BLOCK_NEXT_ENTRY_INDICATOR = '-'
+
+  character(*), parameter, public :: FLOW_MAPPING_START_INDICATOR = '{'
+  character(*), parameter, public :: FLOW_MAPPING_END_INDICATOR = '}'
+  character(*), parameter, public :: FLOW_NEXT_ENTRY_INDICATOR = ','
+
+
   character(*), parameter, public :: KEY_INDICATOR = '?'
   character(*), parameter, public :: DIRECTIVE_INDICATOR = '%'
 
@@ -169,29 +197,33 @@ contains
     call token%set_id('<stream end>')
   end function new_StreamEndToken
   
-  function new_ScalarToken(value) result(token)
+  function new_ScalarToken(value, is_plain) result(token)
     type(ScalarToken) :: token
     character(*), intent(in) :: value
-    
+    logical, intent(in) :: is_plain
+
     call token%set_id('<scalar>')
     token%value = value
+    token%is_plain = is_plain
 
   end function new_ScalarToken
 
+
   function new_BlockSequenceStartToken() result(token)
     type(BlockSequenceStartToken) :: token
-    
     call token%set_id('<block sequence start>')
-
   end function new_BlockSequenceStartToken
 
 
   function new_BlockSequenceEndToken() result(token)
     type(BlockSequenceEndToken) :: token
-    
     call token%set_id('<block sequence end>')
-
   end function new_BlockSequenceEndToken
+
+  function new_BlockNextEntryToken() result(token)
+    type(BlockNextEntryToken) :: token
+    call token%set_id(BLOCK_NEXT_ENTRY_INDICATOR)
+  end function new_BlockNextEntryToken
 
 
   function new_DocumentStartToken() result(token)
@@ -224,6 +256,16 @@ contains
     type(FlowMappingEndToken) :: token
     call token%set_id(FLOW_MAPPING_END_INDICATOR)
   end function new_FlowMappingEndToken
+
+  function new_FlowNextEntryToken() result(token)
+    type(FlowMappingEndToken) :: token
+    call token%set_id(FLOW_NEXT_ENTRY_INDICATOR)
+  end function new_FlowNextEntryToken
+
+  function new_ValueToken() result(token)
+    type(FlowMappingEndToken) :: token
+    call token%set_id(VALUE_INDICATOR)
+  end function new_ValueToken
 
 
 

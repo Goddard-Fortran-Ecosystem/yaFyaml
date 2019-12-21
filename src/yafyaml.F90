@@ -6,6 +6,7 @@ module yafyaml
   use fy_AbstractTextStream
   use fy_FileStream
   use fy_TextStream
+  use fy_EscapedTextStream
   use fy_Reader
   use fy_Lexer
   use fy_File

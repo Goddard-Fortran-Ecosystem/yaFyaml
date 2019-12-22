@@ -18,8 +18,8 @@ module fy_Tokens
   public :: FlowNextEntryToken
 
   public :: BlockSequenceStartToken
-  public :: BlockSequenceEndToken
   public :: BlockNextEntryToken
+  public :: BlockEndToken
 
   public :: ValueToken
   public :: ScalarToken
@@ -51,6 +51,7 @@ module fy_Tokens
   type, extends(AbstractToken) :: ScalarToken
      character(:), allocatable :: value
      logical :: is_plain
+     character :: style
   end type ScalarToken
 
   interface ScalarToken
@@ -64,19 +65,19 @@ module fy_Tokens
      module procedure new_BlockSequenceStartToken
   end interface BlockSequenceStartToken
 
-  type, extends(AbstractToken) :: BlockSequenceEndToken
-  end type BlockSequenceEndToken
-
   type, extends(AbstractToken) :: BlockNextEntryToken
   end type BlockNextEntryToken
-
-  interface BlockSequenceEndToken
-     module procedure new_BlockSequenceEndToken
-  end interface BlockSequenceEndToken
 
   interface BlockNextEntryToken
      module procedure new_BlockNextEntryToken
   end interface BlockNextEntryToken
+
+  type, extends(AbstractToken) :: BlockEndToken
+  end type BlockEndToken
+
+  interface BlockEndToken
+     module procedure new_BlockEndToken
+  end interface BlockEndToken
 
 
   ! Used when a function must return a token, but an error has
@@ -149,9 +150,6 @@ module fy_Tokens
 !!$  type, extends(AbstractToken) :: BlockMappingStartToken
 !!$  end type BlockMappingStartToken
 !!$
-!!$  type, extends(AbstractToken) :: BlockEndToken
-!!$  end type BlockEndToken
-!!$
 !!$  type, extends(AbstractToken) :: FlowMappingStartToken
 !!$  end type FlowMappingStartToken
 !!$
@@ -197,14 +195,20 @@ contains
     call token%set_id('<stream end>')
   end function new_StreamEndToken
   
-  function new_ScalarToken(value, is_plain) result(token)
+  function new_ScalarToken(value, is_plain, style) result(token)
     type(ScalarToken) :: token
     character(*), intent(in) :: value
     logical, intent(in) :: is_plain
+    character, optional, intent(in) :: style
 
     call token%set_id('<scalar>')
     token%value = value
     token%is_plain = is_plain
+    if (present(style)) then
+       token%style = style
+    else
+       token%style = ''
+    end if
 
   end function new_ScalarToken
 
@@ -215,15 +219,15 @@ contains
   end function new_BlockSequenceStartToken
 
 
-  function new_BlockSequenceEndToken() result(token)
-    type(BlockSequenceEndToken) :: token
-    call token%set_id('<block sequence end>')
-  end function new_BlockSequenceEndToken
-
   function new_BlockNextEntryToken() result(token)
     type(BlockNextEntryToken) :: token
     call token%set_id(BLOCK_NEXT_ENTRY_INDICATOR)
   end function new_BlockNextEntryToken
+
+  function new_BlockEndToken() result(token)
+    type(FlowMappingEndToken) :: token
+    call token%set_id(VALUE_INDICATOR)
+  end function new_BlockEndToken
 
 
   function new_DocumentStartToken() result(token)

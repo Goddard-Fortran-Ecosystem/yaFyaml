@@ -1,0 +1,45 @@
+module Test_Reader
+  use, intrinsic :: iso_c_binding, only: NL => C_NEW_LINE
+  use, intrinsic :: iso_c_binding, only: C_NULL_CHAR
+  use funit
+  use yaFyaml
+  implicit none
+
+contains
+
+  @test
+  subroutine test_peek()
+
+    type(TextStream) :: stream
+    type(Reader) ::r
+    
+    stream = TextStream('1234567890'//NL//'abcdefghij')
+    r = Reader(stream)
+
+    @assert_that(r%peek(offset=0), is(equal_to('1')))
+    @assert_that(r%peek(offset=0), is(equal_to('1')))
+    @assert_that(r%peek(offset=3), is(equal_to('4')))
+    @assert_that(r%peek(offset=0), is(equal_to('1')))
+
+  end subroutine test_peek
+
+  ! Check that forward() advances one character and
+  ! eventually puts C_NULL_CHAR at the end.
+  @test
+  subroutine test_forward()
+
+    type(TextStream) :: stream
+    type(Reader) ::r
+    
+    stream = TextStream('ab')
+    r = Reader(stream)
+
+    @assert_that(r%peek(), is(equal_to('a')))
+    call r%forward(offset=1)
+    @assert_that(r%peek(), is(equal_to('b')))
+    call r%forward(offset=1)
+    @assert_that(r%peek(), is(equal_to(C_NULL_CHAR)))
+
+  end subroutine test_forward
+    
+end module Test_Reader

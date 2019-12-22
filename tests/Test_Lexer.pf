@@ -1,0 +1,212 @@
+module Test_Lexer
+  use, intrinsic :: iso_c_binding, only: NL => C_NEW_LINE
+  use yaFyaml
+  use funit
+  use fy_TokenVector
+  implicit none
+
+contains
+
+
+  @test
+  subroutine test_is_at_document_start()
+    type(Lexer) :: lexr
+
+    lexr = Lexer(Reader(TextStream("---")))
+    @assertTrue(lexr%is_at_document_boundary('---'))
+
+    lexr = Lexer(Reader(TextStream("- -")))
+    @assertFalse(lexr%is_at_document_boundary('---'))
+
+    ! Must start in 0th column
+    lexr = Lexer(Reader(TextStream(" ---")))
+    @assertFalse(lexr%is_at_document_boundary('---'))
+
+    ! cannot have regular character immediately next
+    lexr = Lexer(Reader(TextStream("---a")))
+    @assertFalse(lexr%is_at_document_boundary('---'))
+    
+  end subroutine test_is_at_document_start
+    
+    
+  @test
+  subroutine test_is_at_document_end()
+    type(Lexer) :: lexr
+
+    lexr = Lexer(Reader(TextStream("...")))
+    @assertTrue(lexr%is_at_document_boundary('...'))
+
+    lexr = Lexer(Reader(TextStream(". .")))
+    @assertFalse(lexr%is_at_document_boundary('...'))
+
+    ! Must end in 0th column
+    lexr = Lexer(Reader(TextStream(" ...")))
+    @assertFalse(lexr%is_at_document_boundary('...'))
+
+    ! cannot have regular character immediately next
+    lexr = Lexer(Reader(TextStream("...a")))
+    @assertFalse(lexr%is_at_document_boundary('...'))
+    
+  end subroutine test_is_at_document_end
+
+  @test
+  subroutine test_scan_to_next_token()
+    type(Lexer) :: lexr
+
+    lexr = Lexer(Reader(TextStream("a")))
+    call lexr%scan_to_next_token()
+    @assert_that(lexr%peek(), is('a'))
+
+
+    lexr = Lexer(Reader(TextStream("b")))
+    call lexr%scan_to_next_token()
+    @assert_that(lexr%peek(), is('b'))
+    
+    lexr = Lexer(Reader(TextStream("  b")))
+    call lexr%scan_to_next_token()
+    @assert_that(lexr%peek(), is('b'))
+
+    print*,__FILE__,__LINE__
+    lexr = Lexer(Reader(EscapedTextStream("  \n  b")))
+    call lexr%scan_to_next_token()
+    @assert_that(lexr%peek(), is('b'))
+    print*,__FILE__,__LINE__
+    
+    lexr = Lexer(Reader(EscapedTextStream("  # comment \n  :")))
+    call lexr%scan_to_next_token()
+    @assert_that(lexr%peek(), is(':'))
+
+    lexr = Lexer(Reader(EscapedTextStream("  # comment \n  \n# foo  #\n -")))
+    call lexr%scan_to_next_token()
+    @assert_that(lexr%peek(), is('-'))
+
+  end subroutine test_scan_to_next_token
+
+  @test
+  subroutine test_flow_sequence_end_token()
+    type(Lexer) :: lexr
+    class(AbstractToken), allocatable :: token
+    character(:), allocatable :: id
+
+    lexr = Lexer(Reader(TextStream("]")))
+
+    token = lexr%get_token() ! skip stream start
+    token = lexr%get_token()
+    id = token%get_id()
+    @assert_that(id, is(equal_to(']')))
+
+    
+  end subroutine test_flow_sequence_end_token
+
+  @test
+  subroutine test_flow_mapping_end_token()
+    type(Lexer) :: lexr
+    class(AbstractToken), allocatable :: token
+    character(:), allocatable :: id
+
+    lexr = Lexer(Reader(TextStream("}")))
+
+    token = lexr%get_token() ! skip stream start
+    token = lexr%get_token()
+    id = token%get_id()
+    @assert_that(id, is(equal_to(FLOW_MAPPING_END_INDICATOR)))
+
+  end subroutine test_flow_mapping_end_token
+
+
+  @test
+  subroutine test_flow_next_entry()
+    type(Lexer) :: lexr
+    class(AbstractToken), allocatable :: token
+    character(:), allocatable :: id
+
+    lexr = Lexer(Reader(TextStream(",")))
+
+    token = lexr%get_token() ! skip stream start
+    token = lexr%get_token()
+    id = token%get_id()
+    @assert_that(id, is(equal_to(FLOW_NEXT_ENTRY_INDICATOR)))
+
+    
+  end subroutine test_flow_next_entry
+
+  @test
+  subroutine test_block_next_entry()
+    type(Lexer) :: lexr
+    class(AbstractToken), allocatable :: token
+    character(:), allocatable :: id
+
+    lexr = Lexer(Reader(TextStream(" -")))
+
+    token = lexr%get_token() ! skip stream start
+    token = lexr%get_token()
+    id = token%get_id()
+    @assert_that(id, is(equal_to(BLOCK_NEXT_ENTRY_INDICATOR)))
+
+  end subroutine test_block_next_entry
+
+  ! If a block entry happens inside a flow context, then
+  ! it may need to start a block sequence.
+  @test
+  subroutine test_block_next_entry_inside_flow()
+    type(Lexer) :: lexr
+    class(AbstractToken), allocatable :: token
+    character(:), allocatable :: id
+
+    lexr = Lexer(Reader(TextStream(" [ "// NL // "    -")))
+
+    token = lexr%get_token() ! skip stream start
+    token = lexr%get_token() 
+    id = token%get_id()
+    @assert_that(id, is(equal_to(FLOW_SEQUENCE_START_INDICATOR)))
+
+    ! The surprising bit
+    token = lexr%get_token()
+    id = token%get_id()
+    @assert_that(id, is(equal_to('<block sequence start>')))
+
+    token = lexr%get_token()
+    id = token%get_id()
+    @assert_that(id, is(equal_to(BLOCK_NEXT_ENTRY_INDICATOR)))
+
+  end subroutine test_block_next_entry_inside_flow
+
+  @test
+  subroutine test_value()
+    type(Lexer) :: lexr
+    class(AbstractToken), allocatable :: token
+    character(:), allocatable :: id
+
+    lexr = Lexer(Reader(TextStream(":")))
+
+    token = lexr%get_token() ! ski stream start
+    token = lexr%get_token()
+    id = token%get_id()
+    @assert_that(id, is(equal_to(VALUE_INDICATOR)))
+
+  end subroutine test_value
+
+  @test
+  subroutine test_plain_scalar()
+    type(Lexer) :: lexr
+    class(AbstractToken), allocatable :: token
+    character(:), allocatable :: id
+
+    lexr = Lexer(Reader(TextStream("abc d ")))
+
+    token = lexr%get_token() ! ski stream start
+    token = lexr%get_token()
+    id = token%get_id()
+    @assert_that(id, is(equal_to('<scalar>')))
+
+    select type (token)
+    type is (ScalarToken)
+       @assert_that(token%is_plain, is(true()))
+       @assert_that(token%value, is(equal_to('abc d')))
+    end select
+
+  end subroutine test_plain_scalar
+
+
+end module Test_Lexer
+

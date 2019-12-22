@@ -17,10 +17,12 @@ module fy_Tokens
   public :: FlowMappingEndToken
   public :: FlowNextEntryToken
 
+  public :: BlockMappingStartToken
   public :: BlockSequenceStartToken
   public :: BlockNextEntryToken
   public :: BlockEndToken
 
+  public :: KeyToken
   public :: ValueToken
   public :: ScalarToken
 
@@ -139,17 +141,28 @@ module fy_Tokens
   end interface FlowNextEntryToken
   
  
+  type, extends(AbstractToken) :: KeyToken
+  end type KeyToken
+
   type, extends(AbstractToken) :: ValueToken
   end type ValueToken
+
+  interface KeyToken
+     module procedure new_KeyToken
+  end interface KeyToken
 
   interface ValueToken
      module procedure new_ValueToken
   end interface ValueToken
+  
 
-!!$
-!!$  type, extends(AbstractToken) :: BlockMappingStartToken
-!!$  end type BlockMappingStartToken
-!!$
+  type, extends(AbstractToken) :: BlockMappingStartToken
+  end type BlockMappingStartToken
+
+  interface BlockMappingStartToken
+     module procedure new_BlockMappingStartToken
+  end interface BlockMappingStartToken
+
 !!$  type, extends(AbstractToken) :: FlowMappingStartToken
 !!$  end type FlowMappingStartToken
 !!$
@@ -266,11 +279,20 @@ contains
     call token%set_id(FLOW_NEXT_ENTRY_INDICATOR)
   end function new_FlowNextEntryToken
 
+  function new_KeyToken() result(token)
+    type(KeyToken) :: token
+    call token%set_id(KEY_INDICATOR)
+  end function new_KeyToken
+
   function new_ValueToken() result(token)
-    type(FlowMappingEndToken) :: token
+    type(ValueToken) :: token
     call token%set_id(VALUE_INDICATOR)
   end function new_ValueToken
 
+  function new_BlockMappingStartToken() result(token)
+    type(FlowMappingEndToken) :: token
+    call token%set_id('<block mapping start>')
+  end function new_BlockMappingStartToken
 
 
   function get_id(this) result(id)

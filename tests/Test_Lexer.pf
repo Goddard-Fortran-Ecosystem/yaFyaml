@@ -179,7 +179,7 @@ contains
 
     lexr = Lexer(Reader(TextStream(":")))
 
-    token = lexr%get_token() ! ski stream start
+    token = lexr%get_token() ! skip stream start
     token = lexr%get_token()
     id = token%get_id()
     @assert_that(id, is(equal_to(VALUE_INDICATOR)))
@@ -194,7 +194,7 @@ contains
 
     lexr = Lexer(Reader(TextStream("abc d ")))
 
-    token = lexr%get_token() ! ski stream start
+    token = lexr%get_token() ! skip stream start
     token = lexr%get_token()
     id = token%get_id()
     @assert_that(id, is(equal_to('<scalar>')))
@@ -207,6 +207,37 @@ contains
 
   end subroutine test_plain_scalar
 
+
+  @test
+  subroutine test_is_value()
+    type(Lexer) :: lexr
+    class(AbstractToken), allocatable :: token
+    character(:), allocatable :: id
+
+    ! flow context
+    lexr = Lexer(Reader(TextStream("  a : b")))
+    token = lexr%get_token() ! skip stream start
+    token = lexr%get_token() ! skip scalar "a"
+    token = lexr%get_token()
+    id = token%get_id()
+    @assert_that(id, is(equal_to(':')))
+
+    ! block context - no space after ":"
+    lexr = Lexer(Reader(TextStream("  ? a : b")))
+    token = lexr%get_token() ! skip stream start
+    token = lexr%get_token()
+    id = token%get_id()
+    @assert_that(id, is(equal_to('<block mapping start>')))
+    token = lexr%get_token()
+    id = token%get_id()
+    @assert_that(id, is(equal_to('?')))
+    token = lexr%get_token() ! skip scalar a
+    token = lexr%get_token()
+    id = token%get_id()
+    @assert_that(id, is(equal_to(':')))
+    
+    
+  end subroutine test_is_value
 
 end module Test_Lexer
 

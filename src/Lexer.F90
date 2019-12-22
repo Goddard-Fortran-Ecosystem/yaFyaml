@@ -67,7 +67,10 @@ module fy_Lexer
      procedure :: process_block_next_entry
      procedure :: add_indentation
 
+     procedure :: process_key
+     procedure :: is_key
      procedure :: process_value
+     procedure :: is_value
      procedure :: is_plain_scalar
      procedure :: process_quoted_scalar
      procedure :: process_plain_scalar
@@ -185,9 +188,9 @@ contains
 !!$    ! Do something with simple keys ...
 !!$
 !!$
-!!$    ! Indentation at start of token matters (unless in flow)
-!!$    call this%unwind_indentation(this%column())
-!!$
+    ! Indentation at start of token matters (unless in flow)
+    call this%unwind_indentation(this%column())
+
     ! Determine type of token from first character
     ch = this%peek()
 
@@ -238,47 +241,52 @@ contains
        call this%process_block_next_entry()
        return
     end if
-    if (ch == VALUE_INDICATOR) then
+    if (ch == KEY_INDICATOR) then
+       if (this%is_key()) then
+          call this%process_key()
+          return
+       end if
+    end if
+    print*,__FILE__,__LINE__,'ch=',ch
+    if (ch == VALUE_INDICATOR .and. this%is_value()) then
+       print*,__FILE__,__LINE__,'ch=',ch
        call this%process_value()
        return
     end if
-!!$ !!$    if (ch == ALIAS_INDICATOR) then
-!!$ !!$       call this%process_alias()
-!!$ !!$       return
-!!$ !!$   end if
-!!$ !!$    if (ch == ANCHOR_INDICATOR) then
-!!$ !!$       call this%process_anchor()
-!!$ !!$       return
-!!$ !!$   end if
-!!$ !!$    if (ch == TAG_INDICATOR) then
-!!$ !!$       call this%process_TAG()
-!!$ !!$       return
-!!$ !!$   end if
-!!$    if (ch == TAG_INDICATOR) then
-!!$       call this%process_TAG()
-!!$       return
-!!$    end if
+    print*,__FILE__,__LINE__,'ch=',ch
+ !!$    if (ch == ALIAS_INDICATOR) then
+ !!$       call this%process_alias()
+ !!$       return
+ !!$   end if
+ !!$    if (ch == ANCHOR_INDICATOR) then
+ !!$       call this%process_anchor()
+ !!$       return
+ !!$   end if
+ !!$    if (ch == TAG_INDICATOR) then
+ !!$       call this%process_TAG()
+ !!$       return
+!!$   end if
+    print*,__FILE__,__LINE__
     if (ch == SINGLE_QUOTED_SCALAR_INDICATOR) then
        call this%process_quoted_scalar(style="'")
        return
     end if
 
+    print*,__FILE__,__LINE__
     if (ch == DOUBLE_QUOTED_SCALAR_INDICATOR) then
        call this%process_quoted_scalar(style='"')
        return
     end if
-!!$    if (ch == DOUBLE_QUOTED_SCALAR_INDICATOR) then
-!!$       call this%process_double_quoted_scalar()
-!!$       return
-!!$    end if
-!!$    
+    
+    print*,__FILE__,__LINE__
     if (this%is_plain_scalar()) then
+       print*,__FILE__,__LINE__
        call this%process_plain_scalar()
        return
     end if
 
-!!$    print*,'Cannot start token with <',ch,'>'
-!!$       
+    error stop "while scanning for next token, found character that cannot start any token"
+
   end subroutine lex_tokens
 
   ! Skip over spaces, line breaks and comments.
@@ -391,9 +399,6 @@ contains
     class(Lexer), intent(inout) :: this
     character(3), intent(in) :: text
 
-    character :: ch
-    integer :: i
-
     is_at_document_boundary = .false. ! unless
     
     if (this%column() == 0) then
@@ -484,7 +489,23 @@ contains
 
   end subroutine process_value
 
+  ! In block context, a leading ":" indicates a ValueToken only if it
+  ! is followed by whitespace.  Otherwise it might just be a
+  ! ScalarToken that happens to start with ":".  Flow context has no
+  ! such restriction.
+  logical function is_value(this)
+    class(Lexer), intent(inout) :: this
 
+    print*,__FILE__,__LINE__, this%current_flow_level
+    if (this%current_flow_level > 0) then
+       is_value = .true.
+    else
+       print*,__FILE__,__LINE__, this%peek(offset=1)
+       is_value = (scan(this%peek(offset=1), WHITESPACE_CHARS) > 0)
+    end if
+    
+  end function is_value
+  
   logical function is_plain_scalar(this)
     class(Lexer), intent(inout) :: this
 
@@ -507,6 +528,7 @@ contains
        if (this%peek() == '#') exit
        do
           ch = this%peek(offset=n)
+          print*,__FILE__,__LINE__, n, ch
 
           if ((scan(ch, WHITESPACE_CHARS) > 0) &
                & .or. (this%current_flow_level == 0 .and. ch == ':' &
@@ -517,25 +539,34 @@ contains
           n = n + 1
        end do
 
+       print*,__FILE__,__LINE__, n
        ! Copying this error handling situation from Python implementation
        if ((this%current_flow_level > 0) .and. ch == ':') then
+          print*,__FILE__,__LINE__, n
           if (scan(this%peek(offset=n+1), WHITESPACE_CHARS) == 0) then
+             print*,__FILE__,__LINE__, n, this%peek(offset=n+1)
              call this%forward(offset=n)
-             error stop 'found unexpected :'
+             print*,__FILE__,__LINE__, n
+             error stop "found unexpected :"
           end if
        end if
           
+       print*,__FILE__,__LINE__, n
        if (n == 0) exit
 
        chunks = chunks // spaces // this%prefix(n)
+       print*,__FILE__,__LINE__, chunks
        call this%forward(offset=n)
        spaces = this%scan_plain_spaces()
+       print*,__FILE__,__LINE__, spaces
        if ((len(spaces) == 0 .or. this%peek() == '#') .or. &
             & (this%current_flow_level == 0 .and. this%column() < indent)) then
           exit
        end if
+       print*,__FILE__,__LINE__,chunks
     end do
 
+    print*,__FILE__,__LINE__,chunks
     call this%processed_tokens%push_back(ScalarToken(chunks, is_plain=.true.))
     
   end subroutine process_plain_scalar
@@ -615,7 +646,6 @@ contains
     character, intent(in) :: style
 
     character(:), allocatable :: chunks
-    integer ::n
     
     chunks = ''
     call this%forward()
@@ -626,7 +656,7 @@ contains
     end do
     call this%forward()
 
-    call this%processed_tokens%push_back(ScalarToken(chunks,is_plain=.false.,style=style))
+    token = ScalarToken(chunks,is_plain=.false.,style=style)
 
   end function scan_flow_scalar
 
@@ -744,8 +774,9 @@ contains
 
   ! Following python's example and using a strict requirement
   ! indentation == column rather than the spec (indentation >= column)
-  subroutine unwind_indentation(this)
+  subroutine unwind_indentation(this, column)
     class(Lexer), intent(inout) :: this
+    integer, intent(in) :: column
 
     ! flow context ignores indentation
     if (this%current_flow_level == 0) then ! nothing to do
@@ -754,7 +785,7 @@ contains
 
     ! In a block context, we need to end each block
     ! that is indented more than the current column
-    do while (this%indent > this%column())
+    do while (this%indent > column)
        associate (indents => this%level_indentations)
          this%indent = indents%back()
          call indents%erase(indents%end())
@@ -762,8 +793,43 @@ contains
        end associate
     end do
        
-
   end subroutine unwind_indentation
+
+  ! In block context, a leading "?" indicates a KeyToken only if it is
+  ! followed by whitespace.  Otherwise it might just be a ScalarToken
+  ! that happens to start with "?".  Flow context has no such
+  ! restriction.
+  logical function is_key(this)
+    class(Lexer), intent(inout) :: this
+
+    if (this%current_flow_level >0) then
+       is_key = .true.
+    else
+       is_key = (scan(this%peek(offset=1), WHITESPACE_CHARS) > 0)
+    end if
+    
+  end function is_key
+
+  subroutine process_key(this)
+    class(Lexer), intent(inout) :: this
+
+    ! If not in flow context, may need to add a mapping start token.
+    if (this%current_flow_level == 0) then
+
+       ! simple key logic TBD
+
+       if (this%add_indentation(this%column())) then
+          call this%processed_tokens%push_back(BlockMappingStartToken())
+       end if
+
+    end if
+
+    ! TBD simple key logic
+
+    call this%forward()
+    call this%processed_tokens%push_back(KeyToken())
+
+  end subroutine process_key
 
   ! The following functions are simple wrappers for invoking the
   ! corresponding methods on the reader component.  These are just for

@@ -41,6 +41,7 @@ module fy_Reader
      procedure :: is_eof
 
      procedure :: get_column
+     procedure :: get_line
      procedure :: get_index
   end type Reader
 
@@ -198,6 +199,12 @@ contains
 
     column = this%column
   end function get_column
+
+  integer function get_line(this) result(line)
+    class(Reader), intent(in) :: this
+
+    line = this%line
+  end function get_line
 
   integer function get_index(this) result(index)
     class(Reader), intent(in) :: this

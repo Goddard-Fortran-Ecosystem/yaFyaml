@@ -20,6 +20,8 @@ module fy_Lexer
   use fy_Tokens
   use fy_TokenVector
   use fy_ErrorCodes
+  use fy_SimpleKey
+  use fy_IntegerSimpleKeyMap
   use fy_KeywordEnforcer
   use gFTL_IntegerVector
   use gFTL_StringStringMap
@@ -34,10 +36,19 @@ module fy_Lexer
 
      logical :: reached_end_of_stream = .false.
      integer :: current_flow_level = 0
-     type(TokenVector) :: processed_tokens  ! not yet emitted
-     integer :: num_tokens_emitted = 0
+     type(TokenVector) :: processed_tokens  ! not yet given
+     integer :: num_tokens_given = 0
      integer :: indent = -1
      type(IntegerVector) :: level_indentations
+
+     ! A dictionary of potential keys indexd by flow level.
+     ! 
+     ! A Keytoken is emitted before all keys (simple and otherwise), but
+     ! cannot always be identified immediately.
+     ! Simple keys should be limited to a single line and 1024 characters. (spec)
+     
+     type(IntegerSimpleKeyMap) :: possible_simple_keys ! indexed by flow level
+     logical :: allow_simple_key = .true.
 
    contains
      ! public access
@@ -76,11 +87,15 @@ module fy_Lexer
      procedure :: process_quoted_scalar
      procedure :: process_plain_scalar
 
+     procedure :: remove_stale_simple_keys
+     procedure :: get_nearest_possible_simple_key
+
      ! Pass through to reader (for clarity)
      procedure :: peek
      procedure :: prefix
      procedure :: forward
      procedure :: column
+     procedure :: line
      procedure :: index
   end type Lexer
 
@@ -106,9 +121,9 @@ contains
     type(Reader), intent(in) :: r
 
     if (.not. initialized) call initialize()
+
     lexr%r = r
     call lexr%processed_tokens%push_back(StreamStartToken())
-
     
   end function new_Lexer
 
@@ -128,39 +143,136 @@ contains
   end subroutine initialize
 
   ! return the next token
-  function get_token(this) result(token)
+  function get_token(this, unused, rc, message) result(token)
     class(AbstractToken), allocatable :: token
     class(Lexer), intent(inout) :: this
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    integer, optional, intent(out) :: rc
+    character(:), allocatable, optional, intent(inout) :: message
 
-    do while (.not. this%reached_end_of_stream)
-       call this%lex_tokens()
+    logical :: need_more
+    integer :: status
+    
+    do
+       need_more = this%need_more_tokens(rc=status, message=message)
+       if (status /= SUCCESS) then
+          if (present(rc)) rc = status
+          token = NULL_TOKEN
+          return
+       end if
+       if (need_more) then
+          call this%lex_tokens()
+       else
+          exit
+       end if
     end do
 
     if (this%processed_tokens%size() >= 0) then
-       this%num_tokens_emitted = this%num_tokens_emitted + 1
+       this%num_tokens_given = this%num_tokens_given + 1
        token = this%pop_token()
     else
        token = NULL_TOKEN
     end if
     
+    if (present(rc)) rc = SUCCESS
+    return
   end function get_token
 
-  logical function need_more_tokens(this)
+  logical function need_more_tokens(this, unused, rc, message)
     class(Lexer), intent(inout) :: this
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    integer, optional, intent(out) :: rc
+    character(:), allocatable, optional, intent(inout) :: message
+
+    integer :: status
+
+    rc = SUCCESS ! unless
 
     if (this%reached_end_of_stream) then
        need_more_tokens = .false.
-       return
-    end if
-
-    if (this%processed_tokens%size() == 0) then
+    elseif (this%processed_tokens%size() == 0) then
        need_more_tokens = .true.
-       return
+    else
+       ! Still have some processed tokens to give, but ...
+       ! the current token is possibly a simple key and lexing
+       ! must continue until a full token is produced.
+       call this%remove_stale_simple_keys(rc=status,message=message)
+       if (status /= SUCCESS) then
+          if (present(rc)) rc = status
+          return
+       end if
+
+       if (this%get_nearest_possible_simple_key() == this%num_tokens_given) then
+          need_more_tokens = .true.
+       else
+          need_more_tokens = .false.
+       end if
     end if
 
-    need_more_tokens = .false.
+    if (present(rc)) rc = SUCCESS
+    return
 
   end function need_more_tokens
+
+
+  ! Remove entries in possible simple keys that are no longer, er,
+  ! possible.
+  subroutine remove_stale_simple_keys(this, unused, rc, message)
+    class(Lexer), target, intent(inout) :: this
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    integer, optional, intent(out) :: rc
+    character(:), allocatable, optional, intent(inout) :: message
+
+    integer, pointer :: level
+    type(SimpleKey), pointer :: possible_key
+    type (IntegerSimpleKeyMapIterator) :: iter
+
+    iter = this%possible_simple_keys%begin()
+    do while (iter /= this%possible_simple_keys%end())
+       level => iter%key()
+       possible_key => iter%value()
+       if ((possible_key%line /= this%line()) .or. (this%index() - possible_key%index > 1024)) then
+          if (possible_key%required) then
+             if (present(rc)) rc = MISSING_COLON_WHILE_SCANNING_A_SIMPLE_KEY
+             if (present(message)) then
+                message = "Did not find expected ':' while scanning a simple key."
+             end if
+             return
+          end if
+          call this%possible_simple_keys%erase(iter)
+       end if
+       call iter%next()
+    end do
+
+    if (present(rc)) rc = SUCCESS
+    return
+
+  end subroutine remove_stale_simple_keys
+
+
+
+  integer function get_nearest_possible_simple_key(this) result(token_number)
+    class(Lexer), intent(inout) :: this
+
+    type(SimpleKey), pointer :: possible_key
+    type (IntegerSimpleKeyMapIterator) :: iter
+    integer :: min_token_number
+
+    min_token_number = huge(1)
+    iter = this%possible_simple_keys%begin()
+    do while (iter /= this%possible_simple_keys%end())
+       possible_key => iter%value()
+       if (possible_key%token_number < min_token_number) then
+          min_token_number = possible_key%token_number
+       end if
+       call iter%next()
+    end do
+
+    token_number = min_token_number
+    
+  end function get_nearest_possible_simple_key
+
+
 
   ! Have not implemented stack in gFTL, so
   ! vector will have to suffice
@@ -177,16 +289,16 @@ contains
     
 
   ! All the different cases ...
-  subroutine lex_tokens(this, unused, status, message)
+  subroutine lex_tokens(this, unused, rc, message)
     class(Lexer), intent(inout) :: this
     class(KeywordEnforcer), optional, intent(in) :: unused
-    integer, optional, intent(out) :: status
+    integer, optional, intent(out) :: rc
     character(:), allocatable, optional, intent(inout) :: message
 
     character(1) :: ch
 
 
-    if (present(status)) status = SUCCESS ! unless ...
+    if (present(rc)) rc = SUCCESS ! unless ...
     
     ! White spaces and comments before a token are irrelevant
     call this%scan_to_next_token()
@@ -206,7 +318,6 @@ contains
 
     if (ch == C_NULL_CHAR) then
        call this%process_end_of_stream()
-       print*,'huh:', this%processed_tokens%size()
        return
     end if
 !!$ !!$    if (ch == DIRECTIVE_INDICATOR .and. this%is_at_directive())  then
@@ -275,7 +386,7 @@ contains
 !!$   end if
     print*,__FILE__,__LINE__
     if (ch == SINGLE_QUOTED_SCALAR_INDICATOR) then
-       call this%process_quoted_scalar(style="'", status=status, message=message)
+       call this%process_quoted_scalar(style="'", rc=rc, message=message)
        return
     end if
 
@@ -293,8 +404,7 @@ contains
     end if
 
     ! Error: ch cannot start any token
-    if (present(status)) status = UNEXPECTED_CHARACTER
-
+    if (present(rc)) rc = UNEXPECTED_CHARACTER
     if (present(message)) then
        message = "While lexing for the next token, found character that cannot start any token: <"//ch//">"
     end if
@@ -526,10 +636,10 @@ contains
     is_plain_scalar = .true.
   end function is_plain_scalar
 
-  subroutine process_plain_scalar(this, unused, status, message)
+  subroutine process_plain_scalar(this, unused, rc, message)
     class(Lexer), intent(inout) :: this
     class(KeywordEnforcer), optional, intent(in) :: unused
-    integer, optional, intent(out) :: status
+    integer, optional, intent(out) :: rc
     character(:), allocatable, optional, intent(inout) :: message
 
     integer :: n
@@ -563,7 +673,7 @@ contains
           if (scan(this%peek(offset=n+1), WHITESPACE_CHARS) == 0) then
              print*,__FILE__,__LINE__, n, this%peek(offset=n+1)
              call this%forward(offset=n)
-             if (present(status)) status = UNEXPECTED_COLON_IN_PLAIN_SCALAR
+             if (present(rc)) rc = UNEXPECTED_COLON_IN_PLAIN_SCALAR
              if (present(message)) then
                 message = "Found unexpected ':' while lexing a plain scalar"
              end if
@@ -571,14 +681,11 @@ contains
           end if
        end if
           
-       print*,__FILE__,__LINE__, n
        if (n == 0) exit
 
        chunks = chunks // spaces // this%prefix(n)
-       print*,__FILE__,__LINE__, chunks
        call this%forward(offset=n)
        spaces = this%scan_plain_spaces()
-       print*,__FILE__,__LINE__, spaces
        if ((len(spaces) == 0 .or. this%peek() == '#') .or. &
             & (this%current_flow_level == 0 .and. this%column() < indent)) then
           exit
@@ -588,6 +695,9 @@ contains
 
     print*,__FILE__,__LINE__,chunks
     call this%processed_tokens%push_back(ScalarToken(chunks, is_plain=.true.))
+
+    if (present(rc)) rc = SUCCESS
+    return
     
   end subroutine process_plain_scalar
 
@@ -651,34 +761,34 @@ contains
 
   end function scan_plain_spaces
 
-  subroutine process_quoted_scalar(this, style, unused, status, message)
+  subroutine process_quoted_scalar(this, style, unused, rc, message)
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style ! "'" or '"'
     class(KeywordEnforcer), optional, intent(in) :: unused
-    integer, optional, intent(out) :: status
+    integer, optional, intent(out) :: rc
     character(:), allocatable, optional, intent(inout) :: message
 
-    call this%processed_tokens%push_back(this%scan_flow_scalar(style, status=status, message=message))
+    call this%processed_tokens%push_back(this%scan_flow_scalar(style, rc=rc, message=message))
 
   end subroutine process_quoted_scalar
 
 
-  function scan_flow_scalar(this, style, unused, status, message) result(token)
+  function scan_flow_scalar(this, style, unused, rc, message) result(token)
     class(AbstractToken), allocatable :: token
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style
     class(KeywordEnforcer), optional, intent(in) :: unused
-    integer, optional, intent(out) :: status
+    integer, optional, intent(out) :: rc
     character(:), allocatable, optional, intent(inout) :: message
 
     character(:), allocatable :: chunks
-    integer :: status_
+    integer :: status
     
     chunks = ''
     call this%forward()
-    chunks = chunks // this%scan_flow_scalar_non_spaces(style, status=status_, message=message)
-    if (status_ /= SUCCESS) then
-       if (present(status)) status = status_
+    chunks = chunks // this%scan_flow_scalar_non_spaces(style, rc=status, message=message)
+    if (status /= SUCCESS) then
+       if (present(rc)) rc = status
        return
     end if
     do while (this%peek() /= style)
@@ -689,15 +799,18 @@ contains
 
     token = ScalarToken(chunks,is_plain=.false.,style=style)
 
+    if (present(rc)) rc = SUCCESS
+    return
+
   end function scan_flow_scalar
 
 
-  function scan_flow_scalar_spaces(this, style, unused, status, message) result(text)
+  function scan_flow_scalar_spaces(this, style, unused, rc, message) result(text)
     character(:), allocatable :: text
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style
     class(KeywordEnforcer), optional, intent(in) :: unused
-    integer, optional, intent(out) :: status
+    integer, optional, intent(out) :: rc
     character(:), allocatable, optional, intent(inout) :: message
 
     integer :: n
@@ -705,8 +818,8 @@ contains
     character :: ch
     character(:), allocatable :: line_break, breaks
 
-    integer :: status_
-    if (present(status)) status = SUCCESS ! unless
+    integer :: status
+    if (present(rc)) rc = SUCCESS ! unless
     
     text = ''
     n = 0
@@ -720,16 +833,17 @@ contains
 
     ch = this%peek()
     if (ch == C_NULL_CHAR) then
-       if (present(status)) status = END_OF_STREAM_INSIDE_QUOTES
+       if (present(rc)) rc = END_OF_STREAM_INSIDE_QUOTES
        if (present(message)) then
           message = "End of stream while lexing a quoted scalar."
        end if
+       if (present(rc)) rc = SUCCESS
        return
     elseif (scan(ch, CR//NL) > 0) then
        line_break = this%scan_line_break()
-       breaks = this%scan_flow_scalar_breaks(style, status=status_, message=message)
-       if (status_ /= SUCCESS) then
-          if (present(status)) status = status_
+       breaks = this%scan_flow_scalar_breaks(style, rc=status, message=message)
+       if (status /= SUCCESS) then
+          if (present(rc)) rc = status
           return
        end if
        if (line_break /= NL) then
@@ -740,15 +854,16 @@ contains
     else
        text = text // whitespaces
     end if
+    if (present(rc)) rc = SUCCESS
     
   end function scan_flow_scalar_spaces
 
-  function scan_flow_scalar_breaks(this, style, unused, status, message) result(text)
+  function scan_flow_scalar_breaks(this, style, unused, rc, message) result(text)
     character(:), allocatable :: text
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style
     class(KeywordEnforcer), optional, intent(in) :: unused
-    integer, optional, intent(out) :: status
+    integer, optional, intent(out) :: rc
     character(:), allocatable, optional, intent(inout) :: message
 
     character(:), allocatable :: pfix
@@ -757,7 +872,7 @@ contains
     do
        pfix = this%prefix(3)
        if ((pfix == '---' .or. pfix == '...') .and. scan(this%peek(offset=3), WHITESPACE_CHARS)>0) then
-          if (present(status)) status = UNEXPECTED_DOCUMENT_SEPARATOR
+          if (present(rc)) rc = UNEXPECTED_DOCUMENT_SEPARATOR
           if (present(message)) then
              message = "Found document separator while scanning a quoted scalar."
           end if
@@ -769,24 +884,27 @@ contains
        if (scan(this%peek(), CR//NL) > 0) then
           text = text // this%scan_line_break()
        else
+          if (present(rc)) rc = SUCCESS
           return
        end if
     end do
 
+    if (present(rc)) rc = SUCCESS
   end function scan_flow_scalar_breaks
 
 
-  function scan_flow_scalar_non_spaces(this, style, unused, status, message) result(text)
+  function scan_flow_scalar_non_spaces(this, style, unused, rc, message) result(text)
     character(:), allocatable :: text
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style
     class(KeywordEnforcer), optional, intent(in) :: unused
-    integer, optional, intent(out) :: status
+    integer, optional, intent(out) :: rc
     character(:), allocatable, optional, intent(inout) :: message
 
     integer :: n
     character :: ch
     character(:), allocatable :: line_break
+    integer :: status
 
     text = ''
 
@@ -818,16 +936,19 @@ contains
              line_break = this%scan_line_break() ! updates internal state, but disregard output value
              text = text // this%scan_flow_scalar_breaks(style)
           else
-             if (present(status)) status = UNKNOWN_ESCAPE_CHARACTER_IN_DOUBLE_QUOTED_SCALAR
+             if (present(rc)) rc = UNKNOWN_ESCAPE_CHARACTER_IN_DOUBLE_QUOTED_SCALAR
              if (present(message)) then
                 message = "Found unknown escape character while scanning a double quoted scalar."
              end if
              return
           end if
        else
+          if (present(rc)) rc = SUCCESS
           return
        end if
     end do
+
+    if (present(rc)) rc = SUCCESS
 
   end function scan_flow_scalar_non_spaces
 
@@ -922,6 +1043,11 @@ contains
     class(Lexer), intent(in) :: this
     column = this%r%get_column()
   end function column
+
+  integer function line(this)
+    class(Lexer), intent(in) :: this
+    line = this%r%get_line()
+  end function line
 
 
   integer function index(this)

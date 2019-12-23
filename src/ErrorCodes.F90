@@ -9,6 +9,7 @@ module fy_ErrorCodes
      enumerator :: END_OF_STREAM_INSIDE_QUOTES
      enumerator :: UNEXPECTED_DOCUMENT_SEPARATOR
      enumerator :: UNKNOWN_ESCAPE_CHARACTER_IN_DOUBLE_QUOTED_SCALAR
+     enumerator :: MISSING_COLON_WHILE_SCANNING_A_SIMPLE_KEY
   end enum
   
 end module fy_ErrorCodes

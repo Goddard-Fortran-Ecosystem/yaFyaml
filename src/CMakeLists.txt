@@ -16,6 +16,8 @@ add_library (yafyaml
   KeywordEnforcer.F90
   YAML_Parser.F90
   ErrorCodes.F90
+  SimpleKey.F90
+  IntegerSimpleKeyMap.F90
   # package
   yafyaml.F90
   )

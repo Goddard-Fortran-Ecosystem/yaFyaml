@@ -10,4 +10,5 @@ module yafyaml
   use fy_Reader
   use fy_Lexer
   use fy_File
+  use fy_ErrorCodes
 end module yafyaml

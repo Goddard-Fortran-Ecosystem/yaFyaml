@@ -19,6 +19,7 @@ module fy_Lexer
   use fy_Reader
   use fy_Tokens
   use fy_TokenVector
+  use fy_ErrorCodes
   use fy_KeywordEnforcer
   use gFTL_IntegerVector
   use gFTL_StringStringMap
@@ -176,11 +177,17 @@ contains
     
 
   ! All the different cases ...
-  subroutine lex_tokens(this)
+  subroutine lex_tokens(this, unused, status, message)
     class(Lexer), intent(inout) :: this
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    integer, optional, intent(out) :: status
+    character(:), allocatable, optional, intent(inout) :: message
 
     character(1) :: ch
 
+
+    if (present(status)) status = SUCCESS ! unless ...
+    
     ! White spaces and comments before a token are irrelevant
     call this%scan_to_next_token()
 
@@ -268,7 +275,7 @@ contains
 !!$   end if
     print*,__FILE__,__LINE__
     if (ch == SINGLE_QUOTED_SCALAR_INDICATOR) then
-       call this%process_quoted_scalar(style="'")
+       call this%process_quoted_scalar(style="'", status=status, message=message)
        return
     end if
 
@@ -285,7 +292,14 @@ contains
        return
     end if
 
-    error stop "while scanning for next token, found character that cannot start any token"
+    ! Error: ch cannot start any token
+    if (present(status)) status = UNEXPECTED_CHARACTER
+
+    if (present(message)) then
+       message = "While lexing for the next token, found character that cannot start any token: <"//ch//">"
+    end if
+
+    return
 
   end subroutine lex_tokens
 
@@ -512,8 +526,11 @@ contains
     is_plain_scalar = .true.
   end function is_plain_scalar
 
-  subroutine process_plain_scalar(this)
+  subroutine process_plain_scalar(this, unused, status, message)
     class(Lexer), intent(inout) :: this
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    integer, optional, intent(out) :: status
+    character(:), allocatable, optional, intent(inout) :: message
 
     integer :: n
     integer :: indent
@@ -546,8 +563,11 @@ contains
           if (scan(this%peek(offset=n+1), WHITESPACE_CHARS) == 0) then
              print*,__FILE__,__LINE__, n, this%peek(offset=n+1)
              call this%forward(offset=n)
-             print*,__FILE__,__LINE__, n
-             error stop "found unexpected :"
+             if (present(status)) status = UNEXPECTED_COLON_IN_PLAIN_SCALAR
+             if (present(message)) then
+                message = "Found unexpected ':' while lexing a plain scalar"
+             end if
+             return
           end if
        end if
           
@@ -631,25 +651,36 @@ contains
 
   end function scan_plain_spaces
 
-  subroutine process_quoted_scalar(this, style)
+  subroutine process_quoted_scalar(this, style, unused, status, message)
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style ! "'" or '"'
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    integer, optional, intent(out) :: status
+    character(:), allocatable, optional, intent(inout) :: message
 
-    call this%processed_tokens%push_back(this%scan_flow_scalar(style))
+    call this%processed_tokens%push_back(this%scan_flow_scalar(style, status=status, message=message))
 
   end subroutine process_quoted_scalar
 
 
-  function scan_flow_scalar(this, style) result(token)
+  function scan_flow_scalar(this, style, unused, status, message) result(token)
     class(AbstractToken), allocatable :: token
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    integer, optional, intent(out) :: status
+    character(:), allocatable, optional, intent(inout) :: message
 
     character(:), allocatable :: chunks
+    integer :: status_
     
     chunks = ''
     call this%forward()
-    chunks = chunks // this%scan_flow_scalar_non_spaces(style)
+    chunks = chunks // this%scan_flow_scalar_non_spaces(style, status=status_, message=message)
+    if (status_ /= SUCCESS) then
+       if (present(status)) status = status_
+       return
+    end if
     do while (this%peek() /= style)
        chunks = chunks // this%scan_flow_scalar_spaces(style)
        chunks = chunks // this%scan_flow_scalar_non_spaces(style)
@@ -661,16 +692,22 @@ contains
   end function scan_flow_scalar
 
 
-  function scan_flow_scalar_spaces(this, style) result(text)
+  function scan_flow_scalar_spaces(this, style, unused, status, message) result(text)
     character(:), allocatable :: text
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    integer, optional, intent(out) :: status
+    character(:), allocatable, optional, intent(inout) :: message
 
     integer :: n
     character(:), allocatable :: whitespaces
     character :: ch
     character(:), allocatable :: line_break, breaks
 
+    integer :: status_
+    if (present(status)) status = SUCCESS ! unless
+    
     text = ''
     n = 0
 
@@ -683,10 +720,18 @@ contains
 
     ch = this%peek()
     if (ch == C_NULL_CHAR) then
-       ERROR STOP "End of stream while scanning a quoted scalar"
+       if (present(status)) status = END_OF_STREAM_INSIDE_QUOTES
+       if (present(message)) then
+          message = "End of stream while lexing a quoted scalar."
+       end if
+       return
     elseif (scan(ch, CR//NL) > 0) then
        line_break = this%scan_line_break()
-       breaks = this%scan_flow_scalar_breaks(style)
+       breaks = this%scan_flow_scalar_breaks(style, status=status_, message=message)
+       if (status_ /= SUCCESS) then
+          if (present(status)) status = status_
+          return
+       end if
        if (line_break /= NL) then
           text = text // line_break
        elseif (len(breaks) > 0) then
@@ -698,10 +743,13 @@ contains
     
   end function scan_flow_scalar_spaces
 
-  function scan_flow_scalar_breaks(this, style) result(text)
+  function scan_flow_scalar_breaks(this, style, unused, status, message) result(text)
     character(:), allocatable :: text
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    integer, optional, intent(out) :: status
+    character(:), allocatable, optional, intent(inout) :: message
 
     character(:), allocatable :: pfix
     
@@ -709,7 +757,11 @@ contains
     do
        pfix = this%prefix(3)
        if ((pfix == '---' .or. pfix == '...') .and. scan(this%peek(offset=3), WHITESPACE_CHARS)>0) then
-          error stop "found document scanner while scanning a quoted scalar"
+          if (present(status)) status = UNEXPECTED_DOCUMENT_SEPARATOR
+          if (present(message)) then
+             message = "Found document separator while scanning a quoted scalar."
+          end if
+          return
        end if
        do while (scan(this%peek(),' '//TAB) > 0)
           call this%forward()
@@ -724,10 +776,13 @@ contains
   end function scan_flow_scalar_breaks
 
 
-  function scan_flow_scalar_non_spaces(this, style) result(text)
+  function scan_flow_scalar_non_spaces(this, style, unused, status, message) result(text)
     character(:), allocatable :: text
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    integer, optional, intent(out) :: status
+    character(:), allocatable, optional, intent(inout) :: message
 
     integer :: n
     character :: ch
@@ -763,7 +818,11 @@ contains
              line_break = this%scan_line_break() ! updates internal state, but disregard output value
              text = text // this%scan_flow_scalar_breaks(style)
           else
-             error stop "found unknown escape character while scanning a double quoted scalar"
+             if (present(status)) status = UNKNOWN_ESCAPE_CHARACTER_IN_DOUBLE_QUOTED_SCALAR
+             if (present(message)) then
+                message = "Found unknown escape character while scanning a double quoted scalar."
+             end if
+             return
           end if
        else
           return

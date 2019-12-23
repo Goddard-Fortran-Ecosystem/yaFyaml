@@ -3,6 +3,7 @@ module fy_ErrorCodes
   public
 
   enum, bind(c)
+     enumerator :: NONSPECIFIC_ERROR = -1
      enumerator :: SUCCESS = 0
      enumerator :: UNEXPECTED_CHARACTER
      enumerator :: UNEXPECTED_COLON_IN_PLAIN_SCALAR

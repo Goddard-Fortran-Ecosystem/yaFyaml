@@ -11,6 +11,8 @@
 !!! Useful guidance on strings from
 !!! http://blogs.perl.org/users/tinita/2018/03/strings-in-yaml---to-quote-or-not-to-quote.html
 
+#include "error_handling.h"
+
 module fy_Lexer
   use, intrinsic :: iso_c_binding, only: C_NULL_CHAR              ! "\0"
   use, intrinsic :: iso_c_binding, only: NL => C_NEW_LINE         ! "\n"
@@ -21,6 +23,7 @@ module fy_Lexer
   use fy_TokenVector
   use fy_ErrorCodes
   use fy_SimpleKey
+  use fy_ErrorHandling
   use fy_IntegerSimpleKeyMap
   use fy_KeywordEnforcer
   use gFTL_IntegerVector
@@ -143,22 +146,20 @@ contains
   end subroutine initialize
 
   ! return the next token
-  function get_token(this, unused, rc, message) result(token)
+  function get_token(this, unused, rc) result(token)
     class(AbstractToken), allocatable :: token
     class(Lexer), intent(inout) :: this
     class(KeywordEnforcer), optional, intent(in) :: unused
     integer, optional, intent(out) :: rc
-    character(:), allocatable, optional, intent(inout) :: message
 
     logical :: need_more
     integer :: status
     
     do
-       need_more = this%need_more_tokens(rc=status, message=message)
+       need_more = this%need_more_tokens(rc=status)
        if (status /= SUCCESS) then
-          if (present(rc)) rc = status
           token = NULL_TOKEN
-          return
+          __RETURN__(status)
        end if
        if (need_more) then
           call this%lex_tokens()
@@ -178,11 +179,10 @@ contains
     return
   end function get_token
 
-  logical function need_more_tokens(this, unused, rc, message)
+  logical function need_more_tokens(this, unused, rc)
     class(Lexer), intent(inout) :: this
     class(KeywordEnforcer), optional, intent(in) :: unused
     integer, optional, intent(out) :: rc
-    character(:), allocatable, optional, intent(inout) :: message
 
     integer :: status
 
@@ -196,7 +196,7 @@ contains
        ! Still have some processed tokens to give, but ...
        ! the current token is possibly a simple key and lexing
        ! must continue until a full token is produced.
-       call this%remove_stale_simple_keys(rc=status,message=message)
+       call this%remove_stale_simple_keys(rc=status)
        if (status /= SUCCESS) then
           if (present(rc)) rc = status
           return
@@ -217,11 +217,10 @@ contains
 
   ! Remove entries in possible simple keys that are no longer, er,
   ! possible.
-  subroutine remove_stale_simple_keys(this, unused, rc, message)
+  subroutine remove_stale_simple_keys(this, unused, rc)
     class(Lexer), target, intent(inout) :: this
     class(KeywordEnforcer), optional, intent(in) :: unused
     integer, optional, intent(out) :: rc
-    character(:), allocatable, optional, intent(inout) :: message
 
     integer, pointer :: level
     type(SimpleKey), pointer :: possible_key
@@ -233,11 +232,7 @@ contains
        possible_key => iter%value()
        if ((possible_key%line /= this%line()) .or. (this%index() - possible_key%index > 1024)) then
           if (possible_key%required) then
-             if (present(rc)) rc = MISSING_COLON_WHILE_SCANNING_A_SIMPLE_KEY
-             if (present(message)) then
-                message = "Did not find expected ':' while scanning a simple key."
-             end if
-             return
+             __ASSERT__("Did not find expected ':' while scanning a simple key.",MISSING_COLON_WHILE_SCANNING_A_SIMPLE_KEY)
           end if
           call this%possible_simple_keys%erase(iter)
        end if
@@ -289,17 +284,14 @@ contains
     
 
   ! All the different cases ...
-  subroutine lex_tokens(this, unused, rc, message)
+  subroutine lex_tokens(this, unused, rc)
     class(Lexer), intent(inout) :: this
     class(KeywordEnforcer), optional, intent(in) :: unused
     integer, optional, intent(out) :: rc
-    character(:), allocatable, optional, intent(inout) :: message
 
     character(1) :: ch
+    integer :: status
 
-
-    if (present(rc)) rc = SUCCESS ! unless ...
-    
     ! White spaces and comments before a token are irrelevant
     call this%scan_to_next_token()
 
@@ -318,98 +310,92 @@ contains
 
     if (ch == C_NULL_CHAR) then
        call this%process_end_of_stream()
-       return
+       __RETURN__(SUCCESS)
     end if
 !!$ !!$    if (ch == DIRECTIVE_INDICATOR .and. this%is_at_directive())  then
 !!$ !!$       call this%process_directive()
-!!$ !!$       return
+!!$           __RETURN__(SUCCESS)
 !!$ !!$    end if
     if ((ch == DOCUMENT_START_INDICATOR) .and. this%is_at_document_boundary('---')) then
        call this%process_document_boundary(DocumentStartToken())
-       return
+       __RETURN__(SUCCESS)
     end if
     if (ch == DOCUMENT_END_INDICATOR .and. this%is_at_document_boundary('...')) then
        call this%process_document_boundary(DocumentEndToken())
-       return
+       __RETURN__(SUCCESS)
     end if
 
     if (ch == FLOW_SEQUENCE_START_INDICATOR) then
        call this%process_flow_collection_start(FlowSequenceStartToken())
-       return
+       __RETURN__(SUCCESS)
     end if
     if (ch == FLOW_SEQUENCE_END_INDICATOR) then
        print*,__FILE__,__LINE__,ch
        call this%process_flow_collection_end(FlowSequenceEndToken())
        print*,__FILE__,__LINE__,ch
-       return
+       __RETURN__(SUCCESS)
     end if
     if (ch == FLOW_MAPPING_START_INDICATOR) then
        call this%process_flow_collection_start(FlowMappingStartToken())
-       return
+       __RETURN__(SUCCESS)
     end if
     if (ch == FLOW_MAPPING_END_INDICATOR) then
        call this%process_flow_collection_end(FlowMappingEndToken())
-       return
+       __RETURN__(SUCCESS)
     end if
     if (ch == FLOW_NEXT_ENTRY_INDICATOR) then
        call this%process_flow_next_entry()
-       return
+       __RETURN__(SUCCESS)
     end if
     if (ch == BLOCK_NEXT_ENTRY_INDICATOR) then
        call this%process_block_next_entry()
-       return
+       __RETURN__(SUCCESS)
     end if
     if (ch == KEY_INDICATOR) then
        if (this%is_key()) then
           call this%process_key()
-          return
+          __RETURN__(SUCCESS)
        end if
     end if
     print*,__FILE__,__LINE__,'ch=',ch
     if (ch == VALUE_INDICATOR .and. this%is_value()) then
        print*,__FILE__,__LINE__,'ch=',ch
        call this%process_value()
-       return
+       __RETURN__(SUCCESS)
     end if
     print*,__FILE__,__LINE__,'ch=',ch
  !!$    if (ch == ALIAS_INDICATOR) then
  !!$       call this%process_alias()
- !!$       return
+ !!$       __RETURN__(SUCCESS)
  !!$   end if
  !!$    if (ch == ANCHOR_INDICATOR) then
  !!$       call this%process_anchor()
- !!$       return
+ !!$       __RETURN__(SUCCESS)
  !!$   end if
  !!$    if (ch == TAG_INDICATOR) then
  !!$       call this%process_TAG()
- !!$       return
+ !!$       __RETURN__(SUCCESS)
 !!$   end if
     print*,__FILE__,__LINE__
     if (ch == SINGLE_QUOTED_SCALAR_INDICATOR) then
-       call this%process_quoted_scalar(style="'", rc=rc, message=message)
-       return
+       call this%process_quoted_scalar(style="'",__RC__)
+       __RETURN__(SUCCESS)
     end if
 
     print*,__FILE__,__LINE__
     if (ch == DOUBLE_QUOTED_SCALAR_INDICATOR) then
        call this%process_quoted_scalar(style='"')
-       return
+       __RETURN__(SUCCESS)
     end if
     
     print*,__FILE__,__LINE__
     if (this%is_plain_scalar()) then
-       print*,__FILE__,__LINE__
        call this%process_plain_scalar()
-       return
+       __RETURN__(SUCCESS)
     end if
 
     ! Error: ch cannot start any token
-    if (present(rc)) rc = UNEXPECTED_CHARACTER
-    if (present(message)) then
-       message = "While lexing for the next token, found character that cannot start any token: <"//ch//">"
-    end if
-
-    return
+    __ASSERT__("While lexing for the next token, found character that cannot start any token: <"//ch//">",UNEXPECTED_CHARACTER)
 
   end subroutine lex_tokens
 
@@ -636,11 +622,10 @@ contains
     is_plain_scalar = .true.
   end function is_plain_scalar
 
-  subroutine process_plain_scalar(this, unused, rc, message)
+  subroutine process_plain_scalar(this, unused, rc)
     class(Lexer), intent(inout) :: this
     class(KeywordEnforcer), optional, intent(in) :: unused
     integer, optional, intent(out) :: rc
-    character(:), allocatable, optional, intent(inout) :: message
 
     integer :: n
     integer :: indent
@@ -673,11 +658,7 @@ contains
           if (scan(this%peek(offset=n+1), WHITESPACE_CHARS) == 0) then
              print*,__FILE__,__LINE__, n, this%peek(offset=n+1)
              call this%forward(offset=n)
-             if (present(rc)) rc = UNEXPECTED_COLON_IN_PLAIN_SCALAR
-             if (present(message)) then
-                message = "Found unexpected ':' while lexing a plain scalar"
-             end if
-             return
+             __ASSERT__("Found unexpected ':' while lexing a plain scalar",UNEXPECTED_COLON_IN_PLAIN_SCALAR)
           end if
        end if
           
@@ -761,36 +742,34 @@ contains
 
   end function scan_plain_spaces
 
-  subroutine process_quoted_scalar(this, style, unused, rc, message)
+  subroutine process_quoted_scalar(this, style, unused, rc)
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style ! "'" or '"'
     class(KeywordEnforcer), optional, intent(in) :: unused
     integer, optional, intent(out) :: rc
-    character(:), allocatable, optional, intent(inout) :: message
 
-    call this%processed_tokens%push_back(this%scan_flow_scalar(style, rc=rc, message=message))
-
+    integer :: status
+    class(AbstractToken), allocatable :: token
+    
+    token = this%scan_flow_scalar(style, __RC__)
+    call this%processed_tokens%push_back(token)
+    __RETURN__(SUCCESS)
   end subroutine process_quoted_scalar
 
 
-  function scan_flow_scalar(this, style, unused, rc, message) result(token)
+  function scan_flow_scalar(this, style, unused, rc) result(token)
     class(AbstractToken), allocatable :: token
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style
     class(KeywordEnforcer), optional, intent(in) :: unused
     integer, optional, intent(out) :: rc
-    character(:), allocatable, optional, intent(inout) :: message
 
     character(:), allocatable :: chunks
     integer :: status
     
     chunks = ''
     call this%forward()
-    chunks = chunks // this%scan_flow_scalar_non_spaces(style, rc=status, message=message)
-    if (status /= SUCCESS) then
-       if (present(rc)) rc = status
-       return
-    end if
+    chunks = chunks // this%scan_flow_scalar_non_spaces(style, __RC__)
     do while (this%peek() /= style)
        chunks = chunks // this%scan_flow_scalar_spaces(style)
        chunks = chunks // this%scan_flow_scalar_non_spaces(style)
@@ -799,19 +778,18 @@ contains
 
     token = ScalarToken(chunks,is_plain=.false.,style=style)
 
-    if (present(rc)) rc = SUCCESS
-    return
+    __RETURN__(rc)
+
 
   end function scan_flow_scalar
 
 
-  function scan_flow_scalar_spaces(this, style, unused, rc, message) result(text)
+  function scan_flow_scalar_spaces(this, style, unused, rc) result(text)
     character(:), allocatable :: text
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style
     class(KeywordEnforcer), optional, intent(in) :: unused
     integer, optional, intent(out) :: rc
-    character(:), allocatable, optional, intent(inout) :: message
 
     integer :: n
     character(:), allocatable :: whitespaces
@@ -833,19 +811,10 @@ contains
 
     ch = this%peek()
     if (ch == C_NULL_CHAR) then
-       if (present(rc)) rc = END_OF_STREAM_INSIDE_QUOTES
-       if (present(message)) then
-          message = "End of stream while lexing a quoted scalar."
-       end if
-       if (present(rc)) rc = SUCCESS
-       return
+       __ASSERT__("End of stream while lexing a quoted scalar.",END_OF_STREAM_INSIDE_QUOTES)
     elseif (scan(ch, CR//NL) > 0) then
        line_break = this%scan_line_break()
-       breaks = this%scan_flow_scalar_breaks(style, rc=status, message=message)
-       if (status /= SUCCESS) then
-          if (present(rc)) rc = status
-          return
-       end if
+       breaks = this%scan_flow_scalar_breaks(style,__RC__)
        if (line_break /= NL) then
           text = text // line_break
        elseif (len(breaks) > 0) then
@@ -854,17 +823,17 @@ contains
     else
        text = text // whitespaces
     end if
-    if (present(rc)) rc = SUCCESS
+
+    __RETURN__(SUCCESS)
     
   end function scan_flow_scalar_spaces
 
-  function scan_flow_scalar_breaks(this, style, unused, rc, message) result(text)
+  function scan_flow_scalar_breaks(this, style, unused, rc) result(text)
     character(:), allocatable :: text
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style
     class(KeywordEnforcer), optional, intent(in) :: unused
     integer, optional, intent(out) :: rc
-    character(:), allocatable, optional, intent(inout) :: message
 
     character(:), allocatable :: pfix
     
@@ -872,11 +841,7 @@ contains
     do
        pfix = this%prefix(3)
        if ((pfix == '---' .or. pfix == '...') .and. scan(this%peek(offset=3), WHITESPACE_CHARS)>0) then
-          if (present(rc)) rc = UNEXPECTED_DOCUMENT_SEPARATOR
-          if (present(message)) then
-             message = "Found document separator while scanning a quoted scalar."
-          end if
-          return
+          __ASSERT__("Found document separator while scanning a quoted scalar.",UNEXPECTED_DOCUMENT_SEPARATOR)
        end if
        do while (scan(this%peek(),' '//TAB) > 0)
           call this%forward()
@@ -884,22 +849,21 @@ contains
        if (scan(this%peek(), CR//NL) > 0) then
           text = text // this%scan_line_break()
        else
-          if (present(rc)) rc = SUCCESS
+          __RETURN__(SUCCESS)
           return
        end if
     end do
 
-    if (present(rc)) rc = SUCCESS
+    __RETURN__(SUCCESS)
   end function scan_flow_scalar_breaks
 
 
-  function scan_flow_scalar_non_spaces(this, style, unused, rc, message) result(text)
+  function scan_flow_scalar_non_spaces(this, style, unused, rc) result(text)
     character(:), allocatable :: text
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style
     class(KeywordEnforcer), optional, intent(in) :: unused
     integer, optional, intent(out) :: rc
-    character(:), allocatable, optional, intent(inout) :: message
 
     integer :: n
     character :: ch
@@ -936,19 +900,14 @@ contains
              line_break = this%scan_line_break() ! updates internal state, but disregard output value
              text = text // this%scan_flow_scalar_breaks(style)
           else
-             if (present(rc)) rc = UNKNOWN_ESCAPE_CHARACTER_IN_DOUBLE_QUOTED_SCALAR
-             if (present(message)) then
-                message = "Found unknown escape character while scanning a double quoted scalar."
-             end if
-             return
+             __ASSERT__("Found unknown escape character while scanning a double quoted scalar.",UNKNOWN_ESCAPE_CHARACTER_IN_DOUBLE_QUOTED_SCALAR)
           end if
        else
-          if (present(rc)) rc = SUCCESS
-          return
+          __RETURN__(SUCCESS)
        end if
     end do
 
-    if (present(rc)) rc = SUCCESS
+    __RETURN__(SUCCESS)
 
   end function scan_flow_scalar_non_spaces
 

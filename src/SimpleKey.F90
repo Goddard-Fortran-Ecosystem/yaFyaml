@@ -14,11 +14,11 @@ module fy_SimpleKey
 
 
   type :: SimpleKey
-     integer :: column
-     integer :: line
-     integer :: index
      integer :: token_number
      logical :: required
+     integer :: index
+     integer :: line
+     integer :: column
   end type SimpleKey
 
 end module fy_SimpleKey

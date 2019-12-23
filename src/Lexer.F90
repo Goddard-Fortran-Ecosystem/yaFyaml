@@ -73,6 +73,7 @@ module fy_Lexer
 
      procedure :: is_at_document_boundary
 
+     procedure :: process_beginning_of_stream
      procedure :: process_end_of_stream
      procedure :: process_document_boundary
      procedure :: process_flow_collection_start
@@ -91,7 +92,9 @@ module fy_Lexer
      procedure :: process_plain_scalar
 
      procedure :: remove_stale_simple_keys
+     procedure :: remove_possible_simple_key
      procedure :: get_nearest_possible_simple_key
+     procedure :: save_simple_key
 
      ! Pass through to reader (for clarity)
      procedure :: peek
@@ -126,7 +129,7 @@ contains
     if (.not. initialized) call initialize()
 
     lexr%r = r
-    call lexr%processed_tokens%push_back(StreamStartToken())
+    call lexr%process_beginning_of_stream()
     
   end function new_Lexer
 
@@ -193,14 +196,10 @@ contains
     elseif (this%processed_tokens%size() == 0) then
        need_more_tokens = .true.
     else
-       ! Still have some processed tokens to give, but ...
-       ! the current token is possibly a simple key and lexing
-       ! must continue until a full token is produced.
-       call this%remove_stale_simple_keys(rc=status)
-       if (status /= SUCCESS) then
-          if (present(rc)) rc = status
-          return
-       end if
+       ! Still have some processed tokens to give, but the current
+       ! token is possibly a simple key and lexing must continue until
+       ! a full token is produced.
+       call this%remove_stale_simple_keys(__RC__)
 
        if (this%get_nearest_possible_simple_key() == this%num_tokens_given) then
           need_more_tokens = .true.
@@ -245,6 +244,19 @@ contains
   end subroutine remove_stale_simple_keys
 
 
+  ! Remove possible key saved at the current flow level
+  subroutine remove_possible_simple_key(this)
+    class(Lexer), intent(inout) :: this
+
+    type(SimpleKey) :: key
+
+    associate (level => this%current_flow_level)
+      if (this%possible_simple_keys%count(level) > 0) then
+         key = this%possible_simple_keys%at(level)
+      end if
+    end associate
+  end subroutine remove_possible_simple_key
+
 
   integer function get_nearest_possible_simple_key(this) result(token_number)
     class(Lexer), intent(inout) :: this
@@ -266,6 +278,30 @@ contains
     token_number = min_token_number
     
   end function get_nearest_possible_simple_key
+
+
+  subroutine save_simple_key(this, unused, rc)
+    class(Lexer), intent(inout) :: this
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    integer, optional, intent(out) :: rc
+
+    logical :: required
+    type(SimpleKey) :: key
+    integer :: token_number
+    integer :: status
+    
+    required = (this%current_flow_level == 0) .and. (this%indent == this%column())
+    __ASSERT__('impossible situation', this%allow_simple_key .or. (.not. required))
+
+    if (this%allow_simple_key) then
+       call this%remove_stale_simple_keys(__RC__)
+       token_number = this%num_tokens_given + this%processed_tokens%size()
+       key = SimpleKey(token_number, required, this%index(), this%line(), this%column())
+       call this%possible_simple_keys%insert(token_number,key)
+    end if
+
+    __RETURN__(SUCCESS)
+  end subroutine save_simple_key
 
 
 
@@ -295,10 +331,8 @@ contains
     ! White spaces and comments before a token are irrelevant
     call this%scan_to_next_token()
 
-!!$
-!!$    ! Do something with simple keys ...
-!!$
-!!$
+    call this%remove_stale_simple_keys(__RC__)
+
     ! Indentation at start of token matters (unless in flow)
     call this%unwind_indentation(this%column())
 
@@ -446,36 +480,30 @@ contains
   end function scan_line_break
 
 
+  subroutine process_beginning_of_stream(this)
+    class(Lexer), intent(inout) :: this
+
+    call this%unwind_indentation(-1)
+    this%allow_simple_key = .false.
+!!$    this%possible_simple_keys = IntegerSimpleKeyMap()
+
+    call this%processed_tokens%push_back(StreamStartToken())
+
+  end subroutine process_beginning_of_stream
+
   subroutine process_end_of_stream(this)
     class(Lexer), intent(inout) :: this
 
-!!$    call this%unwind_indentation(-1)
+    call this%unwind_indentation(-1)
+    this%allow_simple_key = .false.
+    this%possible_simple_keys = IntegerSimpleKeyMap()
+
     call this%processed_tokens%push_back(StreamEndToken())
+
     this%reached_end_of_stream = .true.
 
   end subroutine process_end_of_stream
-!!$
-!!$  subroutine process_document_start(this)
-!!$    class(Lexer), intent(inout) :: this
-!!$
-!!$    call this%process_document(DocumentStartToken())
-!!$  end subroutine process_document_start
-!!$
-!!$  subroutine process_document_end(this)
-!!$    class(Lexer), intent(inout) :: this
-!!$
-!!$    call this%process_document(DocumentEndToken())
-!!$  end subroutine process_document_end
-!!$
-!!$  subroutine process_document(this, token)
-!!$    class(Lexer), intent(inout) :: this
-!!$    class(AbstractToken), intent(in) :: token
-!!$
-!!$    call this%unwind_indentation(-1)
-!!$
-!!$    call this%forward(3)
-!!$  end subroutine process_document
-!!$
+
 
 !!$
 !!$  subroutine unwind_stack(this)
@@ -525,8 +553,10 @@ contains
     class(Lexer), intent(inout) :: this
     class(AbstractToken), intent(in) :: token
 
-!!$    call this%unwind_indentation(-1)
-    call this%forward(offset=3)
+    call this%unwind_indentation(-1)
+    this%allow_simple_key = .false.
+    this%possible_simple_keys = IntegerSimpleKeyMap()
+
     call this%processed_tokens%push_back(token)
     
   end subroutine process_document_boundary

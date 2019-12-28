@@ -165,7 +165,7 @@ contains
           __RETURN__(status)
        end if
        if (need_more) then
-          call this%lex_tokens()
+          call this%lex_tokens(__RC__)
        else
           exit
        end if
@@ -177,9 +177,9 @@ contains
     else
        token = NULL_TOKEN
     end if
-    
-    if (present(rc)) rc = SUCCESS
-    return
+
+    __RETURN__(SUCCESS)
+
   end function get_token
 
   logical function need_more_tokens(this, unused, rc)
@@ -221,13 +221,11 @@ contains
     class(KeywordEnforcer), optional, intent(in) :: unused
     integer, optional, intent(out) :: rc
 
-    integer, pointer :: level
     type(SimpleKey), pointer :: possible_key
     type (IntegerSimpleKeyMapIterator) :: iter
 
     iter = this%possible_simple_keys%begin()
     do while (iter /= this%possible_simple_keys%end())
-       level => iter%key()
        possible_key => iter%value()
        if ((possible_key%line /= this%line()) .or. (this%index() - possible_key%index > 1024)) then
           if (possible_key%required) then
@@ -238,8 +236,7 @@ contains
        call iter%next()
     end do
 
-    if (present(rc)) rc = SUCCESS
-    return
+    __RETURN__(SUCCESS)
 
   end subroutine remove_stale_simple_keys
 
@@ -297,7 +294,8 @@ contains
        call this%remove_stale_simple_keys(__RC__)
        token_number = this%num_tokens_given + this%processed_tokens%size()
        key = SimpleKey(token_number, required, this%index(), this%line(), this%column())
-       call this%possible_simple_keys%insert(token_number,key)
+       print*,'saving token: ', token_number, this%current_flow_level
+       call this%possible_simple_keys%insert(this%current_flow_level,key)
     end if
 
     __RETURN__(SUCCESS)
@@ -364,9 +362,7 @@ contains
        __RETURN__(SUCCESS)
     end if
     if (ch == FLOW_SEQUENCE_END_INDICATOR) then
-       print*,__FILE__,__LINE__,ch
        call this%process_flow_collection_end(FlowSequenceEndToken())
-       print*,__FILE__,__LINE__,ch
        __RETURN__(SUCCESS)
     end if
     if (ch == FLOW_MAPPING_START_INDICATOR) then
@@ -387,17 +383,16 @@ contains
     end if
     if (ch == KEY_INDICATOR) then
        if (this%is_key()) then
-          call this%process_key()
+          call this%process_key(rc=status)
           __RETURN__(SUCCESS)
        end if
     end if
-    print*,__FILE__,__LINE__,'ch=',ch
+
     if (ch == VALUE_INDICATOR .and. this%is_value()) then
-       print*,__FILE__,__LINE__,'ch=',ch
-       call this%process_value()
+       call this%process_value(__RC__)
        __RETURN__(SUCCESS)
     end if
-    print*,__FILE__,__LINE__,'ch=',ch
+
  !!$    if (ch == ALIAS_INDICATOR) then
  !!$       call this%process_alias()
  !!$       __RETURN__(SUCCESS)
@@ -410,19 +405,17 @@ contains
  !!$       call this%process_TAG()
  !!$       __RETURN__(SUCCESS)
 !!$   end if
-    print*,__FILE__,__LINE__
+
     if (ch == SINGLE_QUOTED_SCALAR_INDICATOR) then
        call this%process_quoted_scalar(style="'",__RC__)
        __RETURN__(SUCCESS)
     end if
 
-    print*,__FILE__,__LINE__
     if (ch == DOUBLE_QUOTED_SCALAR_INDICATOR) then
        call this%process_quoted_scalar(style='"')
        __RETURN__(SUCCESS)
     end if
     
-    print*,__FILE__,__LINE__
     if (this%is_plain_scalar()) then
        call this%process_plain_scalar()
        __RETURN__(SUCCESS)
@@ -451,6 +444,9 @@ contains
           end do
        end if
        if (this%scan_line_break() /= '') then
+          if (this%current_flow_level == 0) then
+             this%allow_simple_key = .true.
+          end if
        else
           found = .true.
        end if
@@ -554,8 +550,10 @@ contains
     class(AbstractToken), intent(in) :: token
 
     call this%unwind_indentation(-1)
+    call this%remove_possible_simple_key()
     this%allow_simple_key = .false.
     this%possible_simple_keys = IntegerSimpleKeyMap()
+    call this%forward(offset=3)
 
     call this%processed_tokens%push_back(token)
     
@@ -621,12 +619,48 @@ contains
   end function add_indentation
 
 
-  subroutine process_value(this)
-    class(Lexer), intent(inout) :: this
+  subroutine process_value(this, unused, rc)
+    class(Lexer), target, intent(inout) :: this
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    integer, optional, intent(out) :: rc
+    
 
+    type(IntegerSimpleKeyMapIterator) :: iter
+    type(SimpleKey) :: key
+
+    print*,__FILE__,__LINE__, this%possible_simple_keys%size()
+    print*,__FILE__,__LINE__, this%current_flow_level
+    print*,__FILE__,__LINE__, this%possible_simple_keys%count(this%current_flow_level)
+    if (this%possible_simple_keys%count(this%current_flow_level) > 0) then
+       print*,__FILE__,__LINE__
+       iter = this%possible_simple_keys%find(this%current_flow_level)
+       key = iter%value()
+       call this%possible_simple_keys%erase(iter)
+       call this%processed_tokens%insert(key%token_number-this%num_tokens_given+1, KeyToken())
+       
+       if (this%current_flow_level == 0) then
+          if (this%add_indentation(key%column)) then
+             call this%processed_tokens%push_back(BlockMappingStartToken())
+          end if
+       end if
+       ! simple key cannot be followed immediately by another simple key
+       this%allow_simple_key = .false.
+
+    else
+
+       if (this%current_flow_level == 0) then
+          if (.not. this%allow_simple_key) then
+             __ASSERT__("mapping values not allowed here.",ILLEGAL_VALUE_IN_MAPPING)
+          end if
+       end if
+       this%allow_simple_key = (this%current_flow_level == 0)
+       call this%remove_possible_simple_key()
+
+    end if
+             
     call this%forward()
     call this%processed_tokens%push_back(ValueToken())
-
+    __RETURN__(SUCCESS)
   end subroutine process_value
 
   ! In block context, a leading ":" indicates a ValueToken only if it
@@ -636,11 +670,9 @@ contains
   logical function is_value(this)
     class(Lexer), intent(inout) :: this
 
-    print*,__FILE__,__LINE__, this%current_flow_level
     if (this%current_flow_level > 0) then
        is_value = .true.
     else
-       print*,__FILE__,__LINE__, this%peek(offset=1)
        is_value = (scan(this%peek(offset=1), WHITESPACE_CHARS) > 0)
     end if
     
@@ -662,6 +694,9 @@ contains
     character(1) :: ch
     character(:), allocatable :: chunks, spaces
 
+    call this%save_simple_key()
+    this%allow_simple_key = .false.
+    
     indent = this%indent + 1
     chunks = ''
     spaces = ''
@@ -670,8 +705,6 @@ contains
        if (this%peek() == '#') exit
        do
           ch = this%peek(offset=n)
-          print*,__FILE__,__LINE__, n, ch
-
           if ((scan(ch, WHITESPACE_CHARS) > 0) &
                & .or. (this%current_flow_level == 0 .and. ch == ':' &
                &       .and. scan(this%peek(offset=n+1), WHITESPACE_CHARS) > 0) &
@@ -681,19 +714,16 @@ contains
           n = n + 1
        end do
 
-       print*,__FILE__,__LINE__, n
        ! Copying this error handling situation from Python implementation
        if ((this%current_flow_level > 0) .and. ch == ':') then
-          print*,__FILE__,__LINE__, n
           if (scan(this%peek(offset=n+1), WHITESPACE_CHARS) == 0) then
-             print*,__FILE__,__LINE__, n, this%peek(offset=n+1)
              call this%forward(offset=n)
              __ASSERT__("Found unexpected ':' while lexing a plain scalar",UNEXPECTED_COLON_IN_PLAIN_SCALAR)
           end if
        end if
-          
-       if (n == 0) exit
 
+       if (n == 0) exit
+       this%allow_simple_key = .true.
        chunks = chunks // spaces // this%prefix(n)
        call this%forward(offset=n)
        spaces = this%scan_plain_spaces()
@@ -701,10 +731,8 @@ contains
             & (this%current_flow_level == 0 .and. this%column() < indent)) then
           exit
        end if
-       print*,__FILE__,__LINE__,chunks
     end do
 
-    print*,__FILE__,__LINE__,chunks
     call this%processed_tokens%push_back(ScalarToken(chunks, is_plain=.true.))
 
     if (present(rc)) rc = SUCCESS
@@ -737,6 +765,7 @@ contains
     ch = this%peek()
     if (scan(ch, CR//NL) > 0) then
        line_break = this%scan_line_break()
+       this%allow_simple_key = .true.
        pfix = this%prefix(3)
        if ( &
             & (pfix == '---' .or. pfix == '...') .and. &
@@ -762,8 +791,8 @@ contains
        end do
        if (line_break /= NL) then
           chunks = chunks // line_break
-       else
-          chunks = chunks // 'u'
+       elseif (len(line_break) == 0) then
+          chunks = chunks // ' '
        end if
        chunks = chunks // breaks
     else
@@ -979,13 +1008,17 @@ contains
     
   end function is_key
 
-  subroutine process_key(this)
+  subroutine process_key(this, unused, rc)
     class(Lexer), intent(inout) :: this
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    integer, optional, intent(out) :: rc
 
     ! If not in flow context, may need to add a mapping start token.
     if (this%current_flow_level == 0) then
 
-       ! simple key logic TBD
+       if (.not. this%allow_simple_key) then
+          __ASSERT__("mapping keys not allowed here", UNEXPECTED_MAPPING_KEY)
+       end if
 
        if (this%add_indentation(this%column())) then
           call this%processed_tokens%push_back(BlockMappingStartToken())
@@ -993,10 +1026,12 @@ contains
 
     end if
 
-    ! TBD simple key logic
-
+    this%allow_simple_key = (this%current_flow_level == 0)
+    call this%remove_possible_simple_key()
     call this%forward()
     call this%processed_tokens%push_back(KeyToken())
+
+    __RETURN__(SUCCESS)
 
   end subroutine process_key
 

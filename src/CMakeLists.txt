@@ -11,6 +11,7 @@ add_library (yafyaml
   FileStream.F90
   Reader.F90
   Lexer.F90
+  Parser.F90
 
   Configuration.F90
   KeywordEnforcer.F90

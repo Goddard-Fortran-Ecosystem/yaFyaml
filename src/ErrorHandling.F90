@@ -52,6 +52,7 @@ module fy_ErrorHandling
      integer, optional, intent(out) :: rc ! Not present in MAIN
 
      fail = .not. condition
+
      if (fail) then
          call throw(message, filename, line)
          if (present(rc)) rc = -1
@@ -67,6 +68,7 @@ module fy_ErrorHandling
       integer, intent(in) :: line
       integer, optional, intent(out) :: rc ! Not present in MAIN
 
+      print*,__FILE__,__LINE__, status, present(rc)
       fail = (status /= 0)
 
       if (fail) then
@@ -155,7 +157,7 @@ module fy_ErrorHandling
         use_name = base_name
      end if
 
-     write(ERROR_UNIT,'(a,i5.5,1x,a,i5.5,1x,a3,a40,1x,a)') &
+     write(ERROR_UNIT,'(a,i5.5,1x,a3,a40,1x,a)') &
           & 'FAIL at line=', line_number, prefix, use_name, &
           & '<'//adjustl(trim(message))//'>'
    end subroutine default_throw_method

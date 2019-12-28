@@ -1,0 +1,64 @@
+module Test_Parser
+  use funit
+  use yafyaml
+  use fy_Parser
+  implicit none
+
+contains
+
+  @test
+  subroutine foo()
+    print*,__FILE__,__LINE__
+  end subroutine foo
+
+  @test
+  subroutine test_single_scalar()
+    type(Parser) :: p
+    type(AllocatableConfiguration) :: cfg
+    character(:), allocatable :: scalar
+
+    print*,__FILE__,__LINE__
+    p = Parser()
+    cfg = p%load(EscapedTextStream("--- a\n..."))
+
+    scalar = cfg
+    @assert_that(scalar, is("a"))
+
+  end subroutine test_single_scalar
+
+  @test
+  subroutine test_single_flow_sequence()
+    type(Parser) :: p
+    type(AllocatableConfiguration) :: cfg
+    logical, allocatable :: flags(:)
+
+    print*,__FILE__,__LINE__
+    p = Parser()
+    cfg = p%load(EscapedTextStream("---\n [true, false, true]\n..."))
+
+    flags = cfg
+    @assert_that(flags, is(equal_to([.true.,.false.,.true.])))
+
+  end subroutine test_single_flow_sequence
+
+  @test
+  subroutine test_single_flow_map()
+    type(Parser) :: p
+    type(AllocatableConfiguration) :: cfg
+    logical :: flag
+
+    print*,__FILE__,__LINE__
+    p = Parser()
+    cfg = p%load(EscapedTextStream("---\n {a: true, b: false}\n..."))
+
+    flag = cfg%at("a")
+    @assert_that(flag, is(equal_to(.true.)))
+
+    flag = cfg%at("b")
+    @assert_that(flag, is(equal_to(.false.)))
+
+
+  end subroutine test_single_flow_map
+
+end module Test_Parser
+  

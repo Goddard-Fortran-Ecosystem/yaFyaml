@@ -558,7 +558,7 @@ contains
   end function default_real32
 
   function default_string() result(s)
-    character(len=0) :: s
+    character(len=:), allocatable :: s
     s = ''
   end function default_string
 

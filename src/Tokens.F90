@@ -27,7 +27,7 @@ module fy_Tokens
   public :: ScalarToken
 
   type, abstract :: AbstractToken
-     private
+!!$     private
      character(:), allocatable :: id
    contains
      procedure :: get_id
@@ -275,8 +275,9 @@ contains
   end function new_FlowMappingEndToken
 
   function new_FlowNextEntryToken() result(token)
-    type(FlowMappingEndToken) :: token
+    type(FlowNextEntryToken) :: token
     call token%set_id(FLOW_NEXT_ENTRY_INDICATOR)
+
   end function new_FlowNextEntryToken
 
   function new_KeyToken() result(token)

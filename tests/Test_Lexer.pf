@@ -153,6 +153,8 @@ contains
     class(AbstractToken), allocatable :: token
     character(:), allocatable :: id
 
+    integer :: status
+    
     lexr = Lexer(Reader(TextStream(" [ "// NL // "    -")))
 
     token = lexr%get_token() ! skip stream start
@@ -165,7 +167,8 @@ contains
     id = token%get_id()
     @assert_that(id, is(equal_to('<block sequence start>')))
 
-    token = lexr%get_token()
+    token = lexr%get_token(rc=status)
+    @assert_that(status, is(equal_to(0)))
     id = token%get_id()
     @assert_that(id, is(equal_to(BLOCK_NEXT_ENTRY_INDICATOR)))
 
@@ -177,10 +180,11 @@ contains
     class(AbstractToken), allocatable :: token
     character(:), allocatable :: id
 
-    lexr = Lexer(Reader(TextStream(":")))
+    lexr = Lexer(Reader(TextStream("a:")))
 
     token = lexr%get_token() ! skip stream start
-    token = lexr%get_token()
+    token = lexr%get_token() ! document start
+    token = lexr%get_token() ! scalar token
     id = token%get_id()
     @assert_that(id, is(equal_to(VALUE_INDICATOR)))
 
@@ -223,15 +227,17 @@ contains
     @assert_that(id, is(equal_to(':')))
 
     ! block context - no space after ":"
-    lexr = Lexer(Reader(TextStream("  ? a : b")))
+    lexr = Lexer(Reader(TextStream("{? a : b}")))
     token = lexr%get_token() ! skip stream start
-    token = lexr%get_token()
+    token = lexr%get_token() ! "{"
     id = token%get_id()
-    @assert_that(id, is(equal_to('<block mapping start>')))
-    token = lexr%get_token()
+    @assert_that(id, is(equal_to('{')))
+    token = lexr%get_token() ! key marker
     id = token%get_id()
     @assert_that(id, is(equal_to('?')))
-    token = lexr%get_token() ! skip scalar a
+    token = lexr%get_token() ! a
+    id = token%get_id()
+    @assert_that(id, is(equal_to('<scalar>')))
     token = lexr%get_token()
     id = token%get_id()
     @assert_that(id, is(equal_to(':')))

@@ -1,0 +1,92 @@
+module Test_UnlimitedUtilities
+  use funit
+  use fy_UnlimitedUtilities
+  use fy_String
+  use fy_ArrayWrapper
+  use gFTL_UnlimitedVector
+
+contains
+
+  @test
+  subroutine test_is_logical
+    class(*), allocatable :: u
+
+    u = .true.
+    @assert_that(is_logical(u), is(true()))
+
+    u = 1
+    @assert_that(is_logical(u), is(false()))
+
+    u = ArrayWrapper([.true.,.false.])
+    @assert_that(is_logical(u), is(true()))
+
+  end subroutine test_is_logical
+
+  @test
+  subroutine test_is_logical_unlimited_vector
+    class(*), allocatable :: u
+    type(UnlimitedVector) :: v
+
+    call v%push_back(.true.)
+    u = v
+    @assert_that(is_logical(u), is(true()))
+    
+    call v%push_back(.true.)
+    u = v
+    @assert_that(is_logical(u), is(true()))
+    
+    call v%push_back(.true.)
+    u = v
+    @assert_that(is_logical(u), is(true()))
+    
+    call v%push_back(3)
+    u = v
+    @assert_that(is_logical(u), is(false()))
+    
+    
+  end subroutine test_is_logical_unlimited_vector
+  
+
+  @test
+  subroutine test_is_integer
+    class(*), allocatable :: u
+
+    u = 5
+    @assert_that(is_integer(u), is(true()))
+
+    u = 1.2
+    @assert_that(is_integer(u), is(false()))
+    
+  end subroutine test_is_integer
+
+  @test
+  subroutine test_is_real
+    class(*), allocatable :: u
+
+    u = 5.2
+    @assert_that(is_real(u), is(true()))
+
+    u = 1
+    @assert_that(is_real(u), is(false()))
+    
+  end subroutine test_is_real
+
+
+  @test
+  subroutine test_is_string
+    class(*), allocatable :: u
+
+    u = 'a b c'
+    @assert_that(is_string(u), is(true()))
+
+    u = String('cat')
+    @assert_that(is_string(u), is(true()))
+
+    u = 5
+    @assert_that(is_string(u), is(false()))
+    
+  end subroutine test_is_string
+
+end module Test_UnlimitedUtilities
+
+  

@@ -3,6 +3,7 @@ module fy_Configuration
   use, intrinsic :: iso_fortran_env, only: REAL32
   use gFTL_UnlimitedVector
   use gFTL_StringUnlimitedMap
+  use fy_String
   use fy_ArrayWrapper
   use fy_KeywordEnforcer
   implicit none
@@ -47,8 +48,8 @@ module fy_Configuration
      generic :: assignment(=) => to_string_vector
      generic :: assignment(=) => to_unlimited_map
 
-     generic :: get => get_logical
-
+     generic :: get => get_logical_scalar
+     generic :: get => get_logical_at_index
      generic :: at => at_key
      generic :: at => at_index
 
@@ -63,7 +64,8 @@ module fy_Configuration
      procedure, pass(this) :: to_string_vector
      procedure, pass(this) :: to_unlimited_map
 
-     procedure :: get_logical
+     procedure :: get_logical_scalar
+     procedure :: get_logical_at_index
 
      procedure :: at_key
      procedure :: at_index
@@ -83,6 +85,10 @@ module fy_Configuration
      class(*), pointer :: node => null()
    contains
      procedure :: get_node => get_node_pointer
+     ! Ifort 19.0.5 override - needs an explicit copy for
+     ! unlimited polymorphic pointer component assignemnt??
+     generic :: assignment(=) => copy_pointer_configuration
+     procedure :: copy_pointer_configuration
   end type PointerConfiguration
 
   interface Configuration
@@ -175,6 +181,7 @@ contains
 
     call this%get_node(node)
     is_none = same_type_as(node, NONE)
+
 !!$    is_none = associated(this%node, NONE)
   end function is_none
 
@@ -237,6 +244,8 @@ contains
     select type(q => node)
     type is (character(*))
        value = q
+    type is (String)
+       value = q%s
     class default
        value = default_string()
     end select
@@ -256,7 +265,6 @@ contains
     type is (ArrayWrapper)
        select type(qq => q%elements)
        type is (logical)
-          print*,'qq: ', qq
           values = qq
        class default ! type mismatch
           values = [logical :: ] ! empty array
@@ -396,6 +404,8 @@ contains
           select type (qq => q%at(i))
           type is (character(*))
              maxlen = max(maxlen, len(qq))
+          type is (String)
+             maxlen = max(maxlen, len(qq%s))
           class default
              values = [character(0) :: ] ! empty array
              return
@@ -406,6 +416,8 @@ contains
           select type (qq => q%at(i))
           type is (character(*))
              values(i) = qq
+          type is (String)
+             values(i) = qq%s
           end select
        end do
     class default ! category mismatch - not an array
@@ -432,6 +444,10 @@ contains
           do i = 1, size(qq)
              call values%push_back(qq(i))
           end do
+       type is (String)
+          do i = 1, size(qq)
+             call values%push_back(qq(i)%s)
+          end do
        class default ! type mismatch
           values = StringVector()
        end select
@@ -441,6 +457,7 @@ contains
        do i = 1, n
           select type (qq => q%at(i))
           type is (character(*))
+          type is (String)
           class default
              values = StringVector()
              return
@@ -450,6 +467,8 @@ contains
           select type (qq => q%at(i))
           type is (character(*))
              call values%push_back(qq)
+          type is (String)
+             call values%push_back(qq%s)
           end select
        end do
     class default ! category mismatch - not an array
@@ -478,22 +497,55 @@ contains
 
 
 
-  subroutine get_logical(this, value, unused, default, is_present, rc)
+  subroutine get_logical_scalar(this, value, unused, default, is_present, rc)
     class(Configuration), intent(in) :: this
-    type (Logical) :: value
+    type (Logical), intent(out) :: value
     class (KeywordEnforcer), optional, intent(in) :: unused
     type (Logical), optional, intent(in) :: default
     type (Logical), optional, intent(in) :: is_present
     integer, optional, intent(out) :: rc
 
     class(*), pointer :: node
+
     call this%get_node(node)
 
     select type(q => node)
     type is (logical)
+       value = q
+    class default
+       value = default_logical(default)
     end select
     
-  end subroutine get_logical
+  end subroutine get_logical_scalar
+
+  subroutine get_logical_at_index(this, value, index, unused, default, is_present, rc)
+    class(Configuration), intent(in) :: this
+    type (Logical), intent(out) :: value
+    integer, intent(in) :: index
+    class (KeywordEnforcer), optional, intent(in) :: unused
+    type (Logical), optional, intent(in) :: default
+    type (Logical), optional, intent(in) :: is_present
+    integer, optional, intent(out) :: rc
+
+    class(*), pointer :: node
+
+    call this%get_node(node)
+
+    select type(q => node)
+    type is (UnlimitedVector)
+       if (index <= q%size()) then
+          select type (qq => q%at(index))
+          type is (Logical)
+             value = qq
+          class default
+             value = default_logical(default)
+          end select
+       end if
+    class default ! node not a vector
+       value = default_logical(default)
+    end select
+    
+  end subroutine get_logical_at_index
 
 
   function at_key(this, key) result(sub_config)
@@ -522,10 +574,11 @@ contains
 
   function at_index(this, index) result(sub_config)
     type(PointerConfiguration) :: sub_config
-    class(Configuration), intent(in) :: this
+    class(Configuration), target, intent(in) :: this
     integer, intent(in) :: index
 
     class(*), pointer :: node
+
     call this%get_node(node)
 
     select type(q => node)
@@ -544,8 +597,15 @@ contains
 
 
 
-  logical function default_logical()
-    default_logical = .false.
+  logical function default_logical(default)
+    logical, optional, intent(in) :: default
+
+    if (present(default)) then
+       default_logical = default
+    else
+       default_logical = .false.
+    end if
+
   end function default_logical
 
   integer(kind=INT32) function default_int32()
@@ -562,7 +622,11 @@ contains
     s = ''
   end function default_string
 
-
+  subroutine copy_pointer_configuration(to, from)
+    class(PointerConfiguration), intent(in) :: from
+    class(PointerConfiguration), intent(out) :: to
+    to%node => from%node
+  end subroutine copy_pointer_configuration
 
 end module fy_Configuration
 

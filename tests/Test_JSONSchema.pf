@@ -1,0 +1,41 @@
+module Test_JSONSchema
+  use funit
+  use fy_JSONSchema
+  implicit none
+
+contains
+
+
+  ! From the YAML 1.2 spec
+  ! Float regexp is: -? ( 0 | [1-9] [0-9]* ) ( \. [0-9]* )? ( [eE] [-+]? [0-9]+ )?
+  @test
+  subroutine test_matches_real()
+    type(JSONSchema) :: schema
+
+    
+
+    @assert_that(schema%matches_real('-1.'), is(true()))
+    @assert_that(schema%matches_real('1.'), is(true()))
+    @assert_that(schema%matches_real('1.23'), is(true()))
+    @assert_that(schema%matches_real('0.23'), is(true()))
+
+    ! With exponents
+    @assert_that(schema%matches_real('0.23e15'), is(true()))
+    @assert_that(schema%matches_real('0.23e+15'), is(true()))
+    @assert_that(schema%matches_real('0.23e-15'), is(true()))
+    @assert_that(schema%matches_real('0.23e-00'), is(true()))
+    @assert_that(schema%matches_real('120.23e+00'), is(true()))
+
+    ! Negative cases
+    @assert_that(schema%matches_real('0'), is(false()))
+    ! "0" can only be leading digit if it immediately precedes "."
+    @assert_that(schema%matches_real('01.23'), is(false()))
+    ! No spaces
+    @assert_that(schema%matches_real('0.23 e-00'), is(false()))
+    ! No inf, nan
+    @assert_that(schema%matches_real('.inf'), is(false()))
+    @assert_that(schema%matches_real('.nan'), is(false()))
+
+  end subroutine test_matches_real
+
+end module Test_JSONSchema

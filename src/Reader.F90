@@ -126,13 +126,22 @@ contains
          if (scan(ch, NL) /= 0) then
             this%line = this%line + 1
             this%column = 0
-         elseif (p+1 <= len(this%buffer)) then
-            if (ch == CR .and. this%buffer(p+1:p+1) /= NL) then
-               this%line = this%line + 1
-               this%column = 0
-            end if
          else
-            this%column = this%column + 1
+            if (p+1 <= len(this%buffer)) then
+               if (ch == CR .and. this%buffer(p+1:p+1) /= NL) then
+                  this%line = this%line + 1
+                  this%column = 0
+               else
+                  this%column = this%column + 1
+               end if
+            else
+               if (ch == CR) then
+                  this%line = this%line + 1
+                  this%column = 0
+               else
+                  this%column = this%column + 1
+               end if
+            end if
          end if
        end associate
     end do

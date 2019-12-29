@@ -35,6 +35,7 @@ contains
     character(:), allocatable :: token
     type(StringVector) :: tokens
 
+    first_line = .true.
     do 
        line = file%read_line()
        if (first_line .and. trim(line) == '---') then ! skip

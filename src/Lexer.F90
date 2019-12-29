@@ -81,6 +81,7 @@ module fy_Lexer
 
      procedure :: process_flow_next_entry
      procedure :: process_block_next_entry
+     procedure :: is_block_next_entry
      procedure :: add_indentation
 
      procedure :: process_key
@@ -161,11 +162,13 @@ contains
     do
        need_more = this%need_more_tokens(rc=status)
        if (status /= SUCCESS) then
-          token = NULL_TOKEN
+          token = NullToken()
           __RETURN__(status)
        end if
        if (need_more) then
-          call this%lex_tokens(__RC__)
+          call this%lex_tokens(rc=status)
+          if (status /= SUCCESS) token = NullToken()
+          __VERIFY__(status)
        else
           exit
        end if
@@ -175,7 +178,7 @@ contains
        this%num_tokens_given = this%num_tokens_given + 1
        token = this%pop_token()
     else
-       token = NULL_TOKEN
+       token = NullToken()
     end if
 
     __RETURN__(SUCCESS)
@@ -286,7 +289,7 @@ contains
     type(SimpleKey) :: key
     integer :: token_number
     integer :: status
-    
+
     required = (this%current_flow_level == 0) .and. (this%indent == this%column())
     __ASSERT__('impossible situation', this%allow_simple_key .or. (.not. required))
 
@@ -294,7 +297,6 @@ contains
        call this%remove_stale_simple_keys(__RC__)
        token_number = this%num_tokens_given + this%processed_tokens%size()
        key = SimpleKey(token_number, required, this%index(), this%line(), this%column())
-       print*,'saving token: ', token_number, this%current_flow_level
        call this%possible_simple_keys%insert(this%current_flow_level,key)
     end if
 
@@ -336,6 +338,7 @@ contains
 
     ! Determine type of token from first character
     ch = this%peek()
+    print*,' next char: <',ch,'>'
 
     ! Cannot quite use SELECT CASE here.  Some cases require further
     ! processing to ascertain their relevancy.
@@ -378,8 +381,10 @@ contains
        __RETURN__(SUCCESS)
     end if
     if (ch == BLOCK_NEXT_ENTRY_INDICATOR) then
-       call this%process_block_next_entry()
-       __RETURN__(SUCCESS)
+       if (this%is_block_next_entry()) then
+          call this%process_block_next_entry(__RC__)
+          __RETURN__(SUCCESS)
+       end if
     end if
     if (ch == KEY_INDICATOR) then
        if (this%is_key()) then
@@ -479,10 +484,6 @@ contains
   subroutine process_beginning_of_stream(this)
     class(Lexer), intent(inout) :: this
 
-    call this%unwind_indentation(-1)
-    this%allow_simple_key = .false.
-!!$    this%possible_simple_keys = IntegerSimpleKeyMap()
-
     call this%processed_tokens%push_back(StreamStartToken())
 
   end subroutine process_beginning_of_stream
@@ -499,34 +500,6 @@ contains
     this%reached_end_of_stream = .true.
 
   end subroutine process_end_of_stream
-
-
-!!$
-!!$  subroutine unwind_stack(this)
-!!$    class(Lexer), intent(inout) :: this
-!!$
-!!$    do while (this%flow_level > 0)
-!!$       call this%tokens%push_back(BlockSequenceEndToken())
-!!$       this%flow_level = this%flow_level - 1
-!!$    end do
-!!$
-!!$    call this%tokens%push_back(DocumentEndToken())
-!!$    
-!!$  end subroutine unwind_stack
-!!$  
-!!$  subroutine eat_whitespace(this)
-!!$    class(Lexer), intent(inout) :: this
-!!$
-!!$    character(len=1) :: ch
-!!$    
-!!$    ch = this%r%peek()
-!!$    do while (ch == ' ')
-!!$       call this%r%forward(offset=1)
-!!$       ch = this%r%peek()
-!!$    end do
-!!$
-!!$  end subroutine eat_whitespace
-!!$
 
 
   logical function is_at_document_boundary(this, text)
@@ -587,19 +560,34 @@ contains
     call this%forward()
     call this%processed_tokens%push_back(FlowNextEntryToken())
   end subroutine process_flow_next_entry
-  
 
-  subroutine process_block_next_entry(this)
+  logical function is_block_next_entry(this)
     class(Lexer), intent(inout) :: this
 
-    if (this%current_flow_level > 0) then
+    is_block_next_entry = (scan(this%peek(offset=1),WHITESPACE_CHARS) > 0)
+  end function is_block_next_entry
+
+  subroutine process_block_next_entry(this, unused, rc)
+    class(Lexer), intent(inout) :: this
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    integer, optional, intent(out) :: rc
+
+    if (this%current_flow_level == 0) then
+       if (.not. this%allow_simple_key) then
+          __ASSERT__("sequence entries not allowed here",ILLEGAL_SEQUENCE_ENTRY)
+       end if
        if (this%add_indentation(this%column())) then
           call this%processed_tokens%push_back(BlockSequenceStartToken())
        end if
     end if
 
+    this%allow_simple_key = .true.
+    call this%remove_possible_simple_key()
+
     call this%forward()
     call this%processed_tokens%push_back(BlockNextEntryToken())
+
+    __RETURN__(SUCCESS)
 
   end subroutine process_block_next_entry
 
@@ -611,9 +599,11 @@ contains
     add_indentation = (this%indent < column)
     
     if (add_indentation) then
-       this%indent = column
        call this%level_indentations%push_back(this%indent)
+       this%indent = column
        add_indentation = .true.
+    else
+       add_indentation = .false.
     end if
 
   end function add_indentation
@@ -628,11 +618,7 @@ contains
     type(IntegerSimpleKeyMapIterator) :: iter
     type(SimpleKey) :: key
 
-    print*,__FILE__,__LINE__, this%possible_simple_keys%size()
-    print*,__FILE__,__LINE__, this%current_flow_level
-    print*,__FILE__,__LINE__, this%possible_simple_keys%count(this%current_flow_level)
     if (this%possible_simple_keys%count(this%current_flow_level) > 0) then
-       print*,__FILE__,__LINE__
        iter = this%possible_simple_keys%find(this%current_flow_level)
        key = iter%value()
        call this%possible_simple_keys%erase(iter)
@@ -640,7 +626,7 @@ contains
        
        if (this%current_flow_level == 0) then
           if (this%add_indentation(key%column)) then
-             call this%processed_tokens%push_back(BlockMappingStartToken())
+             call this%processed_tokens%insert(key%token_number-this%num_tokens_given+1, BlockMappingStartToken())
           end if
        end if
        ! simple key cannot be followed immediately by another simple key
@@ -977,7 +963,7 @@ contains
     integer, intent(in) :: column
 
     ! flow context ignores indentation
-    if (this%current_flow_level == 0) then ! nothing to do
+    if (this%current_flow_level > 0) then ! nothing to do
        return
     end if
 

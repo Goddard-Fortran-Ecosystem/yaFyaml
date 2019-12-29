@@ -136,43 +136,20 @@ contains
     class(AbstractToken), allocatable :: token
     character(:), allocatable :: id
 
-    lexr = Lexer(Reader(TextStream(" -")))
+    lexr = Lexer(Reader(TextStream("- a")))
 
     token = lexr%get_token() ! skip stream start
+    print*,__FILE__,__LINE__,token%get_id()
+    token = lexr%get_token()
+    print*,__FILE__,__LINE__,token%get_id()
+    id = token%get_id()
+    @assert_that(id, is(equal_to("<block sequence start>")))
     token = lexr%get_token()
     id = token%get_id()
     @assert_that(id, is(equal_to(BLOCK_NEXT_ENTRY_INDICATOR)))
 
   end subroutine test_block_next_entry
 
-  ! If a block entry happens inside a flow context, then
-  ! it may need to start a block sequence.
-  @test
-  subroutine test_block_next_entry_inside_flow()
-    type(Lexer) :: lexr
-    class(AbstractToken), allocatable :: token
-    character(:), allocatable :: id
-
-    integer :: status
-    
-    lexr = Lexer(Reader(TextStream(" [ "// NL // "    -")))
-
-    token = lexr%get_token() ! skip stream start
-    token = lexr%get_token() 
-    id = token%get_id()
-    @assert_that(id, is(equal_to(FLOW_SEQUENCE_START_INDICATOR)))
-
-    ! The surprising bit
-    token = lexr%get_token()
-    id = token%get_id()
-    @assert_that(id, is(equal_to('<block sequence start>')))
-
-    token = lexr%get_token(rc=status)
-    @assert_that(status, is(equal_to(0)))
-    id = token%get_id()
-    @assert_that(id, is(equal_to(BLOCK_NEXT_ENTRY_INDICATOR)))
-
-  end subroutine test_block_next_entry_inside_flow
 
   @test
   subroutine test_value()
@@ -184,7 +161,11 @@ contains
 
     token = lexr%get_token() ! skip stream start
     token = lexr%get_token() ! document start
+    token = lexr%get_token()
+    id = token%get_id()
+    @assert_that(id, is(equal_to(KEY_INDICATOR)))
     token = lexr%get_token() ! scalar token
+    token = lexr%get_token()
     id = token%get_id()
     @assert_that(id, is(equal_to(VALUE_INDICATOR)))
 
@@ -221,6 +202,8 @@ contains
     ! flow context
     lexr = Lexer(Reader(TextStream("  a : b")))
     token = lexr%get_token() ! skip stream start
+    token = lexr%get_token() ! skip block mapping start
+    token = lexr%get_token() ! skip key 
     token = lexr%get_token() ! skip scalar "a"
     token = lexr%get_token()
     id = token%get_id()

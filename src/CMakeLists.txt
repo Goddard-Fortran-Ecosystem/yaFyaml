@@ -3,6 +3,8 @@ add_library (yafyaml
   AbstractFile.F90
   File.F90
 
+  String.F90
+  UnlimitedUtilities.F90
   Tokens.F90
   TokenVector.F90
   AbstractTextStream.F90
@@ -12,6 +14,10 @@ add_library (yafyaml
   Reader.F90
   Lexer.F90
   Parser.F90
+  AbstractSchema.F90
+  FailsafeSchema.F90
+  JSONSchema.F90
+  CoreSchema.F90
 
   Configuration.F90
   KeywordEnforcer.F90

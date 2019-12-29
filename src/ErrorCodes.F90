@@ -13,6 +13,7 @@ module fy_ErrorCodes
      enumerator :: UNKNOWN_ESCAPE_CHARACTER_IN_DOUBLE_QUOTED_SCALAR
      enumerator :: MISSING_COLON_WHILE_SCANNING_A_SIMPLE_KEY
      enumerator :: ILLEGAL_VALUE_IN_MAPPING
+     enumerator :: ILLEGAL_SEQUENCE_ENTRY
      enumerator :: PARSER_ERROR
   end enum
   

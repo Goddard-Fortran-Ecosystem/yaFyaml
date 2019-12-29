@@ -60,5 +60,87 @@ contains
 
   end subroutine test_single_flow_map
 
+  @test
+  subroutine test_single_block_sequence()
+    type(Parser) :: p
+    type(AllocatableConfiguration) :: cfg
+    logical, allocatable :: flags(:)
+
+    print*,__FILE__,__LINE__
+    p = Parser()
+    cfg = p%load(EscapedTextStream("---\n - true \n - false \n - true \n..."))
+
+    flags = cfg
+    @assert_that(flags, is(equal_to([.true.,.false.,.true.])))
+
+  end subroutine test_single_block_sequence
+
+  @test
+  subroutine test_interpret_integer()
+    type(ScalarToken) :: t
+    type(Parser) :: p
+
+    p = Parser()
+
+    t = ScalarToken('0', .true.)
+    @assert_that(p%interpret(t), is(equal_to(0)))
+
+    ! Leading digit cannot be 0 (except for 0 itself)
+    t = ScalarToken('01', .true.)
+    @assert_that(p%interpret(t), is(equal_to('01')))
+
+    t = ScalarToken('-01', .true.)
+    @assert_that(p%interpret(t), is(equal_to('-01')))
+
+    t = ScalarToken('123', .true.)
+    @assert_that(p%interpret(t), is(equal_to(123)))
+
+    t = ScalarToken('-1', .true.)
+    @assert_that(p%interpret(t), is(equal_to(-1)))
+    
+    t = ScalarToken('-', .true.)
+    @assert_that(p%interpret(t), is(equal_to('-')))
+
+    ! Real are not interpreted integers:
+    t = ScalarToken('1.', .true.)
+    @assert_that(p%interpret(t), is(not(equal_to(1))))
+
+    ! leading integers with other trailing characters are not integers
+    t = ScalarToken('123 abc', .true.)
+    @assert_that(p%interpret(t), is(not(equal_to(123))))
+    
+end subroutine test_interpret_integer
+
+
+  ! From the YAML 1.2 spec
+  ! Float regexp is: -? ( 0 | [1-9] [0-9]* ) ( \. [0-9]* )? ( [eE] [-+]? [0-9]+ )?
+  @test
+  subroutine test_matches_real()
+
+    @assert_that(matches_real('-1.','JSON'), is(true()))
+    @assert_that(matches_real('1.','JSON'), is(true()))
+    @assert_that(matches_real('1.23','JSON'), is(true()))
+    @assert_that(matches_real('0.23','JSON'), is(true()))
+
+    ! With exponents
+    @assert_that(matches_real('0.23e15','JSON'), is(true()))
+    @assert_that(matches_real('0.23e+15','JSON'), is(true()))
+    @assert_that(matches_real('0.23e-15','JSON'), is(true()))
+    @assert_that(matches_real('0.23e-00','JSON'), is(true()))
+    @assert_that(matches_real('120.23e+00','JSON'), is(true()))
+
+    @assert_that(matches_real('0','JSON'), is(false()))
+    ! "0" can only be leading digit if it immediately precedes "."
+    @assert_that(matches_real('01.23','JSON'), is(false()))
+    ! No spaces
+    @assert_that(matches_real('0.23 e-00','JSON'), is(false()))
+    ! Incorrect capitalization
+    @assert_that(matches_real('iNf','JSON'), is(false()))
+    @assert_that(matches_real('Nan','JSON'), is(false()))
+    @assert_that(matches_real('nAn','JSON'), is(false()))
+
+  end subroutine test_matches_real
+
+
 end module Test_Parser
   

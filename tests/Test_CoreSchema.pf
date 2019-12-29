@@ -1,0 +1,104 @@
+module Test_CoreSchema
+  use funit
+  use fy_CoreSchema
+  implicit none
+
+contains
+
+  ! Base 10:    [-+]? [0-9]+
+  ! Octal:      0o [0-7]+
+  ! Hex:        0x [0-9a-fA-F]+
+  @test
+  subroutine test_matches_integer_base_10()
+    type(CoreSchema) :: schema
+
+    @assert_that(schema%matches_integer('0'), is(true()))
+    @assert_that(schema%matches_integer('00'), is(true()))
+    @assert_that(schema%matches_integer('1'), is(true()))
+    @assert_that(schema%matches_integer('-0'), is(true()))
+    @assert_that(schema%matches_integer('+0123'), is(true()))
+
+    ! Negative cases
+    ! No decimal point
+    @assert_that(schema%matches_integer('-0.'), is(false()))
+    ! At most one sign indicator
+    @assert_that(schema%matches_integer('-+5'), is(false()))
+    ! Must have at least one digit
+    @assert_that(schema%matches_integer('-'), is(false()))
+    @assert_that(schema%matches_integer('+'), is(false()))
+
+    
+  end subroutine test_matches_integer_base_10
+
+  @test
+  subroutine test_matches_integer_octal()
+    type(CoreSchema) :: schema
+
+    @assert_that(schema%matches_integer('0o0'), is(true()))
+    @assert_that(schema%matches_integer('0o123'), is(true()))
+
+    ! Negative cases
+    ! No decimal point
+    @assert_that(schema%matches_integer('0o1.'), is(false()))
+    ! No digits greater than 7
+    @assert_that(schema%matches_integer('0o378'), is(false()))
+    
+  end subroutine test_matches_integer_octal
+
+
+  @test
+  subroutine test_matches_integer_hex()
+    type(CoreSchema) :: schema
+
+    @assert_that(schema%matches_integer('0x0'), is(true()))
+    @assert_that(schema%matches_integer('0x123'), is(true()))
+    @assert_that(schema%matches_integer('0x1a3'), is(true()))
+    @assert_that(schema%matches_integer('0xB1a'), is(true()))
+
+  end subroutine test_matches_integer_hex
+
+
+  ! From the YAML 1.2 spec
+  ! Float regexp is: -? ( 0 | [1-9] [0-9]* ) ( \. [0-9]* )? ( [eE] [-+]? [0-9]+ )?
+  @test
+  subroutine test_matches_real()
+    type(CoreSchema) :: schema
+
+    @assert_that(schema%matches_real('1.'), is(true()))
+    @assert_that(schema%matches_real('-1.'), is(true()))
+    @assert_that(schema%matches_real('+1.'), is(true()))
+    @assert_that(schema%matches_real('1.23'), is(true()))
+    @assert_that(schema%matches_real('0.23'), is(true()))
+    @assert_that(schema%matches_real('00.23'), is(true()))
+    @assert_that(schema%matches_real('.23'), is(true()))
+    @assert_that(schema%matches_real('-.23'), is(true()))
+    @assert_that(schema%matches_real('+.23'), is(true()))
+
+    ! With exponents
+    @assert_that(schema%matches_real('0.23e15'), is(true()))
+    @assert_that(schema%matches_real('0.23e+15'), is(true()))
+    @assert_that(schema%matches_real('0.23e-15'), is(true()))
+    @assert_that(schema%matches_real('0.23e-00'), is(true()))
+    @assert_that(schema%matches_real('120.23e+00'), is(true()))
+
+    ! inf and nan
+    @assert_that(schema%matches_real('.inf'), is(true()))
+    @assert_that(schema%matches_real('-.inf'), is(true()))
+    @assert_that(schema%matches_real('.Inf'), is(true()))
+    @assert_that(schema%matches_real('.INF'), is(true()))
+    @assert_that(schema%matches_real('.nan'), is(true()))
+    @assert_that(schema%matches_real('.NaN'), is(true()))
+    @assert_that(schema%matches_real('.NAN'), is(true()))
+
+    ! Negative cases
+    @assert_that(schema%matches_real('0'), is(false()))
+    ! No spaces
+    @assert_that(schema%matches_real('0.23 e-00'), is(false()))
+    ! Incorrect capitalization
+    @assert_that(schema%matches_real('.iNf'), is(false()))
+    @assert_that(schema%matches_real('.Nan'), is(false()))
+    @assert_that(schema%matches_real('.nAn'), is(false()))
+
+  end subroutine test_matches_real
+
+end module Test_CoreSchema

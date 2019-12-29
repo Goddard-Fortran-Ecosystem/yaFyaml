@@ -3,7 +3,7 @@ module fy_Tokens
   private
 
   public :: AbstractToken
-  public :: NullToken, NULL_TOKEN
+  public :: NullToken
 
   public :: StreamStartToken
   public :: StreamEndToken
@@ -87,6 +87,10 @@ module fy_Tokens
   type, extends(AbstractToken) :: NullToken
   end type NullToken
 
+  interface NullToken
+     module procedure new_NullToken
+  end interface NullToken
+
   type, abstract, extends(AbstractToken) :: DocumentBoundaryToken
   end type DocumentBoundaryToken
 
@@ -167,8 +171,6 @@ module fy_Tokens
 !!$  end type FlowMappingStartToken
 !!$
 
-  type(NullToken) :: NULL_TOKEN
-
   character(*), parameter, public :: DOCUMENT_START_INDICATOR = '-'
   character(*), parameter, public :: DOCUMENT_END_INDICATOR = '.'
 
@@ -207,7 +209,12 @@ contains
     type (StreamEndToken) :: token
     call token%set_id('<stream end>')
   end function new_StreamEndToken
-  
+
+  function new_NullToken() result(token)
+    type(NullToken) :: token
+    call token%set_id('<null>')
+  end function new_NullToken
+
   function new_ScalarToken(value, is_plain, style) result(token)
     type(ScalarToken) :: token
     character(*), intent(in) :: value
@@ -238,8 +245,8 @@ contains
   end function new_BlockNextEntryToken
 
   function new_BlockEndToken() result(token)
-    type(FlowMappingEndToken) :: token
-    call token%set_id(VALUE_INDICATOR)
+    type(BlockEndToken) :: token
+    call token%set_id('<block end>')
   end function new_BlockEndToken
 
 

@@ -30,10 +30,17 @@ module fy_ErrorHandling
       module procedure assert_status
    end interface assert
 
+   ! GFortran 9.2 complains that "throw" cannot be generic
+   ! when attempting to use this module in conjunction with pFUnit.
+   ! Might be right, but NAG is not complaining.  
+   interface throw
+      module procedure throw_
+   end interface throw
+
  contains
 
 
-   subroutine throw(message, filename, line_number)
+   subroutine throw_(message, filename, line_number)
      character(len=*), intent(in) :: message
      character(len=*), intent(in) :: filename
      integer, intent(in) :: line_number
@@ -41,7 +48,7 @@ module fy_ErrorHandling
      if (.not. initialized) call initialize()
      call throw_method(message, filename, line_number)
         
-   end subroutine throw
+   end subroutine throw_
 
 
    logical function assert_condition(message, condition, filename, line, rc) result(fail)
@@ -68,7 +75,6 @@ module fy_ErrorHandling
       integer, intent(in) :: line
       integer, optional, intent(out) :: rc ! Not present in MAIN
 
-      print*,__FILE__,__LINE__, status, present(rc)
       fail = (status /= 0)
 
       if (fail) then
@@ -164,7 +170,7 @@ module fy_ErrorHandling
 
 
    subroutine set_throw_method(method)
-     procedure(throw) :: method
+     procedure(throw_) :: method
 
      throw_method => method
      initialized = .true.

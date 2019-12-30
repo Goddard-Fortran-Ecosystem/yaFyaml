@@ -76,71 +76,50 @@ contains
   end subroutine test_single_block_sequence
 
   @test
-  subroutine test_interpret_integer()
-    type(ScalarToken) :: t
+  subroutine test_nested_block_sequence()
     type(Parser) :: p
+    type(AllocatableConfiguration) :: cfg
+    type(PointerConfiguration) :: sub
+    
+    integer, allocatable :: ints(:)
 
+    print*,__FILE__,__LINE__
     p = Parser()
+    cfg = p%load(EscapedTextStream("---\n - \n    - 1 \n    - 2 \n - \n    - 3 \n    - 4 \n..."))
+    !                               0123 0123 012345678 012345678 0123 012345678 012345678 012
 
-    t = ScalarToken('0', .true.)
-    @assert_that(p%interpret(t), is(equal_to(0)))
+    sub = cfg%at(1)
+    ints = sub
+    @assert_that(ints, is(equal_to([1,2])))
 
-    ! Leading digit cannot be 0 (except for 0 itself)
-    t = ScalarToken('01', .true.)
-    @assert_that(p%interpret(t), is(equal_to('01')))
+    sub = cfg%at(2)
+    ints = sub
+    @assert_that(ints, is(equal_to([3,4])))
 
-    t = ScalarToken('-01', .true.)
-    @assert_that(p%interpret(t), is(equal_to('-01')))
+  end subroutine test_nested_block_sequence
 
-    t = ScalarToken('123', .true.)
-    @assert_that(p%interpret(t), is(equal_to(123)))
-
-    t = ScalarToken('-1', .true.)
-    @assert_that(p%interpret(t), is(equal_to(-1)))
-    
-    t = ScalarToken('-', .true.)
-    @assert_that(p%interpret(t), is(equal_to('-')))
-
-    ! Real are not interpreted integers:
-    t = ScalarToken('1.', .true.)
-    @assert_that(p%interpret(t), is(not(equal_to(1))))
-
-    ! leading integers with other trailing characters are not integers
-    t = ScalarToken('123 abc', .true.)
-    @assert_that(p%interpret(t), is(not(equal_to(123))))
-    
-end subroutine test_interpret_integer
-
-
-  ! From the YAML 1.2 spec
-  ! Float regexp is: -? ( 0 | [1-9] [0-9]* ) ( \. [0-9]* )? ( [eE] [-+]? [0-9]+ )?
   @test
-  subroutine test_matches_real()
+  subroutine test_nested_block_map_sequence()
+    type(Parser) :: p
+    type(AllocatableConfiguration) :: cfg
+    type(PointerConfiguration) :: sub
+    
+    integer, allocatable :: ints(:)
 
-    @assert_that(matches_real('-1.','JSON'), is(true()))
-    @assert_that(matches_real('1.','JSON'), is(true()))
-    @assert_that(matches_real('1.23','JSON'), is(true()))
-    @assert_that(matches_real('0.23','JSON'), is(true()))
+    print*,__FILE__,__LINE__
+    p = Parser()
+    cfg = p%load(EscapedTextStream("---\n cat: \n    - 1 \n    - 2 \n dog: \n    - 3 \n    - 4 \n..."))
+    !                               0123 0123456 012345678 012345678 0123567 012345678 012345678 012
 
-    ! With exponents
-    @assert_that(matches_real('0.23e15','JSON'), is(true()))
-    @assert_that(matches_real('0.23e+15','JSON'), is(true()))
-    @assert_that(matches_real('0.23e-15','JSON'), is(true()))
-    @assert_that(matches_real('0.23e-00','JSON'), is(true()))
-    @assert_that(matches_real('120.23e+00','JSON'), is(true()))
+    sub = cfg%at('cat')
+    ints = sub
+    @assert_that(ints, is(equal_to([1,2])))
 
-    @assert_that(matches_real('0','JSON'), is(false()))
-    ! "0" can only be leading digit if it immediately precedes "."
-    @assert_that(matches_real('01.23','JSON'), is(false()))
-    ! No spaces
-    @assert_that(matches_real('0.23 e-00','JSON'), is(false()))
-    ! Incorrect capitalization
-    @assert_that(matches_real('iNf','JSON'), is(false()))
-    @assert_that(matches_real('Nan','JSON'), is(false()))
-    @assert_that(matches_real('nAn','JSON'), is(false()))
+    sub = cfg%at('dog')
+    ints = sub
+    @assert_that(ints, is(equal_to([3,4])))
 
-  end subroutine test_matches_real
-
+  end subroutine test_nested_block_map_sequence
 
 end module Test_Parser
   

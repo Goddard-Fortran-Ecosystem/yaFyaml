@@ -18,6 +18,7 @@ add_library (yafyaml
   FailsafeSchema.F90
   JSONSchema.F90
   CoreSchema.F90
+  None.F90
 
   Configuration.F90
   KeywordEnforcer.F90

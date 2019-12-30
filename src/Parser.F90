@@ -12,17 +12,18 @@ module fy_Parser
   use fy_Configuration
   use gFTL_UnlimitedVector
   use gFTL_StringUnlimitedMap
+  use fy_AbstractSchema
+  use fy_FailsafeSchema
+  use fy_JSONSchema
+  use fy_CoreSchema
   implicit none
   private
 
   public :: Parser
-  public :: matches_logical
-  public :: matches_integer
-  public :: matches_real
 
   type :: Parser
      private
-     character(:), allocatable :: schema
+     class(AbstractSchema), allocatable :: schema
    contains
      procedure :: load
      procedure :: top
@@ -33,17 +34,45 @@ module fy_Parser
 
 
   interface Parser
-     module procedure new_Parser
+     module procedure new_Parser_default
+     module procedure new_Parser_schema
+     module procedure new_Parser_schema_name
   end interface Parser
 
 
 contains
 
-  function new_Parser() result(p)
+  function new_Parser_default() result(p)
     type(Parser) :: p
 
-    p%schema = 'JSON'
-  end function new_Parser
+    p = Parser(CoreSchema())
+
+  end function new_Parser_default
+
+  function new_Parser_schema(schema) result(p)
+    type(Parser) :: p
+    class(AbstractSchema), intent(in) :: schema
+
+    p%schema = schema
+  end function new_Parser_schema
+
+  function new_Parser_schema_name(schema_name) result(p)
+    type(Parser) :: p
+    character(*), intent(in) :: schema_name
+
+    select case (schema_name)
+    case ('json','JSON')
+       p = Parser(JSONSchema())
+    case ('core','Core')
+       p = Parser(CoreSchema())
+    case ('failsafe','Failsafe')
+       p = Parser(FailsafeSchema())
+    case default
+       error stop "Unknown schema"
+    end select
+
+  end function new_Parser_schema_name
+
 
   function load(this, stream) result(cfg)
     type(AllocatableConfiguration) :: cfg
@@ -100,6 +129,12 @@ contains
           call cfg%get_node(node)
           call this%process_sequence(node, lexr)
           done = .true.
+       type is (BlockMappingStartToken)
+!!$          __ASSERT__("Configuration can only have one top node.", .not. done)
+          cfg = Configuration(scalar=StringUnlimitedMap())
+          call cfg%get_node(node)
+          call this%process_sequence(node, lexr)
+          done = .true.
        type is (FlowMappingStartToken)
 !!$          __ASSERT__("Configuration can only have one top node.", .not. done)
           cfg = Configuration(scalar=StringUnlimitedMap())
@@ -125,11 +160,13 @@ contains
     class(*), pointer :: sub_node
 
     expect_another = .false.
-    
+    print*,__FILE__,__LINE__    
     select type (node)
     type is (UnlimitedVector)
        do
+          print*,__FILE__,__LINE__    
           token = lexr%get_token()
+          print*,__FILE__,__LINE__    
           print*,__FILE__,__LINE__,'id: ', token%get_id()
 
 
@@ -138,6 +175,10 @@ contains
           type is (ScalarToken)
              call node%push_back(this%interpret(token))
 
+          type is (BlockSequenceStartToken)
+             call node%push_back(UnlimitedVector())
+             sub_node => node%back()
+             call this%process_sequence(sub_node, lexr)
           type is (FlowNextEntryToken)
              print*,__FILE__,__LINE__,token%get_id()
              expect_another = .true.
@@ -175,15 +216,15 @@ contains
           deallocate(token)
        end do
        print*,__FILE__,__LINE__
-       
+
     class default
-       error stop 'inconsistent state in parser'
+       error stop 'inconsistent state in parser:: process_sequence()'
 
     end select
-    
+
   end subroutine process_sequence
 
-     
+
   recursive subroutine process_mapping(this, node, lexr)
     class(Parser), intent(in) :: this
     class(*), pointer, intent(in) :: node
@@ -196,7 +237,7 @@ contains
     class(AbstractToken), allocatable :: next_token
 
     expect_another = .false.
-    
+
     select type (node)
     type is (StringUnlimitedMap)
        do
@@ -214,6 +255,7 @@ contains
                 error stop
              end select
              next_token = lexr%get_token()
+             print*,__FILE__,__LINE__,'id: ', next_token%get_id()
              select type(next_token)
              type is (ValueToken)
                 ! mandatory before value
@@ -221,6 +263,7 @@ contains
                 error stop
              end select
              next_token = lexr%get_token()
+             print*,__FILE__,__LINE__,'id: ', next_token%get_id()
              select type(next_token)
              type is (ScalarToken)
                 call node%insert(key, this%interpret(next_token))
@@ -228,8 +271,29 @@ contains
                 sub = Configuration(UnlimitedVector())
                 call node%insert(key,sub)
                 call this%process_sequence(node%at(key), lexr)
-
              type is (FlowMappingStartToken)
+                sub = Configuration(StringUnlimitedMap())
+                call node%insert(key,sub)
+                call this%process_mapping(node%at(key), lexr)
+             type is (BlockSequenceStartToken)
+                print*,__FILE__,__LINE__
+                sub = Configuration(UnlimitedVector())
+                print*,__FILE__,__LINE__
+                call node%insert(key,UnlimitedVector())
+                print*,__FILE__,__LINE__
+                block
+                  class(*),pointer :: p
+                  p => node%at(key)
+                  select type (p)
+                  type is (UnlimitedVector)
+                     print*,__FILE__,__LINE__, 'success'
+                  class default
+                     print*,__FILE__,__LINE__, 'fail'
+                  end select
+                end block
+                call this%process_sequence(node%at(key), lexr)
+                print*,__FILE__,__LINE__
+             type is (BlockMappingStartToken)
                 sub = Configuration(StringUnlimitedMap())
                 call node%insert(key,sub)
                 call this%process_mapping(node%at(key), lexr)
@@ -242,6 +306,8 @@ contains
 
           type is (FlowMappingEndToken)
              exit
+          type is (BlockEndToken)
+             exit
           class default
              error stop 'illegal token encountered'
           end select
@@ -249,7 +315,7 @@ contains
        end do
        
     class default
-       error stop 'inconsistent state in parser'
+       error stop 'inconsistent state in parser:: process_mapping()'
 
     end select
     
@@ -266,310 +332,20 @@ contains
     integer :: status
 
     text = scalar%value
-    print*,__FILE__,__LINE__,'interpreting: <',text,'> ',this%schema
-    select case (this%schema)
-    case ('JSON')
-          print*,'logical?'
-       if (matches_logical(text,this%schema)) then
-          print*,'logical'
-          value = to_logical(text, this%schema)
-          return
-       end if
-          print*,'integer?'
-       if (matches_integer(text, this%schema)) then
-          print*,'integer'
-          value = to_integer(text, this%schema)
-          return
-       end if
-       if (matches_real(text, this%schema)) then
-          value = to_real(text, this%schema)
-          return
-       end if
-       ! else is a string
+
+    if (this%schema%matches_null(text)) then
+       value = None
+    elseif (this%schema%matches_logical(text)) then
+       value = this%schema%to_logical(text)
+    elseif (this%schema%matches_integer(text)) then
+       value = this%schema%to_integer(text)
+    elseif(this%schema%matches_real(text)) then
+       value = this%schema%to_real(text)
+    else
+       ! anything else is a string
        value = text
-    end select
-    
+    end if
+
   end function interpret
-
-  logical function matches_logical(text, schema)
-    character(*), intent(in) :: text
-    character(*), intent(in) :: schema
-
-    select case (schema)
-    case ('Core')
-       select case (text)
-       case ('true', 'True', 'TRUE')
-          matches_logical = .true.
-       case ('false', 'False', 'FALSE')
-          matches_logical = .true.
-       case default
-          matches_logical = .false.
-       end select
-    case ('JSON')
-
-       select case (text)
-       case ('true', 'false')
-          matches_logical = .true.
-       case default
-          matches_logical = .false.
-       end select
-    case default
-       error stop 'schema not supported'
-    end select
-    
-  end function matches_logical
-
-
-  logical function to_logical(text, schema)
-    character(*), intent(in) :: text
-    character(*), intent(in) :: schema
-
-    select case (schema)
-    case ('JSON')
-       select case (text)
-       case ('true')
-          to_logical = .true.
-       case ('false')
-          to_logical = .false.
-       case default
-          error stop 'not interpretable as logical'
-       end select
-    case default
-       error stop 'schema not supported'
-    end select
-    
-  end function to_logical
-
-  
-  logical function matches_integer(text, schema)
-    character(*), intent(in) :: text
-    character(*), intent(in) :: schema
-
-    integer :: leading_digit
-    
-    select case (schema)
-    case ('Core')
-       matches_integer = (len(text) >= 1)
-       if (.not. matches_integer) return
-
-       if (verify(text(1:1),'-+') == 0) then
-          matches_integer = (len(text) >= 2)
-          if (.not. matches_integer) return
-          leading_digit = 2
-       else
-          leading_digit = 1
-       end if
-
-       ! remaining chars are digits (can be multiple leading 0's)
-       matches_integer = (verify(text(leading_digit:),'0123456789') == 0)
-
-    case ('JSON')
-
-       matches_integer = (len(text) >= 1)
-       if (.not. matches_integer) return
-
-       if (text(1:1) == '0') then
-          matches_integer = (len(text) == 1)
-          return
-       elseif (text(1:1) == '-') then
-          leading_digit = 2
-       else
-          leading_digit = 1
-       end if
-
-       matches_integer = (len(text) >= leading_digit)
-       if (.not. matches_integer) return
-
-       ! leading digit cannot be 0
-       matches_integer = (scan(text(leading_digit:leading_digit),'123456789') > 0)
-       if (.not. matches_integer) return
-       matches_integer = (verify(text(leading_digit+1:),'0123456789') == 0)
-          
-    case default
-       error stop 'schema not supported'
-    end select
-    
-  end function matches_integer
-
-  
-  integer function to_integer(text, schema)
-    character(*), intent(in) :: text
-    character(*), intent(in) :: schema
-
-    integer :: status
-    select case (schema)
-    case ('JSON')
-       read(text,*, iostat=status) to_integer
-       if (status /= 0) then
-          error stop 'could not convert to integer'
-       end if
-    case default
-       error stop 'schema not supported'
-    end select
-    
-  end function to_integer
-
-  
-  ! From the YAML 1.2 spec: <https://yaml.org/spec/1.2/spec.html#id2803828>
-  ! Float regexp is: -? ( 0 | [1-9] [0-9]* ) ( \. [0-9]* )? ( [eE] [-+]? [0-9]+ )?
-  logical function matches_real(text, schema) result(matches)
-    character(*), intent(in) :: text
-    character(*), intent(in) :: schema
-
-    integer :: sep
-    integer :: e
-
-
-    select case (schema)
-    case ('JSON')
-
-       ! special cases
-       if (matches_inf(text) .or. matches_nan(text)) then
-          matches = .true.
-          return
-       end if
-
-       ! Reals must have a '.' and it must be preceded by at least one digit.
-       sep = scan(text,'.')
-       matches = (sep > 1)
-       if (.not. matches) return
-
-       print*,'sep: ', sep, text
-       ! Position of start of exponent:
-       e = scan(text, 'eE')
-       print*,__LINE__,'e: ', e
-       ! Exponent part must either not exist or it must be between the '.'
-       ! and the end of text with at least one character after.
-       matches = (e == 0 .or. (e > sep))
-       if (.not. matches) return
-       print*,__LINE__,'e: ', e
-
-       matches = matches_whole(text(:sep-1))
-       if (.not. matches) return
-
-       if (e == 0) then
-          print*,__LINE__,'e: ', e
-          matches = matches_fraction(text(sep+1:))
-       else
-          matches = matches_fraction(text(sep+1:e-1))
-          if (.not. matches) return
-          matches = matches_exponent(text(e+1:))
-       end if
-
-    case default
-       error stop 'schema not supported'
-    end select
-
-  contains
-
-    logical function matches_inf(text)
-      character(*), intent(in) :: text
-
-      ! Possible leading sign
-      select case (text)
-      case ('inf','Inf','INF')
-         matches_inf = .true.
-      case default
-         matches_inf = .false.
-      end select
-    end function matches_inf
-
-    logical function matches_nan(text)
-      character(*), intent(in) :: text
-
-      select case (text)
-      case ('nan','NaN','NAN')
-         matches_nan = .true.
-      case default
-         matches_nan = .false.
-      end select
-    end function matches_nan
-
-
-    ! This procedure checks the floor part or the exponent part.  The
-    ! diference is that '+' is allowed in the sign of the exponent
-    ! part.
-   
-    logical function matches_whole(text) result(matches)
-      character(*), intent(in) :: text
-
-
-      integer :: first_digit 
-      ! text is guaranteed to have at least one character from above.
-      ! if leading character is '-',  must have more chars
-      if (verify(text(1:1), '-') == 0) then
-         first_digit = 2
-         matches = (len(text) > 1)
-         if (.not. matches) return
-      else
-         first_digit = 1
-      end if
-
-      ! If leading digit is 0, then any other digits must be in the
-      ! fraction.
-      if (text(first_digit:first_digit) == '0') then
-         matches = (len(text) == first_digit)
-         if (.not. matches) return
-      else
-         ! remaining characters must be digits
-         matches = (verify(text(first_digit:),'0123456789') == 0)
-      end if
-
-    end function matches_whole
-
-    logical function matches_fraction(text) result(matches)
-      character(*), intent(in) :: text
-
-      ! Easy - must consist of only digits
-      matches = (verify(text,'0123456789') == 0)
-
-    end function matches_fraction
-
-    ! Like matches_whole(), except sign char can be "+" and
-    ! Multiple leading 0's are permitted
-    logical function matches_exponent(text) result(matches)
-      character(*), intent(in) :: text
-
-      integer :: first_digit
-
-      ! text is guaranteed to have at least one character from above.
-      ! if leading character is '-+',  must have more chars
-      if (verify(text(1:1), '-+') == 0) then
-         first_digit = 2
-         matches = (len(text) > 1)
-         if (.not. matches) return
-      else
-         first_digit = 1
-      end if
-
-      ! remaining chars must be digits
-      matches = (verify(text(first_digit:),'0123456789') == 0)
-      if (.not. matches) return
-
-    end function matches_exponent
-
-    
-  end function matches_real
-
-  real function to_real(text, schema)
-    character(*), intent(in) :: text
-    character(*), intent(in) :: schema
-
-    integer :: status
-    select case (schema)
-    case ('JSON')
-       read(text,*, iostat=status) to_real
-       if (status /= 0) then
-          error stop 'could not convert to real'
-       end if
-    case default
-       error stop 'schema not supported'
-    end select
-    
-  end function to_real
-
-  
-
-
   
 end module fy_Parser

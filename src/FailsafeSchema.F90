@@ -12,6 +12,10 @@ module fy_FailsafeSchema
      procedure, nopass :: matches_logical
      procedure, nopass :: matches_integer
      procedure, nopass :: matches_real
+
+     procedure, nopass :: to_logical
+     procedure, nopass :: to_integer
+     procedure, nopass :: to_real
   end type FailsafeSchema
 
 contains
@@ -49,6 +53,22 @@ contains
     matches = .false.
 
   end function matches_real
+
+
+  logical function to_logical(text)
+    character(*), intent(in) :: text
+    error stop 'Failsafe schema does not support bool'
+  end function to_logical
+
+  integer function to_integer(text)
+    character(*), intent(in) :: text
+    error stop 'Failsafe schema does not support integer'
+  end function to_integer
+
+  real function to_real(text)
+    character(*), intent(in) :: text
+    error stop 'Failsafe schema does not support float'
+  end function to_real
 
 end module fy_FailsafeSchema
   

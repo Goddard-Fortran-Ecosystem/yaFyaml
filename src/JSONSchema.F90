@@ -12,6 +12,10 @@ module fy_JSONSchema
      procedure, nopass :: matches_logical
      procedure, nopass :: matches_integer
      procedure, nopass :: matches_real
+
+     procedure, nopass :: to_logical
+     procedure, nopass :: to_integer
+     procedure, nopass :: to_real
   end type JSONSchema
 
 contains
@@ -165,6 +169,42 @@ contains
     
   end function matches_real
   
+
+  logical function to_logical(text)
+    character(*), intent(in) :: text
+
+    select case (text)
+    case ('true')
+       to_logical = .true.
+    case ('false')
+       to_logical = .false.
+    end select
+
+  end function to_logical
+
+  integer function to_integer(text)
+    character(*), intent(in) :: text
+
+    integer :: status
+    read(text,*, iostat=status) to_integer
+    if (status /= 0) then
+       error stop 'could not convert to integer'
+    end if
+    
+  end function to_integer
+
+
+  real function to_real(text)
+    character(*), intent(in) :: text
+
+    integer :: status
+
+    read(text,*, iostat=status) to_real
+    if (status /= 0) then
+       error stop 'could not convert to real'
+    end if
+    
+  end function to_real
 
 end module fy_JSONSchema
 

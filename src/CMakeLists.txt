@@ -1,4 +1,5 @@
 add_library (yafyaml
+  OrderedStringUnlimitedMap.F90
   ArrayWrapper.F90
   AbstractFile.F90
   File.F90

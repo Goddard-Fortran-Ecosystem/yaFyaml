@@ -2,7 +2,7 @@ module fy_YAML_Parser
   use, intrinsic :: iso_fortran_env, only: REAL32
   use fy_Configuration
   use fy_AbstractFile
-  use gFTL_StringUnlimitedMap
+  use fy_OrderedStringUnlimitedMap
   use gFTL_StringVector
   implicit none
   private
@@ -31,7 +31,7 @@ contains
 
 
     logical :: first_line
-    type(StringUnlimitedMap), allocatable :: map
+    type(OrderedStringUnlimitedMap), allocatable :: map
     character(:), allocatable :: token
     type(StringVector) :: tokens
 

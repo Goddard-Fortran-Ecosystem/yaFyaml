@@ -1,0 +1,104 @@
+module Test_Configuration_dump
+  use funit
+  use fy_Configuration
+  use gFTL_UnlimitedVector
+  use fy_OrderedStringUnlimitedMap
+  implicit none
+
+
+contains
+
+  @test
+  subroutine test_dump_scalar_logical()
+    type(AllocatableConfiguration) :: cfg
+    character(100) :: buffer
+
+    cfg = Configuration(.true.)
+    write(buffer,*) cfg
+    @assert_that(trim(adjustl(buffer)),is(equal_to('true')))
+
+    cfg = Configuration(.false.)
+    write(buffer,*) cfg
+    @assert_that(trim(adjustl(buffer)),is(equal_to('false')))
+    
+  end subroutine test_dump_scalar_logical
+
+  @test
+  subroutine test_dump_scalar_integer()
+    type(AllocatableConfiguration) :: cfg
+    character(100) :: buffer
+
+    cfg = Configuration(1)
+    write(buffer,*) cfg
+
+    @assert_that(trim(adjustl(buffer)),is(equal_to('1')))
+    
+  end subroutine test_dump_scalar_integer
+
+  @test
+  subroutine test_dump_scalar_real()
+    type(AllocatableConfiguration) :: cfg
+    character(100) :: buffer
+    character(:), allocatable :: expected
+    real :: x
+
+    x = 1.234
+
+    cfg = Configuration(x)
+    write(buffer,'(g0)') x
+    expected = trim(adjustl(buffer))
+    write(buffer,'(DT)') cfg
+
+    @assert_that(trim(adjustl(buffer)),is(equal_to(expected)))
+    
+  end subroutine test_dump_scalar_real
+
+  @test
+  subroutine test_dump_scalar_string()
+    type(AllocatableConfiguration) :: cfg
+    character(100) :: buffer
+
+    cfg = Configuration('heptagon')
+    write(buffer,'(DT)') cfg
+
+    @assert_that(trim(buffer),is(equal_to("'heptagon'")))
+    
+  end subroutine test_dump_scalar_string
+
+  @test
+  subroutine test_dump_sequence()
+    type(AllocatableConfiguration) :: cfg
+    type(UnlimitedVector) :: v
+
+    character(100) :: buffer
+
+    call v%push_back(1)
+    call v%push_back('enigma')
+    call v%push_back(.false.)
+    
+    cfg = Configuration(v)
+    write(buffer,'(DT)') cfg
+
+    @assert_that(trim(buffer),is(equal_to("[1,'enigma',false]")))
+    
+  end subroutine test_dump_sequence
+
+  @test
+  subroutine test_dump_map()
+    type(AllocatableConfiguration) :: cfg
+    type(OrderedStringUnlimitedMap) :: m
+
+    character(100) :: buffer
+
+    call m%insert('triangle',3)
+    call m%insert('square',4)
+    call m%insert('heptadecagon',17)
+    
+    cfg = Configuration(m)
+    write(buffer,'(DT)') cfg
+
+    @assert_that(trim(buffer),is(equal_to("{'triangle': 3,'square': 4,'heptadecagon': 17}")))
+    
+  end subroutine test_dump_map
+
+end module Test_Configuration_dump

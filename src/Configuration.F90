@@ -2,7 +2,7 @@ module fy_Configuration
   use, intrinsic :: iso_fortran_env, only: INT32
   use, intrinsic :: iso_fortran_env, only: REAL32
   use gFTL_UnlimitedVector
-  use gFTL_StringUnlimitedMap
+  use fy_OrderedStringUnlimitedMap
   use fy_String
   use fy_ArrayWrapper
   use fy_KeywordEnforcer
@@ -69,6 +69,9 @@ module fy_Configuration
 
      procedure :: at_key
      procedure :: at_index
+
+     procedure :: to_json
+     generic :: write(formatted) => to_json
 
   end type Configuration
 
@@ -480,17 +483,17 @@ contains
 
   subroutine to_unlimited_map(values, this)
     use gFTL_StringVector
-    type (StringUnlimitedMap), intent(out) :: values
+    type (OrderedStringUnlimitedMap), intent(out) :: values
     class(Configuration), intent(in) :: this
 
     class(*), pointer :: node
     call this%get_node(node)
 
     select type(q => node)
-    type is (StringUnlimitedMap)
+    type is (OrderedStringUnlimitedMap)
        values = q
     class default
-       values = StringUnlimitedMap() ! empty map
+       values = OrderedStringUnlimitedMap() ! empty map
     end select
 
   end subroutine to_unlimited_map
@@ -557,7 +560,7 @@ contains
     call this%get_node(node)
 
     select type(q => node)
-    type is (StringUnlimitedMap)
+    type is (OrderedStringUnlimitedMap)
        if (q%count(key) > 0) then
           sub_config%node => q%at(key)
        else
@@ -627,6 +630,82 @@ contains
     class(PointerConfiguration), intent(out) :: to
     to%node => from%node
   end subroutine copy_pointer_configuration
+
+
+  subroutine to_json(this, unit, iotype, v_list, iostat, iomsg)
+    class(Configuration), intent(in) :: this
+    integer, intent(in) :: unit
+    character(*), intent(in) :: iotype
+    integer, intent(in) :: v_list(:)
+    integer, intent(out) :: iostat
+    character(*), intent(inout) :: iomsg
+
+    class(*), pointer :: node
+
+    call this%get_node(node)
+    call write_one(unit, node)
+
+  contains
+
+    recursive subroutine write_one(unit, node)
+      integer, intent(in) :: unit
+      class(*), intent(in) :: node
+
+      type(OrderedStringUnlimitedMapIterator) :: iter
+      integer :: i
+      
+      select type (q => node)
+      type is (logical)
+         if (q) then
+            write(unit,'(a4)',iostat=iostat) 'true'
+         else
+            write(unit,'(a5)',iostat=iostat) 'false'
+         end if
+      type is (integer)
+         write(unit,'(i0)',iostat=iostat) q
+      type is (real)
+         write(unit,'(g0)',iostat=iostat) q
+      type is (string)
+         write(unit,'(a1,a,a1)',iostat=iostat)"'",q%s,"'"
+      type is (character(*))
+         write(unit,'(a1,a,a1)',iostat=iostat) "'",q,"'"
+         
+      type is (UnlimitedVector)
+         write(unit,'(a1)', advance='no')"["
+         do i = 1, q%size()
+            call write_one(unit,q%at(i))
+            if (i < q%size()) then
+               write(unit,'(a1)') ","
+            end if
+         end do
+         write(unit,'(a1)', advance='no')"]"
+
+      type is (OrderedStringUnlimitedMap)
+         write(unit,'(a1)', advance='no')"{"
+
+         iter = q%begin()
+         if (iter /= q%end()) then
+            call write_one(unit,iter%key())
+            write(unit,'(a2)') ": "
+            call write_one(unit,iter%value())
+            call iter%next()
+         end if
+         do while (iter /= q%end())
+            write(unit,'(a1)') ","
+            call write_one(unit,iter%key())
+            write(unit,'(a2)') ": "
+            call write_one(unit,iter%value())
+            call iter%next
+         end do
+         write(unit,'(a1)', advance='no')"}"
+
+      class default
+         iostat = -1
+      end select
+
+    end subroutine write_one
+    
+  end subroutine to_json
 
 end module fy_Configuration
 

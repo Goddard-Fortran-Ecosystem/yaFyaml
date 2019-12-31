@@ -11,7 +11,7 @@ module fy_Parser
   use fy_AbstractTextStream
   use fy_Configuration
   use gFTL_UnlimitedVector
-  use gFTL_StringUnlimitedMap
+  use fy_OrderedStringUnlimitedMap
   use fy_AbstractSchema
   use fy_FailsafeSchema
   use fy_JSONSchema
@@ -131,13 +131,13 @@ contains
           done = .true.
        type is (BlockMappingStartToken)
 !!$          __ASSERT__("Configuration can only have one top node.", .not. done)
-          cfg = Configuration(scalar=StringUnlimitedMap())
+          cfg = Configuration(scalar=OrderedStringUnlimitedMap())
           call cfg%get_node(node)
           call this%process_sequence(node, lexr)
           done = .true.
        type is (FlowMappingStartToken)
 !!$          __ASSERT__("Configuration can only have one top node.", .not. done)
-          cfg = Configuration(scalar=StringUnlimitedMap())
+          cfg = Configuration(scalar=OrderedStringUnlimitedMap())
           call cfg%get_node(node)
           call this%process_mapping(node, lexr)
           done = .true.
@@ -205,7 +205,7 @@ contains
              call this%process_sequence(node%back(), lexr)
 
           type is (FlowMappingStartToken)
-             sub = Configuration(StringUnlimitedMap())
+             sub = Configuration(OrderedStringUnlimitedMap())
              call node%push_back(sub)
              call this%process_mapping(node%back(), lexr)
 
@@ -238,8 +238,8 @@ contains
 
     expect_another = .false.
 
-    select type (node)
-    type is (StringUnlimitedMap)
+    select type (q => node)
+    type is (OrderedStringUnlimitedMap)
        do
           token = lexr%get_token()
           print*,__FILE__,__LINE__,'id: ', token%get_id()
@@ -266,37 +266,23 @@ contains
              print*,__FILE__,__LINE__,'id: ', next_token%get_id()
              select type(next_token)
              type is (ScalarToken)
-                call node%insert(key, this%interpret(next_token))
+                call q%insert(key, this%interpret(next_token))
              type is (FlowSequenceStartToken)
                 sub = Configuration(UnlimitedVector())
-                call node%insert(key,sub)
-                call this%process_sequence(node%at(key), lexr)
+                call q%insert(key,sub)
+                call this%process_sequence(q%at(key), lexr)
              type is (FlowMappingStartToken)
-                sub = Configuration(StringUnlimitedMap())
-                call node%insert(key,sub)
-                call this%process_mapping(node%at(key), lexr)
+                sub = Configuration(OrderedStringUnlimitedMap())
+                call q%insert(key,sub)
+                call this%process_mapping(q%at(key), lexr)
              type is (BlockSequenceStartToken)
-                print*,__FILE__,__LINE__
                 sub = Configuration(UnlimitedVector())
-                print*,__FILE__,__LINE__
-                call node%insert(key,UnlimitedVector())
-                print*,__FILE__,__LINE__
-                block
-                  class(*),pointer :: p
-                  p => node%at(key)
-                  select type (p)
-                  type is (UnlimitedVector)
-                     print*,__FILE__,__LINE__, 'success'
-                  class default
-                     print*,__FILE__,__LINE__, 'fail'
-                  end select
-                end block
-                call this%process_sequence(node%at(key), lexr)
-                print*,__FILE__,__LINE__
+                call q%insert(key,UnlimitedVector())
+                call this%process_sequence(q%at(key), lexr)
              type is (BlockMappingStartToken)
-                sub = Configuration(StringUnlimitedMap())
-                call node%insert(key,sub)
-                call this%process_mapping(node%at(key), lexr)
+                sub = Configuration(OrderedStringUnlimitedMap())
+                call q%insert(key,sub)
+                call this%process_mapping(q%at(key), lexr)
              class default
                 error stop
              end select

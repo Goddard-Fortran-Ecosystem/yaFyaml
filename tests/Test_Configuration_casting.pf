@@ -14,7 +14,7 @@
 !
 ! Generic gFTL containers
 ! - UnlimitedVector
-! - StringUnlimitedMap
+! - OrderedStringUnlimitedMap
 ! - IntegerUnlimitedMap
 !
 ! TBD? - Specific gFTL containers
@@ -41,7 +41,7 @@ module Test_Configuration_casting
   use yafyaml
   use fy_String
   use gFTL_UnlimitedVector
-  use gFTL_StringUnlimitedMap
+  use fy_OrderedStringUnlimitedMap
   use, intrinsic :: iso_fortran_env, only: INT32
   use, intrinsic :: iso_fortran_env, only: REAL32
   implicit none
@@ -340,7 +340,7 @@ contains
   subroutine test_at_key_not_a_key()
     type(AllocatableConfiguration) :: c
     type(PointerConfiguration) :: sub
-    type(StringUnlimitedMap) :: map
+    type(OrderedStringUnlimitedMap) :: map
 
     call map%insert('a',1)
     call map%insert('b',.true.)
@@ -353,7 +353,7 @@ contains
   @test
   subroutine test_at_key_integer()
     type(AllocatableConfiguration) :: c
-    type(StringUnlimitedMap) :: map
+    type(OrderedStringUnlimitedMap) :: map
     integer :: found
     
     call map%insert('a',1)
@@ -366,7 +366,7 @@ contains
   @test
   subroutine test_at_key_logical()
     type(AllocatableConfiguration) :: c
-    type(StringUnlimitedMap) :: map
+    type(OrderedStringUnlimitedMap) :: map
     logical :: found
     
     call map%insert('a',1)
@@ -379,8 +379,8 @@ contains
   @test
   subroutine test_at_key_map()
     type(AllocatableConfiguration) :: c
-    type(StringUnlimitedMap) :: map1, map2
-    type(StringUnlimitedMap) :: found_map
+    type(OrderedStringUnlimitedMap) :: map1, map2
+    type(OrderedStringUnlimitedMap) :: found_map
 
     call map1%insert('triangle',3)
     call map1%insert('quadrilateral',4)
@@ -457,9 +457,9 @@ contains
   !@test
   subroutine test_at_index_map()
     type(AllocatableConfiguration) :: c
-    type(StringUnlimitedMap) :: map
+    type(OrderedStringUnlimitedMap) :: map
     type(UnlimitedVector) :: v
-    type(StringUnlimitedMap) :: found_map
+    type(OrderedStringUnlimitedMap) :: found_map
 
     call map%insert('triangle',3)
     call map%insert('quadrilateral',4)

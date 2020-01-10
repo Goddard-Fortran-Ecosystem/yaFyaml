@@ -1,201 +1,439 @@
+! Three types of accessor procedures are provided.
+
+!   I. Subroutines that return pointers, and allow for errors.  These
+!      are arguably less elegant to use, but have the fewest compiler
+!      issues and are likely necessary in complex applications that
+!      must propagate error status to higher levels.
+!
+!      Forms: overloaded for logical, integer, real, string; scalar,
+!              1D, and gFTL Vector & gFTL Map
+!
+!            CALL  cfg%at(ptr, key=<string>, is_present=is_present, rc=status)
+!            CALL  cfg%at(ptr, index=<integer>, is_present=is_present, rc=status)
+!
+!      Unsuccessful calls set ptr to NULL().
+
+!      If calls fail because key/index do not exist, but is_present is PRESENT, the
+!      rc is zero.  I.e. it is not an error condition.
+!      (Later we may support integer keys as well.)
+!
+!  II. Subroutines that return values and allow for default values and
+!      errors.  These are very similar to the above but can require
+!      copying complex data structures for nested components, and
+!      therefore are more likely to encounter compiler bugs.  In
+!      particular, during development, gfortran 9.2, has difficulty
+!      with these, but ifort 19.0.5 and nag 6.2 (6247) were fine.
+!
+!      Forms: overloaded for logical, integer, real, string; scalar,
+!              1D, and gFTL Vector & gFTL Map
+!
+!            CALL  cfg%get(value, key=<string>, default=<default>, is_present, rc=status)
+!            CALL  cfg%get(value, index=<integer>, default=<default>, is_present, rc=status)
+!
+!      If calls fail because key/index do not exist, but is_present is PRESENT, the
+!      rc is zero.  I.e. it is not an error condition.
+!
+! III. For those that like to live dangerously, a simplified operator
+!      is provided to drill into the data structure.  If any errors
+!      are encountered a (hopefully-informative) message is printed
+!      and execution is terminated (ERROR STOP).  This is
+!      esp. dangerous in a parallel application where one process may
+!      terminate.    Users can set their own error handler which may
+!      help
+!
+!      Forms: overloaded for logical, integer, real, string; scalar,
+!
+!
+!      q = cfg .at. <key> .at. <index> .at. <key2>
+!
+
+
 module fy_Configuration
-  use, intrinsic :: iso_fortran_env, only: INT32
-  use, intrinsic :: iso_fortran_env, only: REAL32
+  use fy_ArrayWrapper
+  use fy_KeywordEnforcer
+  use fy_None
   use gFTL_UnlimitedVector
   use fy_OrderedStringUnlimitedMap
   use fy_String
-  use fy_ArrayWrapper
-  use fy_KeywordEnforcer
   implicit none
   private
 
   public :: Configuration
-  public :: AllocatableConfiguration
-  public :: PointerConfiguration
-  public :: NONE
 
-  public :: YAFYAML_SUCCESS
-  public :: YAFYAML_TYPE_MISMATCH
-  public :: YAFYAML_NOT_AN_ARRAY
-  public :: YAFYAML_NOT_A_SCALAR
-
-  integer, parameter :: YAFYAML_SUCCESS = 0
-  integer, parameter :: YAFYAML_TYPE_MISMATCH = 1
-  integer, parameter :: YAFYAML_NOT_AN_ARRAY = 2
-  integer, parameter :: YAFYAML_NOT_A_SCALAR = 3
-
-  type :: NoneObject
-  end type NoneObject
-  type (NoneObject), target :: NONE
-
-  ! Use this class for memory management
-  type, abstract :: Configuration
-     private
-!!$     class(*), pointer :: node
+  type, abstract :: BaseNode
    contains
-
      procedure(get_node_interface), deferred :: get_node
+  end type BaseNode
 
-     procedure :: is_none
-     generic :: assignment(=) => to_logical
-     generic :: assignment(=) => to_integer_int32
-     generic :: assignment(=) => to_real_real32
-     generic :: assignment(=) => to_string
-     generic :: assignment(=) => to_logical_array
-     generic :: assignment(=) => to_integer_int32_array
-     generic :: assignment(=) => to_real_real32_array
-     generic :: assignment(=) => to_string_array
-     generic :: assignment(=) => to_string_vector
-     generic :: assignment(=) => to_unlimited_map
-
-     generic :: get => get_logical_scalar
-     generic :: get => get_logical_at_index
-     generic :: at => at_key
-     generic :: at => at_index
-
-     procedure, pass(this) :: to_logical
-     procedure, pass(this) :: to_integer_int32
-     procedure, pass(this) :: to_real_real32
-     procedure, pass(this) :: to_string
-     procedure, pass(this) :: to_logical_array
-     procedure, pass(this) :: to_integer_int32_array
-     procedure, pass(this) :: to_real_real32_array
-     procedure, pass(this) :: to_string_array
-     procedure, pass(this) :: to_string_vector
-     procedure, pass(this) :: to_unlimited_map
-
-     procedure :: get_logical_scalar
-     procedure :: get_logical_at_index
-
-     procedure :: at_key
-     procedure :: at_index
-
-     procedure :: to_json
-     generic :: write(formatted) => to_json
-
-  end type Configuration
-
-
-  type, extends(Configuration) :: AllocatableConfiguration
+  type, extends(BaseNode) :: AllocatableNode
      private
      class(*), allocatable :: node
    contains
-     procedure :: get_node => get_node_alloc
-  end type AllocatableConfiguration
+     procedure :: get_node => get_node_AllocatableNode
+  end type AllocatableNode
 
-  type, extends(Configuration) :: PointerConfiguration
+  abstract interface
+     function get_node_interface(this) result(node)
+       import BaseNode
+       class(*), pointer :: node
+       class(BaseNode), target, intent(in) :: this
+     end function get_node_interface
+  end interface
+
+  type, extends(BaseNode) :: PointerNode
      private
-     class(*), pointer :: node => null()
+     class(*), pointer :: node
    contains
-     procedure :: get_node => get_node_pointer
-     ! Ifort 19.0.5 override - needs an explicit copy for
-     ! unlimited polymorphic pointer component assignemnt??
-     generic :: assignment(=) => copy_pointer_configuration
-     procedure :: copy_pointer_configuration
-  end type PointerConfiguration
+     procedure :: get_node => get_node_PointerNode
+  end type PointerNode
+     
+
+  type :: Configuration
+     private
+     class(BaseNode), allocatable :: node
+     class(*), pointer :: node_reference => null()
+   contains
+
+     ! Return Config reference at selector(s)
+     procedure :: at
+     procedure :: at_index
+     procedure :: at_key
+     generic :: operator(.at.) => at_index
+     generic :: operator(.at.) => at_key
+
+     ! Get pointer to substructure at selector
+     procedure :: get_node_at_selector
+     procedure :: get_config_at_selector
+     generic :: get => get_config_at_selector
+
+
+     ! Cast to containers
+     procedure, pass(this) :: to_map
+     procedure, pass(this) :: to_unlimited_vector
+     generic :: assignment(=) => to_map
+     generic :: assignment(=) => to_unlimited_vector
+     
+     ! Cast to direct scalars (simple document)
+     procedure, pass(this) :: to_logical
+     procedure, pass(this) :: to_integer
+     procedure, pass(this) :: to_real
+     procedure, pass(this) :: to_string
+     generic :: assignment(=) => to_logical
+     generic :: assignment(=) => to_integer
+     generic :: assignment(=) => to_real
+     generic :: assignment(=) => to_string
+
+     ! Cast to arrays
+     procedure, pass(this) :: to_logical_array
+     procedure, pass(this) :: to_integer_array
+     procedure, pass(this) :: to_real_array
+     procedure, pass(this) :: to_string_array
+     generic :: assignment(=) => to_logical_array
+     generic :: assignment(=) => to_integer_array
+     generic :: assignment(=) => to_real_array
+     generic :: assignment(=) => to_string_array ! fixed length
+
+!!$     ! Cast to vectors
+!!$     procedure, pass(this) :: to_logical_vector
+!!$     procedure, pass(this) :: to_integer_vector
+!!$     procedure, pass(this) :: to_real_vector
+     procedure, pass(this) :: to_string_vector
+!!$     generic :: assignment(=) => to_logical_vector
+!!$     generic :: assignment(=) => to_integer_vector
+!!$     generic :: assignment(=) => to_real_vector
+     generic :: assignment(=) => to_string_vector
+     
+     procedure :: write_formatted
+     generic :: write(formatted) => write_formatted
+
+     
+!!$
+!!$     ! Maybe not these?  Compilers make them problematic, and Fortran
+!!$     ! requirements mean that they cannot be references.
+!!$     ! Access to map
+!!$     generic :: assignment(=) => to_map
+!!$     ! Access to vector
+!!$     generic :: assignment(=) => to_sequence
+!!$
+
+     procedure :: is_none
+  end type Configuration
+
 
   interface Configuration
-     module procedure new_Configuration_scalar
+     module procedure new_Configuration_scalar ! including map and 
      module procedure new_Configuration_array
   end interface Configuration
 
-  abstract interface
-     subroutine get_node_interface(this, node)
-       import Configuration
-       class(Configuration), target, intent(in) :: this
-       class(*), pointer :: node
-     end subroutine get_node_interface
-  end interface
 
 contains
 
-  subroutine get_node_alloc(this, node)
-    class(AllocatableConfiguration), target, intent(in) :: this
-    class(*), pointer :: node
-
-    node => this%node
-  end subroutine get_node_alloc
-
-  subroutine get_node_pointer(this, node)
-    class(PointerConfiguration), target, intent(in) :: this
-    class(*), pointer :: node
-
-    node => this%node
-  end subroutine get_node_pointer
 
   function new_Configuration_scalar(scalar) result(config)
-    type (AllocatableConfiguration) :: config
+    type (Configuration) :: config
     class(*), intent(in) :: scalar
 
-    config%node = scalar
-!!$    allocate(config%node, source=scalar)
+    allocate(AllocatableNode :: config%node)
+
+    select type (q => config%node)
+    type is (AllocatableNode)
+       allocate(q%node, source=scalar)
+    class is (BaseNode)
+    end select
 
   end function new_Configuration_scalar
 
 
   function new_Configuration_array(array) result(config)
-    type (AllocatableConfiguration) :: config
+    type (Configuration) :: config
     class(*), intent(in) :: array(:)
 
-    config%node = ArrayWrapper(array)
-!!$    type :: Workaround
-!!$       class(*), allocatable :: q
-!!$    end type Workaround
-!!$    type (Workaround), pointer :: x
-!!$
-!!$    allocate(x)
-!!$    x%q = ArrayWrapper(array)
-!!$    config%node => x%q
-!!$
-!!$
-!!$    type(ArrayWrapper) :: wrapper
-!!$
-!!$    wrapper = ArrayWrapper(array)
-!!$    allocate(config%node, source=wrapper)
-!!$    select type (array)
-!!$    type is (logical)
-!!$       print*, 'raw: ', array
-!!$    end select
-!!$    select type (q => config%node)
-!!$    type is (logical)
-!!$       print*, 'node inside: ', q
-!!$    end select
-!!$    select type (q => wrapper%elements)
-!!$    type is (logical)
-!!$       print*, 'wrapper inside: ', q
-!!$    end select
+    type(ArrayWrapper) :: w
+
+    allocate(w%elements, source=array)
+
+    allocate(AllocatableNode :: config%node)
+    select type (q => config%node)
+    type is (AllocatableNode)
+       allocate(q%node, source=w)
+    end select
+
   end function new_Configuration_array
 
+  function get_node_AllocatableNode(this) result(node)
+    class(*), pointer :: node
+    class(AllocatableNode), target, intent(in) :: this
+    node => this%node
+  end function get_node_AllocatableNode
 
-!!$  function get(this) result(config)
-!!$    class(Configuration), intent(in) :: this
-!!$    type(Configuration) :: config
-!!$
-!!$    config%node => this%node
-!!$
-!!$  end function get
-!!$
-    
-    
-  logical function is_none(this)
+  function get_node_PointerNode(this) result(node)
+    class(*), pointer :: node
+    class(PointerNode), target, intent(in) :: this
+    node => this%node
+  end function get_node_PointerNode
+
+
+
+#define ARG_LIST arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9
+
+
+  subroutine get_node_at_selector(this, q, ARG_LIST, unused, default, rc)
     class(Configuration), target, intent(in) :: this
+    class(*), pointer :: q
+    class(*), optional, intent(in) :: arg1
+    class(*), optional, intent(in) :: arg2
+    class(*), optional, intent(in) :: arg3
+    class(*), optional, intent(in) :: arg4
+    class(*), optional, intent(in) :: arg5
+    class(*), optional, intent(in) :: arg6
+    class(*), optional, intent(in) :: arg7
+    class(*), optional, intent(in) :: arg8
+    class(*), optional, intent(in) :: arg9
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(*), optional, intent(in) :: default
+    integer, optional, intent(out) :: rc
+
+    type (UnlimitedVector) :: v
+    type (UnlimitedVectorIterator) :: iter
+    class(*), pointer :: arg
+    class(*), pointer :: node, next_node
+
+    call save_args(v)
+
+    node => this%node%get_node()
+    iter = v%begin()
+    do while (iter /= v%end())
+       arg => iter%get()
+
+       select type (node)
+       type is (UnlimitedVector)
+          select type (index => arg)
+          type is (integer)
+             if (index >=1 .and. index <= node%size()) then
+                next_node => node%at(index)
+             else
+                next_node => null()
+             end if
+          class default
+             next_node => null()
+          end select
+       type is (OrderedStringUnlimitedMap)
+          select type (key => arg)
+          type is (character(*))
+             next_node => node%at(key)
+          type is (String)
+             next_node => node%at(key%s)
+          class default
+             next_node => null()
+          end select
+       class default !  cannot dive down into anything else
+          next_node => null()
+       end select
+
+       node => next_node
+       if (.not. associated(node)) exit
+       call iter%next()
+
+    end do
+
+    q => node
+
+  contains
+
+    subroutine save_args(v)
+      type (UnlimitedVector), intent(out) :: v
+
+      if (present(arg1)) call v%push_back(arg1)
+      if (present(arg2)) call v%push_back(arg2)
+      if (present(arg3)) call v%push_back(arg3)
+      if (present(arg4)) call v%push_back(arg4)
+      if (present(arg5)) call v%push_back(arg5)
+      if (present(arg6)) call v%push_back(arg6)
+      if (present(arg7)) call v%push_back(arg7)
+      if (present(arg8)) call v%push_back(arg8)
+      if (present(arg9)) call v%push_back(arg9)
+    end subroutine save_args
+    
+  end subroutine get_node_at_selector
+    
+  subroutine get_config_at_selector(this, config, ARG_LIST, unused, default, rc)
+    class(Configuration), target, intent(in) :: this
+    type(Configuration), intent(out) :: config
+    class(*), intent(in) :: arg1
+    class(*), optional, intent(in) :: arg2
+    class(*), optional, intent(in) :: arg3
+    class(*), optional, intent(in) :: arg4
+    class(*), optional, intent(in) :: arg5
+    class(*), optional, intent(in) :: arg6
+    class(*), optional, intent(in) :: arg7
+    class(*), optional, intent(in) :: arg8
+    class(*), optional, intent(in) :: arg9
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(*), optional, intent(in) :: default
+    integer, optional, intent(out) :: rc
+
+    integer :: status
+    class(*), pointer :: node
+
+    
+    
+    call this%get_node_at_selector(node, ARG_LIST, rc=status)
+
+    if (.not. associated(node) .and. .not.present(default)) then
+       node => None
+    end if
+
+    if(associated(node)) then
+       allocate(PointerNode :: config%node)
+       select type (q => config%node)
+       type is (PointerNode)
+          q%node => node
+       end select
+    else ! default must be present
+       allocate(AllocatableNode :: config%node)
+       select type (q => config%node)
+       type is (AllocatableNode)
+          allocate(q%node, source=default)
+       end select
+    end if
+       
+!!$    VERIFY(status)
+
+  end subroutine get_config_at_selector
+
+
+
+  ! i = cfg%at(key1, index1, key2, default=default, rc=status)
+  function at(this, ARG_LIST, unused, default, rc) result(q)
+    type(Configuration) :: q
+    class(Configuration), target, intent(in) :: this
+    class(*), intent(in) :: arg1
+    class(*), optional, intent(in) :: arg2
+    class(*), optional, intent(in) :: arg3
+    class(*), optional, intent(in) :: arg4
+    class(*), optional, intent(in) :: arg5
+    class(*), optional, intent(in) :: arg6
+    class(*), optional, intent(in) :: arg7
+    class(*), optional, intent(in) :: arg8
+    class(*), optional, intent(in) :: arg9
+    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(*), optional, intent(in) :: default
+    integer, optional, intent(out) :: rc
+
+    class(*), pointer :: p
+    integer :: status
+
+    allocate(PointerNode :: q%node)
+    call this%get_config_at_selector(q, ARG_LIST, default=default, rc=status)
+
+  end function at
+
+
+  function at_index(this, index) result(sub)
+    type(Configuration) :: sub
+    class(Configuration), target, intent(in) :: this
+    integer, intent(in) :: index
+
+    sub = at(this, index)
+    
+  end function at_index
+
+  function at_key(this, key) result(sub)
+    type(Configuration) :: sub
+    class(Configuration), target, intent(in) :: this
+    character(*), intent(in) :: key
+
+    sub = at(this, key)
+    
+  end function at_key
+
+
+  subroutine to_map(values, this)
+    use gFTL_StringVector
+    type (OrderedStringUnlimitedMap), intent(out) :: values
+    class(Configuration), intent(in) :: this
 
     class(*), pointer :: node
 
-    call this%get_node(node)
-    is_none = same_type_as(node, NONE)
+    node => this%node%get_node()
 
-!!$    is_none = associated(this%node, NONE)
-  end function is_none
+    select type(q => node)
+    type is (OrderedStringUnlimitedMap)
+       values = q
+    class default
+       values = OrderedStringUnlimitedMap() ! empty map
+    end select
+
+  end subroutine to_map
+
+  subroutine to_unlimited_vector(values, this)
+    use gFTL_StringVector
+    type (UnlimitedVector), intent(out) :: values
+    class(Configuration), intent(in) :: this
+
+    class(*), pointer :: node
+
+    node => this%node%get_node()
+
+    select type(q => node)
+    type is (UnlimitedVector)
+       values = q
+    class default
+       values = UnlimitedVector() ! empty vector
+    end select
+
+  end subroutine to_unlimited_vector
+
+
 
   subroutine to_logical(value, this)
     logical, intent(out) :: value
     class(Configuration), intent(in) :: this
 
     class(*), pointer :: node
-    call this%get_node(node)
+    
+    node => this%node%get_node()
 
-!!$    select type(node)
     select type(q => node)
     type is (logical)
        value = q
@@ -205,44 +443,44 @@ contains
 
   end subroutine to_logical
 
-  subroutine to_integer_int32(value, this)
+  subroutine to_integer(value, this)
     integer, intent(out) :: value
     class(Configuration), intent(in) :: this
 
     class(*), pointer :: node
-    call this%get_node(node)
+    node => this%node%get_node()
 
     select type(q => node)
-    type is (integer(kind=INT32))
+    type is (integer) ! default
        value = q
     class default
-       value = default_int32()
+       value = default_integer()
     end select
 
-  end subroutine to_integer_int32
+  end subroutine to_integer
 
-  subroutine to_real_real32(value, this)
+  subroutine to_real(value, this)
     real, intent(out) :: value
     class(Configuration), intent(in) :: this
 
     class(*), pointer :: node
-    call this%get_node(node)
+    node => this%node%get_node()
 
     select type(q => node)
-    type is (real(kind=REAL32))
+    type is (real) ! default
        value = q
     class default
-       value = default_real32()
+       value = default_real()
     end select
 
-  end subroutine to_real_real32
+  end subroutine to_real
   
   subroutine to_string(value, this)
     character(:), allocatable, intent(out) :: value
     class(Configuration), intent(in) :: this
 
     class(*), pointer :: node
-    call this%get_node(node)
+    node => this%node%get_node()
 
     select type(q => node)
     type is (character(*))
@@ -255,20 +493,22 @@ contains
 
   end subroutine to_string
   
+
   subroutine to_logical_array(values, this)
     logical, allocatable, intent(out) :: values(:)
     class(Configuration), intent(in) :: this
 
     integer :: i, n
-
     class(*), pointer :: node
-    call this%get_node(node)
+
+    node => this%node%get_node()
 
     select type(q => node)
     type is (ArrayWrapper)
        select type(qq => q%elements)
        type is (logical)
-          values = qq
+          allocate(values, source=qq)
+!!$          values = qq
        class default ! type mismatch
           values = [logical :: ] ! empty array
        end select
@@ -297,88 +537,88 @@ contains
   end subroutine to_logical_array
 
 
-  subroutine to_integer_int32_array(values, this)
+  subroutine to_integer_array(values, this)
     integer, allocatable, intent(out) :: values(:)
     class(Configuration), intent(in) :: this
 
     integer :: i, n
 
     class(*), pointer :: node
-    call this%get_node(node)
+    node => this%node%get_node()
 
     select type(q => node)
     type is (ArrayWrapper)
        select type(qq => q%elements)
-       type is (integer(kind=INT32))
+       type is (integer)
           values = qq
        class default ! type mismatch
-          values = [integer(INT32) :: ] ! empty array
+          values = [integer :: ] ! empty array
        end select
     type is (UnlimitedVector)
-       ! Check if all elements are INT32
+       ! Check if all elements are default integer
        n = q%size()
        do i = 1, n
           select type (qq => q%at(i))
-          type is (integer(INT32))
+          type is (integer)
           class default
-             values = [integer(INT32) :: ]
+             values = [integer :: ]
              return
           end select
        end do
        allocate(values(n))
        do i = 1, n
           select type (qq => q%at(i))
-          type is (integer(INT32))
+          type is (integer)
              values(i) = qq
           end select
        end do
     class default ! category mismatch - not an array
-       values = [integer(int32) :: ] ! empty array
+       values = [integer :: ] ! empty array
     end select
 
-  end subroutine to_integer_int32_array
+  end subroutine to_integer_array
 
 
-  subroutine to_real_real32_array(values, this)
+  subroutine to_real_array(values, this)
     real, allocatable, intent(out) :: values(:)
     class(Configuration), intent(in) :: this
 
     integer :: i, n
 
     class(*), pointer :: node
-    call this%get_node(node)
+    node => this%node%get_node()
 
     select type(q => node)
     type is (ArrayWrapper)
        select type(qq => q%elements)
-       type is (real(kind=REAL32))
+       type is (real)
           values = qq
        class default ! type mismatch
-          values = [real(REAL32) :: ] ! empty array
+          values = [real :: ] ! empty array
        end select
     type is (UnlimitedVector)
-       ! Check if all elements are REAL32
+       ! Check if all elements are default real
        n = q%size()
        do i = 1, n
           select type (qq => q%at(i))
-          type is (real(REAL32))
+          type is (real)
           class default
-             values = [real(REAL32) :: ]
+             values = [real :: ]
              return
           end select
        end do
        allocate(values(n))
        do i = 1, n
           select type (qq => q%at(i))
-          type is (real(REAL32))
+          type is (real)
              values(i) = qq
           end select
        end do
     class default ! category mismatch - not an array
-       values = [real(real32) :: ] ! empty array
+       values = [real :: ] ! empty array
     end select
 
-  end subroutine to_real_real32_array
+  end subroutine to_real_array
 
 
   subroutine to_string_array(values, this)
@@ -389,7 +629,7 @@ contains
     integer :: maxlen
 
     class(*), pointer :: node
-    call this%get_node(node)
+    node => this%node%get_node()
 
     select type(q => node)
     type is (ArrayWrapper)
@@ -429,7 +669,6 @@ contains
 
   end subroutine to_string_array
 
-
   subroutine to_string_vector(values, this)
     use gFTL_StringVector
     type (StringVector), intent(out) :: values
@@ -438,7 +677,9 @@ contains
     integer :: i, n
 
     class(*), pointer :: node
-    call this%get_node(node)
+
+
+    node => this%node%get_node()
 
     select type(q => node)
     type is (ArrayWrapper)
@@ -481,125 +722,6 @@ contains
   end subroutine to_string_vector
 
 
-  subroutine to_unlimited_map(values, this)
-    use gFTL_StringVector
-    type (OrderedStringUnlimitedMap), intent(out) :: values
-    class(Configuration), intent(in) :: this
-
-    class(*), pointer :: node
-    call this%get_node(node)
-
-    select type(q => node)
-    type is (OrderedStringUnlimitedMap)
-       values = q
-    class default
-       values = OrderedStringUnlimitedMap() ! empty map
-    end select
-
-  end subroutine to_unlimited_map
-
-
-
-  subroutine get_logical_scalar(this, value, unused, default, is_present, rc)
-    class(Configuration), intent(in) :: this
-    type (Logical), intent(out) :: value
-    class (KeywordEnforcer), optional, intent(in) :: unused
-    type (Logical), optional, intent(in) :: default
-    type (Logical), optional, intent(in) :: is_present
-    integer, optional, intent(out) :: rc
-
-    class(*), pointer :: node
-
-    call this%get_node(node)
-
-    select type(q => node)
-    type is (logical)
-       value = q
-    class default
-       value = default_logical(default)
-    end select
-    
-  end subroutine get_logical_scalar
-
-  subroutine get_logical_at_index(this, value, index, unused, default, is_present, rc)
-    class(Configuration), intent(in) :: this
-    type (Logical), intent(out) :: value
-    integer, intent(in) :: index
-    class (KeywordEnforcer), optional, intent(in) :: unused
-    type (Logical), optional, intent(in) :: default
-    type (Logical), optional, intent(in) :: is_present
-    integer, optional, intent(out) :: rc
-
-    class(*), pointer :: node
-
-    call this%get_node(node)
-
-    select type(q => node)
-    type is (UnlimitedVector)
-       if (index <= q%size()) then
-          select type (qq => q%at(index))
-          type is (Logical)
-             value = qq
-          class default
-             value = default_logical(default)
-          end select
-       end if
-    class default ! node not a vector
-       value = default_logical(default)
-    end select
-    
-  end subroutine get_logical_at_index
-
-
-  function at_key(this, key) result(sub_config)
-    type(PointerConfiguration) :: sub_config
-    class(Configuration), intent(in) :: this
-    character(*), intent(in) :: key
-
-    class(*), pointer :: node
-    call this%get_node(node)
-
-    select type(q => node)
-    type is (OrderedStringUnlimitedMap)
-       if (q%count(key) > 0) then
-          sub_config%node => q%at(key)
-       else
-          ! sub_config is empty
-          sub_config%node => NONE ! YAFYAML_NO_SUCH_KEY
-       end if
-    class default
-       ! sub_config is empty
-       sub_config%node => NONE ! YAFYAML_NOT_A_MAP
-    end select
-
-  end function at_key
-
-
-  function at_index(this, index) result(sub_config)
-    type(PointerConfiguration) :: sub_config
-    class(Configuration), target, intent(in) :: this
-    integer, intent(in) :: index
-
-    class(*), pointer :: node
-
-    call this%get_node(node)
-
-    select type(q => node)
-    type is (UnlimitedVector)
-       if (index >= 1 .and. index <= q%size()) then
-          sub_config%node => q%at(index)
-       else
-          ! sub_config is empty
-          sub_config%node => NONE ! YAFYAML_INDEX_OUT_OF_BOUNDS
-       end if
-    class default
-       ! sub_config is empty
-       sub_config%node => NONE ! YAFYAML_NOT_A_VECTOR
-    end select
-  end function at_index
-
-
-
   logical function default_logical(default)
     logical, optional, intent(in) :: default
 
@@ -611,28 +733,22 @@ contains
 
   end function default_logical
 
-  integer(kind=INT32) function default_int32()
-    default_int32 = -HUGE(1)
-  end function default_int32
+  integer function default_integer()
+    default_integer = -HUGE(1)
+  end function default_integer
   
-  real(kind=REAL32) function default_real32()
+  real function default_real()
     use, intrinsic :: ieee_arithmetic
-    default_real32 = ieee_value(1._REAL32,  IEEE_QUIET_NAN)
-  end function default_real32
+    default_real = ieee_value(1.,  IEEE_QUIET_NAN)
+  end function default_real
 
   function default_string() result(s)
     character(len=:), allocatable :: s
     s = ''
   end function default_string
 
-  subroutine copy_pointer_configuration(to, from)
-    class(PointerConfiguration), intent(in) :: from
-    class(PointerConfiguration), intent(out) :: to
-    to%node => from%node
-  end subroutine copy_pointer_configuration
 
-
-  subroutine to_json(this, unit, iotype, v_list, iostat, iomsg)
+  subroutine write_formatted(this, unit, iotype, v_list, iostat, iomsg)
     class(Configuration), intent(in) :: this
     integer, intent(in) :: unit
     character(*), intent(in) :: iotype
@@ -642,7 +758,7 @@ contains
 
     class(*), pointer :: node
 
-    call this%get_node(node)
+    node => this%node%get_node()
     call write_one(unit, node)
 
   contains
@@ -654,6 +770,7 @@ contains
       type(OrderedStringUnlimitedMapIterator) :: iter
       integer :: i
       
+      iostat = 0
       select type (q => node)
       type is (logical)
          if (q) then
@@ -669,20 +786,18 @@ contains
          write(unit,'(a1,a,a1)',iostat=iostat)"'",q%s,"'"
       type is (character(*))
          write(unit,'(a1,a,a1)',iostat=iostat) "'",q,"'"
-         
       type is (UnlimitedVector)
-         write(unit,'(a1)', advance='no')"["
+         write(unit,'(a1)') "["
          do i = 1, q%size()
             call write_one(unit,q%at(i))
             if (i < q%size()) then
                write(unit,'(a1)') ","
             end if
          end do
-         write(unit,'(a1)', advance='no')"]"
+         write(unit,'(a1)') "]"
 
       type is (OrderedStringUnlimitedMap)
-         write(unit,'(a1)', advance='no')"{"
-
+         write(unit,'(a1)')"{"
          iter = q%begin()
          if (iter /= q%end()) then
             call write_one(unit,iter%key())
@@ -697,7 +812,7 @@ contains
             call write_one(unit,iter%value())
             call iter%next
          end do
-         write(unit,'(a1)', advance='no')"}"
+         write(unit,'(a1)') "}"
 
       class default
          iostat = -1
@@ -705,7 +820,23 @@ contains
 
     end subroutine write_one
     
-  end subroutine to_json
+  end subroutine write_formatted
+
+  logical function is_none(this)
+    class(Configuration), target, intent(in) :: this
+
+    class(*), pointer :: node
+
+    node => this%node%get_node()
+    is_none = same_type_as(node, None)
+
+  end function is_none
+
+
 
 end module fy_Configuration
 
+! type(OrderedStringUnlimitedMap), pointer :: my_map
+! call cfg%get(my_map, ...)
+
+! call cfg%get(sub_config, ...)

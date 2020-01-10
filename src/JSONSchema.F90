@@ -82,7 +82,6 @@ contains
     matches = (sep > 1)
     if (.not. matches) return
     
-    print*,'sep: ', sep, text
     ! Position of start of exponent:
     e = scan(text, 'eE')
 

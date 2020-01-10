@@ -118,7 +118,7 @@ contains
     call strings%push_back('a')
     call strings%push_back('"on"')
     call strings%push_back("'off'")
-    call strings%push_back(' ')
+    call strings%push_back(' x')
     call strings%push_back('bike')
     ! variant capitalizations are strings, not bools
     call strings%push_back('fAlse')
@@ -136,7 +136,7 @@ contains
   @test
   subroutine test_parse_single_node_scalar_int()
     type(YAML_Parser) :: p
-    type(AllocatableConfiguration) :: config
+    type(Configuration) :: config
 
     type(MockFile) :: f
     character(:), allocatable :: line
@@ -158,7 +158,7 @@ contains
   @test
   subroutine test_parse_single_node_scalar_int_b()
     type(YAML_Parser) :: p
-    type(AllocatableConfiguration) :: config
+    type(Configuration) :: config
 
     type(MockFile) :: f
     character(:), allocatable :: line
@@ -181,7 +181,7 @@ contains
   @test
   subroutine test_ignore_triple_hyphen()
     type(YAML_Parser) :: p
-    type(AllocatableConfiguration) :: config
+    type(Configuration) :: config
 
     type(MockFile) :: f
     character(:), allocatable :: line
@@ -204,7 +204,7 @@ contains
   @test
   subroutine test_parse_single_node_logical()
     type(YAML_Parser) :: p
-    type(AllocatableConfiguration) :: config
+    type(Configuration) :: config
 
     type(MockFile) :: f
     character(:), allocatable :: line
@@ -226,7 +226,7 @@ contains
   @test
   subroutine test_parse_single_node_string()
     type(YAML_Parser) :: p
-    type(AllocatableConfiguration) :: config
+    type(Configuration) :: config
 
     type(MockFile) :: f
     character(:), allocatable :: line
@@ -248,9 +248,9 @@ contains
   @test
   subroutine test_parse_single_entry_map()
     type(YAML_Parser) :: p
-    type(AllocatableConfiguration) :: config
+    type(Configuration) :: config
 
-    type (AllocatableConfiguration) :: c
+    type (Configuration) :: c
     integer :: value
 
     type(MockFile) :: f
@@ -265,7 +265,7 @@ contains
     call p%load(f, config)
 
     c = config
-    value = c%at(key='a')
+    value = c .at. 'a'
 
     @assert_that(value, is(equal_to(1)))
     call f%close(delete=.true.)

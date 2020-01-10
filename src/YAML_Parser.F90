@@ -22,10 +22,10 @@ contains
   subroutine load(this, file, config)
     class(YAML_Parser), intent(inout) :: this
     class(AbstractFile), intent(inout) :: file
-    type(AllocatableConfiguration), intent(inout) :: config
+    type(Configuration), intent(inout) :: config
 
     character(:), allocatable :: line
-    integer :: i, n
+    integer :: n
     character(:), allocatable :: key
     character(:), allocatable :: value
 
@@ -49,15 +49,13 @@ contains
        if (token(n:n) == ':') then
           key = token(:n-1)
           value = tokens%at(2)
-          print*,'found map: {',key,",", value,"}"
           allocate(map)
           call map%insert(key,this%interpret(value))
           config = Configuration(scalar=map)
           deallocate(map)
        else
-          print*,__FILE__,__LINE__, line
           config = Configuration(scalar=this%interpret(line))
-          print*,__FILE__,__LINE__, line
+
        endif
        if (file%end_of_file()) exit
     end do
@@ -82,7 +80,6 @@ contains
        read(token,*,iostat=status) i
        if (status == 0) then ! integer
           value = i
-          print*,__FILE__,__LINE__,'found an integer: ',i
        else
           read(token,*,iostat=status) x
           if (status == 0) then ! integer

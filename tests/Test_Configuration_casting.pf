@@ -92,24 +92,22 @@ contains
 
   @test
   subroutine test_assign_to_string_scalar()
-    type(AllocatableConfiguration) :: c
+    type(Configuration) :: c
     character(:), allocatable :: found
     character(*), parameter :: expected = 'dog'
 
-    c = Configuration(scalar=expected)
+    c = Configuration(scalar=String(expected))
     found = c ! overloaded assignment
+    @assert_that(found, is(equal_to(expected)))
   end subroutine test_assign_to_string_scalar
 
 
   @test
   subroutine test_assign_to_logical_array()
     logical, allocatable :: found(:)
-
-    print*,__FILE__,__LINE__
+    
     found = Configuration(array=[.true.,.false.]) ! needs overloaded assignment
-    print*,__FILE__,__LINE__
     @assert_that(found,is(equal_to([.true.,.false.])))
-    print*,__FILE__,__LINE__
     
   end subroutine test_assign_to_logical_array
 
@@ -118,11 +116,30 @@ contains
     logical, allocatable :: found(:)
     type (UnlimitedVector) :: v
 
-    call v%push_back(.false.)
-    call v%push_back(.true.)
-    call v%push_back(.false.)
+    class(*), pointer :: node
+    type(Configuration) :: c
+
+    ! GFortran 9.2  breaks with the following construction.
+    ! Fortunately, this is not the way the construction is
+    ! done within the parser, but it does limit the
+    ! utility of Configuration objects for other purposes.
+!!$    call v%push_back(.false.)
+!!$    call v%push_back(.true.)
+!!$    call v%push_back(.false.)
+!!$    found = Configuration(scalar=v)
     
-    found = Configuration(scalar=v)
+
+    ! This way does work
+    c = Configuration(scalar=v)
+    call c%get_node_at_selector(node)
+    select type (node)
+    type is (UnlimitedVector)
+       call node%push_back(.false.)
+       call node%push_back(.true.)
+       call node%push_back(.false.)
+    end select
+    found = c
+    
     @assert_that(found,is(equal_to([.false.,.true.,.false.])))
     
   end subroutine test_assign_to_logical_array_from_unlimited_vector
@@ -165,16 +182,20 @@ contains
     integer, allocatable :: found(:)
     type (UnlimitedVector) :: v
 
-    print*,__FILE__,__LINE__
-    call v%push_back(3)
-    call v%push_back(2)
-    call v%push_back(1)
-    print*,__FILE__,__LINE__
+    class(*), pointer :: node
+    type(Configuration) :: c
+
+    c = Configuration(scalar=v)
+    call c%get_node_at_selector(node)
+    select type (node)
+    type is (UnlimitedVector)
+       call node%push_back(3)
+       call node%push_back(2)
+       call node%push_back(1)
+    end select
+    found = c
     
-    found = Configuration(scalar=v)
-    print*,__FILE__,__LINE__
     @assert_that(found,is(equal_to([3,2,1])))
-    print*,__FILE__,__LINE__
     
   end subroutine test_assign_to_integer_array_from_unlimited_vector
 
@@ -183,20 +204,29 @@ contains
     integer, allocatable :: found(:)
     type (UnlimitedVector) :: v
 
+    class(*), pointer :: node
+    type(Configuration) :: c
+
+
     ! type mismatch
     found = Configuration(array=[1.,3.])
     @assert_that(found, is(empty_array()))
+    deallocate(found)
     
     ! category mismatch
-    deallocate(found)
     found = Configuration(scalar=1)
     @assert_that(found, is(empty_array()))
+    deallocate(found)
 
     ! mixed types in unlimited
-    call v%push_back(3)
-    call v%push_back(2.)
-    deallocate(found)
-    found = Configuration(scalar=v)
+    c = Configuration(scalar=v)
+    call c%get_node_at_selector(node)
+    select type (node)
+    type is (UnlimitedVector)
+       call node%push_back(3)
+       call node%push_back(2.)
+    end select
+    found = c
     @assert_that(found, is(empty_array()))
     
   end subroutine test_assign_to_integer_array_fail
@@ -216,17 +246,21 @@ contains
     real, allocatable :: found(:)
     type (UnlimitedVector) :: v
 
-    print*,__FILE__,__LINE__
-    call v%push_back(3.)
-    call v%push_back(2.)
-    call v%push_back(1.)
+    class(*), pointer :: node
+    type(Configuration) :: c
+
+    c = Configuration(scalar=v)
+    call c%get_node_at_selector(node)
+    select type (node)
+    type is (UnlimitedVector)
+       call node%push_back(3.)
+       call node%push_back(2.)
+       call node%push_back(1.)
+    end select
+    found = c
     
-    print*,__FILE__,__LINE__
-    found = Configuration(scalar=v)
-    print*,__FILE__,__LINE__
     @assert_that(found,is(equal_to([3.,2.,1.])))
-    print*,__FILE__,__LINE__
-    
+      
   end subroutine test_assign_to_real_array_from_unlimited_vector
 
   @test
@@ -268,20 +302,15 @@ contains
     @assert_that(int(found%size()), is(equal_to(2)))
     @assert_that(found%at(1), is(equal_to('cat ')))
     @assert_that(found%at(2), is(equal_to('food')))
-    print*,__FILE__,__LINE__
 
     ! This way does not ...
     call expected%push_back(String('cat'))
     call expected%push_back(String('food'))
 
     found = Configuration(scalar=expected)
-    print*,__FILE__,__LINE__
     @assert_that(int(found%size()), is(equal_to(2)))
-    print*,__FILE__,__LINE__
     @assert_that(found%at(1), is(equal_to('cat')))
-    print*,__FILE__,__LINE__
     @assert_that(found%at(2), is(equal_to('food')))
-    print*,__FILE__,__LINE__
     
   end subroutine test_assign_to_string_vector
 
@@ -290,11 +319,19 @@ contains
     character(:), allocatable :: found(:)
     type (UnlimitedVector) :: v
 
-    call v%push_back(String('cat'))
-    call v%push_back(String('food'))
-    call v%push_back(String(''))
+    class(*), pointer :: node
+    type(Configuration) :: c
+
+    c = Configuration(scalar=v)
+    call c%get_node_at_selector(node)
+    select type (node)
+    type is (UnlimitedVector)
+       call node%push_back(String('cat'))
+       call node%push_back(String('food'))
+       call node%push_back(String(''))
+    end select
+    found = c
     
-    found = Configuration(v)
     @assert_that(found,is(equal_to(['cat ','food','    '])))
     
   end subroutine test_assign_to_string_array_from_unlimited_vector
@@ -303,15 +340,24 @@ contains
   subroutine test_assign_to_string_array_fail()
     character(:), allocatable :: found(:)
     type (UnlimitedVector) :: v
+    class(*), pointer :: node
+    type(Configuration) :: c
+
 
     ! type mismatch
     found = Configuration(array=[1,3])
     @assert_that(found, is(empty_array()))
     
     ! partial mismatch
-    call v%push_back('a')
-    call v%push_back(1)
-    found = Configuration(scalar=v)
+    c = Configuration(scalar=v)
+    call c%get_node_at_selector(node)
+    select type (node)
+    type is (UnlimitedVector)
+       call node%push_back('a')
+       call node%push_back(1)
+    end select
+    found = c
+
     @assert_that(found, is(empty_array()))
     
     ! category mismatch
@@ -323,81 +369,106 @@ contains
 
   @test
   subroutine test_at_key_not_a_map()
-    type(AllocatableConfiguration) :: c
-    type(PointerConfiguration) :: sub
+    type(Configuration) :: c
+    type(Configuration) :: sub
 
-    print*,__FILE__,__LINE__
     c = Configuration(scalar=1)
-    print*,__FILE__,__LINE__
     sub = c%at('non-existent-key') ! should "fail"
-    print*,__FILE__,__LINE__
     @assert_that(sub%is_none(), is(true()))
-    print*,__FILE__,__LINE__
     
   end subroutine test_at_key_not_a_map
 
   @test
   subroutine test_at_key_not_a_key()
-    type(AllocatableConfiguration) :: c
-    type(PointerConfiguration) :: sub
-    type(OrderedStringUnlimitedMap) :: map
+    type(Configuration) :: c
+    type(Configuration) :: sub
 
-    call map%insert('a',1)
-    call map%insert('b',.true.)
-    c = Configuration(scalar=map)
+    class(*), pointer :: node
+
+    c = Configuration(OrderedStringUnlimitedMap())
+    call c%get_node_at_selector(node)
+    select type (node)
+    type is (OrderedStringUnlimitedMap)
+       call node%insert('a',1)
+       call node%insert('b',.true.)
+    end select
+
     sub = c%at('non-existent-key') ! should "fail"
     @assert_that(sub%is_none(), is(true()))
     
   end subroutine test_at_key_not_a_key
 
-  @test
+  !@test
   subroutine test_at_key_integer()
-    type(AllocatableConfiguration) :: c
-    type(OrderedStringUnlimitedMap) :: map
+    type(Configuration) :: c
     integer :: found
     
-    call map%insert('a',1)
-    call map%insert('b',2)
-    c = Configuration(map)
+    class(*), pointer :: node
+
+    c = Configuration(OrderedStringUnlimitedMap())
+    call c%get_node_at_selector(node)
+    select type (node)
+    type is (OrderedStringUnlimitedMap)
+       call node%insert('a',1)
+       call node%insert('b',2)
+    end select
+
     found = c%at('b')
     @assert_that(found,is(equal_to(2)))
   end subroutine test_at_key_integer
 
-  @test
+  !@test
   subroutine test_at_key_logical()
-    type(AllocatableConfiguration) :: c
-    type(OrderedStringUnlimitedMap) :: map
+    type(Configuration) :: c
     logical :: found
     
-    call map%insert('a',1)
-    call map%insert('b',.false.)
-    c = Configuration(map)
+    class(*), pointer :: node
+
+    c = Configuration(OrderedStringUnlimitedMap())
+    call c%get_node_at_selector(node)
+    select type (node)
+    type is (OrderedStringUnlimitedMap)
+       call node%insert('a',1)
+       call node%insert('b',.false.)
+    end select
+
     found = c%at('b')
     @assert_that(found,is(false()))
   end subroutine test_at_key_logical
 
   @test
   subroutine test_at_key_map()
-    type(AllocatableConfiguration) :: c
-    type(OrderedStringUnlimitedMap) :: map1, map2
+    type(Configuration), target :: c
+    type(Configuration) :: sub
     type(OrderedStringUnlimitedMap) :: found_map
 
-    call map1%insert('triangle',3)
-    call map1%insert('quadrilateral',4)
+    class(*), pointer :: node
+    class(*), pointer :: node2
+    integer :: n
 
-    call map2%insert('a',1)
-    call map2%insert('b',map1)
-
-    c = Configuration(map2)
-    found_map = c%at('b')
-    @assert_that(found_map%at('triangle'),is(equal_to(3)))
+    c = Configuration(OrderedStringUnlimitedMap())
+    call c%get_node_at_selector(node)
+    select type (node)
+    type is (OrderedStringUnlimitedMap)
+       call node%insert('a',1)
+       call node%insert('b',OrderedStringUnlimitedMap())
+       node2 => node%at('b')
+       select type (node2)
+       type is (OrderedStringUnlimitedMap)
+          call node2%insert('triangle',3)
+          call node2%insert('quadrilateral',4)
+       end select
+    end select
+    call c%get(sub,'b')
+    n = sub%at('triangle')
+    @assert_that(n,is(equal_to(3)))
 
   end subroutine test_at_key_map
 
   @test
   subroutine test_at_index_not_a_vector()
-    type(AllocatableConfiguration) :: c
-    type(PointerConfiguration) :: sub
+    type(Configuration) :: c
+    type(Configuration) :: sub
 
     c = Configuration(scalar=1)
     sub = c%at(5) ! should "fail"
@@ -405,15 +476,22 @@ contains
     
   end subroutine test_at_index_not_a_vector
   
-  !@test
+  @test
   subroutine test_at_index_out_of_range()
-    type(AllocatableConfiguration) :: c
-    type(PointerConfiguration) :: sub
+    type(Configuration) :: c
+    type(Configuration) :: sub
     type(UnlimitedVector) :: v
 
-    call v%push_back(1)
-    call v%push_back(7.)
+    class(*), pointer :: node
+    
+    ! This way does work
     c = Configuration(scalar=v)
+    call c%get_node_at_selector(node)
+    select type (node)
+    type is (UnlimitedVector)
+       call node%push_back(1)
+       call node%push_back(7.)
+    end select
 
     sub = c%at(5) ! should "fail"
     @assert_that(sub%is_none(), is(true()))
@@ -421,57 +499,68 @@ contains
   end subroutine test_at_index_out_of_range
   
   @test
-  subroutine test_at_indexb()
-    type(AllocatableConfiguration), target :: c
+  subroutine test_at_index()
+    type(Configuration), target :: c
     type(UnlimitedVector) :: vector
     logical :: found_logical
     integer :: found_integer
     real :: found_real
     character(:), allocatable :: found_string
-    
-    call vector%push_back(.true.)
-    call vector%push_back(1)
-    call vector%push_back(1.234)
-    call vector%push_back(String('foo'))
-    c = Configuration(vector)
 
-    print*,__FILE__,__LINE__
-!!$    found_logical = c%at(1)
-    call c%get(found_logical, index=1)
+    class(*), pointer :: node
+
+    c = Configuration(UnlimitedVector())
+    call c%get_node_at_selector(node)
+    select type (node)
+    type is (UnlimitedVector)
+       call node%push_back(.true.)
+       call node%push_back(1)
+       call node%push_back(1.234)
+       call node%push_back(String('foo'))
+    end select
+
+    found_logical = c%at(1)
     @assert_that(found_logical,is(true()))
-    print*,__FILE__,__LINE__
 
     found_integer = c%at(2)
-!!$    @assert_that(found_integer,is(equal_to(1)))
-!!$    print*,__FILE__,__LINE__
-!!$
+    @assert_that(found_integer,is(equal_to(1)))
+
     found_real = c%at(3)
-!!$    @assert_that(found_real,is(equal_to(1.234)))
-!!$    print*,__FILE__,__LINE__
-!!$
-!!$    found_string = c%at(4)
-!!$    @assert_that(found_string,is(equal_to('foo')))
+    @assert_that(found_real,is(equal_to(1.234)))
 
-  end subroutine test_at_indexb
+    found_string = c%at(4)
+    @assert_that(found_string,is(equal_to('foo')))
 
-  !@test
+  end subroutine test_at_index
+
+  @test
   subroutine test_at_index_map()
-    type(AllocatableConfiguration) :: c
-    type(OrderedStringUnlimitedMap) :: map
-    type(UnlimitedVector) :: v
+    type(Configuration), target :: c
     type(OrderedStringUnlimitedMap) :: found_map
 
-    call map%insert('triangle',3)
-    call map%insert('quadrilateral',4)
+    class(*), pointer :: node, node2
+    integer :: n
 
-    call v%push_back(1)
-    call v%push_back(map)
-    call v%push_back(2.)
+    c = Configuration(UnlimitedVector())
+    call c%get_node_at_selector(node)
 
-    c = Configuration(v)
-    found_map = c%at(2)
-    @assert_that(found_map%at('triangle'),is(equal_to(3)))
-    @assert_that(found_map%at('quadrilateral'),is(equal_to(4)))
+    select type (node)
+    type is (UnlimitedVector)
+       call node%push_back(1)
+       call node%push_back(OrderedStringUnlimitedMap())
+       node2 => node%back()
+       select type (node2)
+       type is (OrderedStringUnlimitedMap)
+          call node2%insert('triangle',3)
+          call node2%insert('quadrilateral',4)
+       end select
+       call node%push_back(2.)
+    end select
+
+    n = c .at. 2 .at. 'triangle'
+    @assert_that(n,is(equal_to(3)))
+    n = c .at. 2 .at. 'quadrilateral'
+    @assert_that(n,is(equal_to(4)))
 
   end subroutine test_at_index_map
 

@@ -77,13 +77,18 @@ contains
   subroutine read_empty_line()
     type(File) :: f
     character(:), allocatable :: line
+
     f = File(TMP_FILE,mode='w')
     call f%write_line('')
     call f%close()
 
     f = File(TMP_FILE, mode='r')
     line = f%read_line()
+#ifdef __GFORTRAN__
+    @assert_that(line == '', is(true()))
+#else
     @assert_that(line,is(equal_to('')))
+#endif
 
     call f%close()
   end subroutine read_empty_line

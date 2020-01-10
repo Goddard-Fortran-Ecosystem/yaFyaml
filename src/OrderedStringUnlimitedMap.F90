@@ -1,16 +1,19 @@
 module fy_OrderedStringUnlimitedMap
-  use gFTL_StringUnlimitedMap
+  use gFTL_StringIntegerMap
   use gFTL_StringVector
+  use gFTL_UnlimitedVector
+  use gFTL_StringUnlimitedMap, only: pair
   implicit none
   private
 
   public :: OrderedStringUnlimitedMap
   public :: OrderedStringUnlimitedMapIterator
-
+  public :: pair
   type :: OrderedStringUnlimitedMap
      private
-     type(StringUnlimitedMap) :: map
-     type(StringVector) :: insertions
+     type(StringIntegerMap) :: map
+     type(StringVector) :: keys
+     type(UnlimitedVector) :: values
    contains
      procedure :: empty
      procedure :: size
@@ -41,7 +44,9 @@ module fy_OrderedStringUnlimitedMap
   type :: OrderedStringUnlimitedMapIterator
      private
      class(OrderedStringUnlimitedMap), pointer :: reference
-     type(StringVectorIterator) :: insertion_iter
+     type(StringVectorIterator) :: k_iter
+     type(UnlimitedVectorIterator) :: v_iter
+     integer :: current = 0
    contains
      procedure :: value
      procedure :: key
@@ -64,19 +69,20 @@ contains
 
   function new_OrderedStringUnlimitedMap() result(m)
     type(OrderedStringUnlimitedMap) :: m
-    m%map = StringUnlimitedMap()
-    m%insertions = StringVector()
+    m%map = StringIntegerMap()
+    m%keys = StringVector()
+    m%values = UnlimitedVector()
   end function new_OrderedStringUnlimitedMap
 
   logical function empty(this)
     class (OrderedStringUnlimitedMap), intent(in) :: this
-    empty = this%insertions%empty()
+    empty = this%map%empty()
   end function empty
   
   function size(this)
     integer(kind=SIZE_kind) :: size
     class (OrderedStringUnlimitedMap), intent(in) :: this
-    size = this%insertions%size()
+    size = this%map%size()
   end function size
 
 
@@ -85,8 +91,12 @@ contains
     character(*), intent(in) :: key
     class(*), intent(in) :: value
 
-    call this%map%insert(key, value)
-    call this%insertionS%push_back(key)
+    integer :: n
+
+    n = this%keys%size()
+    call this%map%insert(key,n+1)
+    call this%keys%push_back(key)
+    call this%values%push_back(value)
 
   end subroutine insert_key_value
 
@@ -94,8 +104,7 @@ contains
     class(OrderedStringUnlimitedMap), intent(inout) :: this
     type(pair), intent(in) :: p
 
-    call this%map%insert(p)
-    call this%insertions%push_back(p%key)
+    call this%insert(p%key, p%value)
 
   end subroutine insert_pair
 
@@ -106,9 +115,13 @@ contains
     character(len=*)  :: key
     class(*) , pointer, intent(out) :: value
 
-    res = this%map%get(key, value)
+    integer, pointer :: n
+
+    res = this%map%get(key, n)
+    value => this%values%at(n)
 
     return
+
   end function get
 
   ! Note: does not change insertion order.
@@ -117,7 +130,16 @@ contains
     character(len=*) , intent(in) :: key
     class(*) , intent(in) :: value
 
-    call this%map%set(key,value)
+    integer, pointer :: n
+    logical :: res
+
+    res = this%map%get(key,n)
+    if (res) then
+       call this%values%set(n,value)
+    else
+       call this%insert(key,value)
+    end if
+
   end subroutine m_set
 
   function of(this, key) result(res)
@@ -125,7 +147,11 @@ contains
     character(len=*) , intent(in) :: key
     class(*) , pointer :: res
 
-    res => this%map%of(key)
+    integer :: n
+
+    n = this%map%of(key)
+    res => this%values%at(n)
+
   end function of
 
   function at(this, key) result(res)
@@ -133,8 +159,14 @@ contains
     character(len=*) , intent(in) :: key
     class(*) , pointer :: res
 
+    integer, pointer :: n
 
-    res => this%map%at(key)
+    n => this%map%at(key)
+    if (associated(n)) then
+       res => this%values%at(n)
+    else
+       res => null()
+    end if
 
   end function at
 
@@ -144,13 +176,29 @@ contains
     type(OrderedStringUnlimitedMapIterator), intent(inout) :: iter 
 
     character(:), pointer :: key
-    type(StringUnlimitedMapIterator) :: map_iter
+    type(StringIntegerMapIterator) :: map_iter
+    type(StringVectorIterator) :: k_iter
+    type(UnlimitedVectorIterator) :: v_iter
 
-    key => iter%key()
-    map_iter = this%map%find(key)
-    
-    call this%map%erase(map_iter)
-    call this%insertions%erase(iter%insertion_iter)
+    integer :: n
+    integer, pointer :: nn
+
+    n = iter%current
+    key => this%keys%at(n)
+
+    map_iter = this%map%begin()
+    do while (map_iter /= this%map%end())
+       nn => map_iter%value()
+       if (nn > n) then
+          nn = nn - 1
+       else
+          call this%map%erase(map_iter)
+       end if
+       call map_iter%next()
+    end do
+
+    call this%keys%erase(iter%k_iter)
+    call this%values%erase(iter%v_iter)
 
   end subroutine erase_one
 
@@ -158,7 +206,8 @@ contains
     class(OrderedStringUnlimitedMap), intent(inout) :: this
 
     call this%map%clear()
-    call this%insertions%clear()
+    call this%keys%clear()
+    call this%values%clear()
 
   end subroutine clear
 
@@ -168,7 +217,9 @@ contains
     type (OrderedStringUnlimitedMapIterator) :: iter
     
     iter%reference => this
-    iter%insertion_iter = this%insertions%begin()
+    iter%current = 1
+    iter%k_iter = this%keys%begin()
+    iter%v_iter = this%values%begin()
 
   end function begin
 
@@ -181,7 +232,9 @@ contains
     type (OrderedStringUnlimitedMapIterator) :: iter
 
     iter%reference => this
-    iter%insertion_iter = this%insertions%end()
+    iter%current = this%keys%size() + 1
+    iter%k_iter = this%keys%end()
+    iter%v_iter = this%values%end()
 
   end function end
 
@@ -192,11 +245,17 @@ contains
     class(OrderedStringUnlimitedMap), target, intent(in) :: this
     character(len=*) , intent(in) :: key
 
-    iter = this%begin()
-    do while (iter /= this%end())
-       if (key == iter%insertion_iter%get()) exit
-       call iter%next()
-    end do
+    type(StringIntegerMapIterator) :: m_iter
+
+    m_iter = this%map%find(key)
+
+    iter%reference => this
+    iter%current = m_iter%value()
+
+    iter%k_iter = this%keys%begin()
+    iter%k_iter = iter%k_iter + (iter%current-1)
+    iter%v_iter = this%values%begin()
+    iter%v_iter = iter%v_iter + (iter%current-1)
     
   end function find
 
@@ -216,7 +275,8 @@ contains
     class(OrderedStringUnlimitedMap), intent(in) :: original
 
     call this%map%deepCopy(original%map)
-    this%insertions = original%insertions
+    this%keys = original%keys
+    this%values = original%values
     
   end subroutine deepCopy
   
@@ -229,8 +289,7 @@ contains
 
         character(:), pointer :: key
 
-        key => this%insertion_iter%get()
-        res => this%reference%map%at(key)
+        res => this%v_iter%get()
 
       end function value
 
@@ -241,7 +300,7 @@ contains
         class(OrderedStringUnlimitedMapIterator), target, intent(in) :: this
         character(len=:), pointer :: res
 
-        res => this%insertion_iter%get()
+        res => this%k_iter%get()
 
       end function key
 
@@ -253,7 +312,8 @@ contains
         class(OrderedStringUnlimitedMapIterator), intent(in) :: this
         type(OrderedStringUnlimitedMapIterator), intent(in) :: other
 
-        equal = (this%insertion_iter == other%insertion_iter)
+        equal = (this%current == other%current)
+        ! Other components must agree (at least in theory ...)
 
       end function iter_equal
 
@@ -276,7 +336,9 @@ contains
       subroutine next(this)
          class(OrderedStringUnlimitedMapIterator), intent(inout) :: this
 
-         call this%insertion_iter%next()
+         this%current = this%current + 1
+         call this%k_iter%next()
+         call this%v_iter%next()
 
        end subroutine next
 
@@ -287,7 +349,9 @@ contains
       subroutine previous(this)
          class(OrderedStringUnlimitedMapIterator), intent(inout) :: this
 
-         call this%insertion_iter%previous()
+         this%current = this%current - 1
+         call this%k_iter%previous()
+         call this%v_iter%previous()
 
        end subroutine previous
 

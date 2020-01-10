@@ -19,7 +19,6 @@ contains
     type(ArrayWrapper) :: wrapper
     class(*), intent(in) :: array(:)
 
-    print*,__FILE__,__LINE__
     ! workaround for gfortran 9.2 - segfault with logical array with
     ! polymorphic assignment.  Instead use explicit ALLOCATE.
 #ifdef __GFORTRAN__
@@ -27,8 +26,6 @@ contains
 #else
     wrapper%elements = array
 #endif
-
-    print*,__FILE__,__LINE__
     
   end function new_ArrayWrapper
 

@@ -10,6 +10,7 @@ module fy_Parser
   use fy_Reader
   use fy_AbstractTextStream
   use fy_Configuration
+  use fy_None
   use gFTL_UnlimitedVector
   use fy_OrderedStringUnlimitedMap
   use fy_AbstractSchema
@@ -75,7 +76,7 @@ contains
 
 
   function load(this, stream) result(cfg)
-    type(AllocatableConfiguration) :: cfg
+    type(Configuration) :: cfg
     class(Parser), intent(inout) :: this
     class(AbstractTextStream), intent(in) :: stream
 
@@ -90,7 +91,7 @@ contains
 
   subroutine top(this, cfg, lexr)
     class(Parser), intent(in) :: this
-    type(AllocatableConfiguration), intent(inout) :: cfg
+    type(Configuration), intent(inout) :: cfg
     type(Lexer), intent(inout) :: lexr
 
     class(AbstractToken), allocatable :: token
@@ -101,17 +102,12 @@ contains
 
     do
        token = lexr%get_token()
-       print*,__FILE__,__LINE__,'id: ', token%get_id()
        select type (token)
        type is (StreamStartToken)
-          print*,'stream start'
        type is (StreamEndToken)
-          print*,'stream start'
           exit
        type is (DocumentStartToken)
-          print*,'document start'
        type is (DocumentEndToken)
-          print*,'document end'
           exit
        type is (ScalarToken)
 !!$          __ASSERT__("Configuration can only have one top node.", .not. done)
@@ -120,25 +116,29 @@ contains
        type is (FlowSequenceStartToken)
 !!$          __ASSERT__("Configuration can only have one top node.", .not. done)
           cfg = Configuration(scalar=UnlimitedVector())
-          call cfg%get_node(node)
+          call cfg%get_node_at_selector(node)
+!!$          call cfg%get_node(node)
           call this%process_sequence(node, lexr)
           done = .true.
        type is (BlockSequenceStartToken)
 !!$          __ASSERT__("Configuration can only have one top node.", .not. done)
           cfg = Configuration(scalar=UnlimitedVector())
-          call cfg%get_node(node)
+          call cfg%get_node_at_selector(node)
+!!$          call cfg%get_node(node)
           call this%process_sequence(node, lexr)
           done = .true.
        type is (BlockMappingStartToken)
 !!$          __ASSERT__("Configuration can only have one top node.", .not. done)
           cfg = Configuration(scalar=OrderedStringUnlimitedMap())
-          call cfg%get_node(node)
+          call cfg%get_node_at_selector(node)
+!!$          call cfg%get_node(node)
           call this%process_sequence(node, lexr)
           done = .true.
        type is (FlowMappingStartToken)
 !!$          __ASSERT__("Configuration can only have one top node.", .not. done)
           cfg = Configuration(scalar=OrderedStringUnlimitedMap())
-          call cfg%get_node(node)
+          call cfg%get_node_at_selector(node)
+!!$          call cfg%get_node(node)
           call this%process_mapping(node, lexr)
           done = .true.
        class default
@@ -156,18 +156,14 @@ contains
 
     class(AbstractToken), allocatable :: token
     logical :: expect_another
-    type(AllocatableConfiguration) :: sub
+    type(Configuration) :: sub
     class(*), pointer :: sub_node
 
     expect_another = .false.
-    print*,__FILE__,__LINE__    
     select type (node)
     type is (UnlimitedVector)
        do
-          print*,__FILE__,__LINE__    
           token = lexr%get_token()
-          print*,__FILE__,__LINE__    
-          print*,__FILE__,__LINE__,'id: ', token%get_id()
 
 
           select type (token)
@@ -180,11 +176,9 @@ contains
              sub_node => node%back()
              call this%process_sequence(sub_node, lexr)
           type is (FlowNextEntryToken)
-             print*,__FILE__,__LINE__,token%get_id()
              expect_another = .true.
 
           type is (BlockNextEntryToken)
-             print*,__FILE__,__LINE__,token%get_id()
              expect_another = .true.
 
           type is (FlowSequenceEndToken)
@@ -212,10 +206,8 @@ contains
           class default
              error stop 'illegal token encountered'
           end select
-          print*,__FILE__,__LINE__
           deallocate(token)
        end do
-       print*,__FILE__,__LINE__
 
     class default
        error stop 'inconsistent state in parser:: process_sequence()'
@@ -232,7 +224,7 @@ contains
 
     class(AbstractToken), allocatable :: token
     logical :: expect_another
-    type(AllocatableConfiguration) :: sub
+    type(Configuration) :: sub
     character(:), allocatable :: key
     class(AbstractToken), allocatable :: next_token
 
@@ -242,7 +234,6 @@ contains
     type is (OrderedStringUnlimitedMap)
        do
           token = lexr%get_token()
-          print*,__FILE__,__LINE__,'id: ', token%get_id()
 
           select type (token)
 
@@ -255,7 +246,6 @@ contains
                 error stop
              end select
              next_token = lexr%get_token()
-             print*,__FILE__,__LINE__,'id: ', next_token%get_id()
              select type(next_token)
              type is (ValueToken)
                 ! mandatory before value
@@ -263,7 +253,6 @@ contains
                 error stop
              end select
              next_token = lexr%get_token()
-             print*,__FILE__,__LINE__,'id: ', next_token%get_id()
              select type(next_token)
              type is (ScalarToken)
                 call q%insert(key, this%interpret(next_token))

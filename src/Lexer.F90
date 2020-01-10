@@ -338,7 +338,6 @@ contains
 
     ! Determine type of token from first character
     ch = this%peek()
-    print*,' next char: <',ch,'>'
 
     ! Cannot quite use SELECT CASE here.  Some cases require further
     ! processing to ascertain their relevancy.

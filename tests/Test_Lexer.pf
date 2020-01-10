@@ -66,11 +66,9 @@ contains
     call lexr%scan_to_next_token()
     @assert_that(lexr%peek(), is('b'))
 
-    print*,__FILE__,__LINE__
     lexr = Lexer(Reader(EscapedTextStream("  \n  b")))
     call lexr%scan_to_next_token()
     @assert_that(lexr%peek(), is('b'))
-    print*,__FILE__,__LINE__
     
     lexr = Lexer(Reader(EscapedTextStream("  # comment \n  :")))
     call lexr%scan_to_next_token()
@@ -139,9 +137,7 @@ contains
     lexr = Lexer(Reader(TextStream("- a")))
 
     token = lexr%get_token() ! skip stream start
-    print*,__FILE__,__LINE__,token%get_id()
     token = lexr%get_token()
-    print*,__FILE__,__LINE__,token%get_id()
     id = token%get_id()
     @assert_that(id, is(equal_to("<block sequence start>")))
     token = lexr%get_token()

@@ -35,7 +35,6 @@ contains
     stream%buffer = buffer
     stream%idx = 1
 
-    print*,'starting with buffer: <',buffer,'>'
   end function new_EscapedTextStream
 
   function read(this, n_characters) result(buffer)

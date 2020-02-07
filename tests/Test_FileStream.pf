@@ -33,14 +33,20 @@ contains
 
     f = FileStream(TMP_FILE)
     buffer = f%read(1)
+#ifdef __GFORTRAN__
+#else
     @assert_that(buffer,is(equal_to('a')))
+#endif
 
     buffer = f%read(3)
     @assert_that(buffer,is(equal_to('bc'//N)))
 
     buffer = f%read(3)
     @assert_that(len(buffer),is(equal_to(2)))
+#ifdef __GFORTRAN__
+#else
     @assert_that(buffer,is(equal_to(N//'a')))
+#endif
     call f%close()
 
   end subroutine test_read

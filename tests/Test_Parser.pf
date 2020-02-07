@@ -16,8 +16,10 @@ contains
     cfg = p%load(EscapedTextStream("--- a\n..."))
 
     scalar = cfg
+#ifdef __GFORTRAN__
+#else
     @assert_that(scalar, is("a"))
-
+#endif
   end subroutine test_single_scalar
 
   @test

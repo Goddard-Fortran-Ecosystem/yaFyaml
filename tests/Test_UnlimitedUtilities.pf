@@ -1,48 +1,52 @@
 module Test_UnlimitedUtilities
   use funit
   use fy_UnlimitedUtilities
-  use fy_String
   use fy_ArrayWrapper
   use gFTL_UnlimitedVector
+  implicit none
 
 contains
 
   @test
   subroutine test_is_logical
     class(*), allocatable :: u
+    type(ArrayWrapper) :: w
 
-    u = .true.
+    logical :: stat
+    
+    allocate(u, source=.true.)
     @assert_that(is_logical(u), is(true()))
+    deallocate(u)
 
-    u = 1
+    allocate(u, source=1)
     @assert_that(is_logical(u), is(false()))
+    deallocate(u)
 
-    u = ArrayWrapper([.true.,.false.])
-    @assert_that(is_logical(u), is(true()))
+    allocate(u, source=ArrayWrapper([.true.,.false.]))
+    stat = is_logical(u)
+    @assert_that(stat, is(true()))
+    deallocate(u)
 
   end subroutine test_is_logical
 
   @test
   subroutine test_is_logical_unlimited_vector
-    class(*), allocatable :: u
-    type(UnlimitedVector) :: v
+    class(*), pointer :: u
+    type(UnlimitedVector), target :: v
+    logical :: stat
 
     call v%push_back(.true.)
-    u = v
+    u => v
     @assert_that(is_logical(u), is(true()))
-    
+
     call v%push_back(.true.)
-    u = v
     @assert_that(is_logical(u), is(true()))
-    
+
     call v%push_back(.true.)
-    u = v
     @assert_that(is_logical(u), is(true()))
-    
+
     call v%push_back(3)
-    u = v
     @assert_that(is_logical(u), is(false()))
-    
     
   end subroutine test_is_logical_unlimited_vector
   
@@ -79,7 +83,7 @@ contains
     u = 'a b c'
     @assert_that(is_string(u), is(true()))
 
-    u = String('cat')
+    u = 'cat'
     @assert_that(is_string(u), is(true()))
 
     u = 5

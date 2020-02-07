@@ -539,11 +539,12 @@ contains
 
   subroutine to_integer_array(values, this)
     integer, allocatable, intent(out) :: values(:)
-    class(Configuration), intent(in) :: this
+    class(Configuration), target, intent(in) :: this
 
     integer :: i, n
 
     class(*), pointer :: node
+
     node => this%node%get_node()
 
     select type(q => node)
@@ -696,7 +697,7 @@ contains
           values = StringVector()
        end select
     type is (UnlimitedVector)
-       ! Check if all elements are REAL32
+       ! Check if all elements are character(*)
        n = q%size()
        do i = 1, n
           select type (qq => q%at(i))

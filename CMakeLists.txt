@@ -41,19 +41,21 @@ if (PFUNIT_FOUND)
 endif ()
 
 # find_package() support
-configure_file (YAFYAMLConfig-version.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/YAFYAMLConfig-version.cmake @ONLY)
-configure_file (YAFYAMLConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/YAFYAMLConfig.cmake @ONLY)
+configure_file (YAFYAMLConfig-version.cmake.in ${PROJECT_BINARY_DIR}/YAFYAMLConfig-version.cmake @ONLY)
+configure_file (YAFYAMLConfig.cmake.in ${PROJECT_BINARY_DIR}/YAFYAMLConfig.cmake @ONLY)
 
 set (top_dir YAFYAML-${YAFYAML_VERSION_MAJOR}.${YAFYAML_VERSION_MINOR})
 install (
-  FILES ${CMAKE_CURRENT_BINARY_DIR}/YAFYAMLConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/YAFYAMLConfig-version.cmake
+  FILES ${PROJECT_BINARY_DIR}/YAFYAMLConfig.cmake ${PROJECT_BINARY_DIR}/YAFYAMLConfig-version.cmake
   DESTINATION "${top_dir}/cmake")
 
 # The following is needed for external projects using *nix make when
 # parent project builds yafyaml as a subproject.
 set (YAFYAML_TOP_DIR "${CMAKE_INSTALL_PREFIX}/${top_dir}" CACHE PATH "")
-configure_file (YAFYAML.mk.in ${CMAKE_CURRENT_BINARY_DIR}/YAFYAML.mk @ONLY)
-install (
-  FILES ${CMAKE_CURRENT_BINARY_DIR}/YAFYAML.mk ${CMAKE_CURRENT_BINARY_DIR}/YAFYAML.mk
-  DESTINATION "${top_dir}/include")
+configure_file (YAFYAML.mk.in ${PROJECT_BINARY_DIR}/YAFYAML.mk @ONLY)
+#install (
+#  FILES ${CMAKE_CURRENT_BINARY_DIR}/YAFYAML.mk ${CMAKE_CURRENT_BINARY_DIR}/YAFYAML.mk
+#  DESTINATION "${top_dir}/include")
+
+#install (EXPORT YAFYAML DESTINATION "${top_dir}/cmake")
 

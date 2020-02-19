@@ -35,9 +35,15 @@ add_library (yafyaml
 set_target_properties (yafyaml PROPERTIES Fortran_MODULE_DIRECTORY ${YAFYAML_BINARY_DIR}/include)
 target_link_libraries(yafyaml gftl-shared)
 
-set (dest "FARGPARSE-${FARGPARSE_VERSION_MAJOR}.${FARGPARSE_VERSION_MINOR}")
+set (dest "YAFYAML-${YAFYAML_VERSION_MAJOR}.${YAFYAML_VERSION_MINOR}")
 
 target_include_directories(yafyaml PUBLIC
   $<BUILD_INTERFACE:${YAFYAML_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:${dest}/include>
 )  
+
+install (TARGETS yafyaml EXPORT YAFYAML DESTINATION ${dest}/lib)
+install (DIRECTORY  ${PROJECT_BINARY_DIR}/include/ DESTINATION ${dest}/include)
+install (EXPORT YAFYAML DESTINATION "${dest}/cmake")
+
+

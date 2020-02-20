@@ -40,6 +40,11 @@ if (PFUNIT_FOUND)
   add_subdirectory(tests)
 endif ()
 
+if (NOT TARGET (examples))
+  add_custom_target(examples COMMAND ${CMAKE_CTEST_COMMAND})
+endif ()
+add_subdirectory (Examples EXCLUDE_FROM_ALL)
+
 # find_package() support
 configure_file (YAFYAMLConfig-version.cmake.in ${PROJECT_BINARY_DIR}/YAFYAMLConfig-version.cmake @ONLY)
 configure_file (YAFYAMLConfig.cmake.in ${PROJECT_BINARY_DIR}/YAFYAMLConfig.cmake @ONLY)

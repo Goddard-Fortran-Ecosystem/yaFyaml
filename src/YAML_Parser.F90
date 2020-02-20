@@ -78,11 +78,13 @@ contains
        value  = .true.
     case default
        read(token,*,iostat=status) i
+       print*,__FILE__,__LINE__,token, status
        if (status == 0) then ! integer
           value = i
        else
           read(token,*,iostat=status) x
-          if (status == 0) then ! integer
+       print*,__FILE__,__LINE__,token, status
+          if (status == 0) then ! real
              value = x
           else
              value = token

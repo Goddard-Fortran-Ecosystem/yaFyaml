@@ -1,116 +1,140 @@
 module Test_Parser
-  use funit
-  use yafyaml
-  use fy_Parser
-  implicit none
+   use funit
+   use yafyaml
+   use fy_Parser
+   implicit none
 
 contains
 
-  @test
-  subroutine test_single_scalar()
-    type(Parser) :: p
-    type(Configuration) :: cfg
-    character(:), allocatable :: scalar
+   @test
+   subroutine test_single_scalar()
+      type(Parser) :: p
+      type(Configuration) :: cfg
+      character(:), allocatable :: scalar
 
-    p = Parser()
-    cfg = p%load(EscapedTextStream("--- a\n..."))
+      p = Parser()
+      cfg = p%load(EscapedTextStream("--- a\n..."))
 
-    scalar = cfg
+      scalar = cfg
 #ifdef __GFORTRAN__
 #else
-    @assert_that(scalar, is("a"))
+      @assert_that(scalar, is("a"))
 #endif
-  end subroutine test_single_scalar
+   end subroutine test_single_scalar
 
-  @test
-  subroutine test_single_flow_sequence()
-    type(Parser) :: p
-    type(Configuration) :: cfg
-    logical, allocatable :: flags(:)
+   @test
+   subroutine test_single_flow_sequence()
+      type(Parser) :: p
+      type(Configuration) :: cfg
+      logical, allocatable :: flags(:)
 
-    p = Parser()
-    cfg = p%load(EscapedTextStream("---\n [true, false, true]\n..."))
+      p = Parser()
+      cfg = p%load(EscapedTextStream("---\n [true, false, true]\n..."))
 
-    flags = cfg
-    @assert_that(flags, is(equal_to([.true.,.false.,.true.])))
+      flags = cfg
+      @assert_that(flags, is(equal_to([.true.,.false.,.true.])))
 
-  end subroutine test_single_flow_sequence
+   end subroutine test_single_flow_sequence
 
-  @test
-  subroutine test_single_flow_map()
-    type(Parser) :: p
-    type(Configuration) :: cfg
-    logical :: flag
+   @test
+   subroutine test_single_flow_mapping()
+      type(Parser) :: p
+      type(Configuration) :: cfg
+      logical :: flag
 
-    p = Parser()
-    cfg = p%load(EscapedTextStream("---\n {a: true, b: false}\n..."))
+      p = Parser()
+      cfg = p%load(EscapedTextStream("---\n {a: true, b: false}\n..."))
 
-    flag = cfg%at("a")
-    @assert_that(flag, is(equal_to(.true.)))
+      flag = cfg%at("a")
+      @assert_that(flag, is(equal_to(.true.)))
 
-    flag = cfg%at("b")
-    @assert_that(flag, is(equal_to(.false.)))
+      flag = cfg%at("b")
+      @assert_that(flag, is(equal_to(.false.)))
 
 
-  end subroutine test_single_flow_map
+   end subroutine test_single_flow_mapping
 
-  @test
-  subroutine test_single_block_sequence()
-    type(Parser) :: p
-    type(Configuration) :: cfg
-    logical, allocatable :: flags(:)
+   @test
+   subroutine test_single_block_sequence()
+      type(Parser) :: p
+      type(Configuration) :: cfg
+      logical, allocatable :: flags(:)
 
-    p = Parser()
-    cfg = p%load(EscapedTextStream("---\n - true \n - false \n - true \n..."))
+      p = Parser()
+      cfg = p%load(EscapedTextStream("---\n - true \n - false \n - true \n..."))
 
-    flags = cfg
-    @assert_that(flags, is(equal_to([.true.,.false.,.true.])))
+      flags = cfg
+      @assert_that(flags, is(equal_to([.true.,.false.,.true.])))
 
-  end subroutine test_single_block_sequence
+   end subroutine test_single_block_sequence
 
-  @test
-  subroutine test_nested_block_sequence()
-    type(Parser) :: p
-    type(Configuration) :: cfg
-    type(Configuration) :: sub
-    
-    integer, allocatable :: ints(:)
+   @test
+   subroutine test_nested_block_sequence()
+      type(Parser) :: p
+      type(Configuration) :: cfg
+      type(Configuration) :: sub
 
-    p = Parser()
-    cfg = p%load(EscapedTextStream("---\n - \n    - 1 \n    - 2 \n - \n    - 3 \n    - 4 \n..."))
-    !                               0123 0123 012345678 012345678 0123 012345678 012345678 012
+      integer, allocatable :: ints(:)
 
-    sub = cfg%at(1)
-    ints = sub
-    @assert_that(ints, is(equal_to([1,2])))
+      p = Parser()
+      cfg = p%load(EscapedTextStream("---\n - \n    - 1 \n    - 2 \n - \n    - 3 \n    - 4 \n..."))
+      !                               0123 0123 012345678 012345678 0123 012345678 012345678 012
 
-    sub = cfg%at(2)
-    ints = sub
-    @assert_that(ints, is(equal_to([3,4])))
+      print*,__FILE__,__LINE__,' accessing ...'
+      sub = cfg%at(1)
 
-  end subroutine test_nested_block_sequence
+      print*,__FILE__,__LINE__,' converting ...'
+      ints = sub
+      @assert_that(ints, is(equal_to([1,2])))
 
-  @test
-  subroutine test_nested_block_map_sequence()
-    type(Parser) :: p
-    type(Configuration) :: cfg
-    type(Configuration) :: sub
-    
-    integer, allocatable :: ints(:)
+      sub = cfg%at(2)
+      ints = sub
+      @assert_that(ints, is(equal_to([3,4])))
 
-    p = Parser()
-    cfg = p%load(EscapedTextStream("---\n cat: \n    - 1 \n    - 2 \n dog: \n    - 3 \n    - 4 \n..."))
-    !                               0123 0123456 012345678 012345678 0123567 012345678 012345678 012
+   end subroutine test_nested_block_sequence
 
-    sub = cfg%at('cat')
-    ints = sub
-    @assert_that(ints, is(equal_to([1,2])))
+   @test
+   subroutine test_nested_block_mapping_sequence()
+      type(Parser) :: p
+      type(Configuration) :: cfg
+      type(Configuration) :: sub
 
-    sub = cfg%at('dog')
-    ints = sub
-    @assert_that(ints, is(equal_to([3,4])))
+      integer, allocatable :: ints(:)
 
-  end subroutine test_nested_block_map_sequence
+      p = Parser()
+      cfg = p%load(EscapedTextStream("---\n cat: \n    - 1 \n    - 2 \n dog: \n    - 3 \n    - 4 \n..."))
+      !                               0123 0123456 012345678 012345678 0123567 012345678 012345678 012
+
+      sub = cfg%at('cat')
+      ints = sub
+      @assert_that(ints, is(equal_to([1,2])))
+
+      sub = cfg%at('dog')
+      ints = sub
+      @assert_that(ints, is(equal_to([3,4])))
+
+   end subroutine test_nested_block_mapping_sequence
+
+   @test
+   subroutine test_nested_mapping_block_flow()
+      type(Parser) :: p
+      type(Configuration) :: cfg
+      type(Configuration) :: sub
+
+      integer :: v1, v2
+
+      p = Parser()
+      cfg = p%load(EscapedTextStream("---\n mapping: { v1: 7, v2: 8 } \n..."))
+
+      sub = cfg%at('mapping')
+
+      v1 = sub%at('v1')
+      @assert_that(v1, is(equal_to(7)))
+
+      v2 = sub%at('v2')
+      @assert_that(v2, is(equal_to(8)))
+
+   end subroutine test_nested_mapping_block_flow
 
 end module Test_Parser
-  
+

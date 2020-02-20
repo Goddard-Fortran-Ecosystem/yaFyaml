@@ -338,7 +338,7 @@ contains
 
     ! Determine type of token from first character
     ch = this%peek()
-
+    print*,__FILE__,__LINE__,'ch=',ch
     ! Cannot quite use SELECT CASE here.  Some cases require further
     ! processing to ascertain their relevancy.
 
@@ -393,6 +393,7 @@ contains
     end if
 
     if (ch == VALUE_INDICATOR .and. this%is_value()) then
+       print*,__FILE__,__LINE__
        call this%process_value(__RC__)
        __RETURN__(SUCCESS)
     end if
@@ -536,7 +537,9 @@ contains
     class(Lexer), intent(inout) :: this
     class(AbstractToken), intent(in) :: token
 
+    call this%save_simple_key()
     this%current_flow_level = this%current_flow_level + 1
+    this%allow_simple_key = .true.
     call this%forward()
     call this%processed_tokens%push_back(token)
     

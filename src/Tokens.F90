@@ -298,7 +298,7 @@ contains
   end function new_ValueToken
 
   function new_BlockMappingStartToken() result(token)
-    type(FlowMappingStartToken) :: token
+    type(BlockMappingStartToken) :: token
     call token%set_id('<block mapping start>')
   end function new_BlockMappingStartToken
 

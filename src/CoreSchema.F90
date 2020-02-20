@@ -272,9 +272,9 @@ contains
     character(*), intent(in) :: text
 
     select case (text)
-    case ('true')
+    case ('true', 'True', 'TRUE')
        to_logical = .true.
-    case ('false')
+    case ('false', 'False', 'FALSE')
        to_logical = .false.
     end select
 

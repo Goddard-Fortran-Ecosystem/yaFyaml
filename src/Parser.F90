@@ -99,9 +99,11 @@ contains
     class(*), pointer :: node
 
     done = .false.
+          print*,__FILE__,__LINE__
 
     do
        token = lexr%get_token()
+          print*,__FILE__,__LINE__, token%get_id()
        select type (token)
        type is (StreamStartToken)
        type is (StreamEndToken)
@@ -110,10 +112,12 @@ contains
        type is (DocumentEndToken)
           exit
        type is (ScalarToken)
+          print*,__FILE__,__LINE__
 !!$          __ASSERT__("Configuration can only have one top node.", .not. done)
           cfg = Configuration(this%interpret(token))
           done = .true.
        type is (FlowSequenceStartToken)
+          print*,__FILE__,__LINE__
 !!$          __ASSERT__("Configuration can only have one top node.", .not. done)
           cfg = Configuration(scalar=UnlimitedVector())
           call cfg%get_node_at_selector(node)
@@ -121,6 +125,7 @@ contains
           call this%process_sequence(node, lexr)
           done = .true.
        type is (BlockSequenceStartToken)
+          print*,__FILE__,__LINE__
 !!$          __ASSERT__("Configuration can only have one top node.", .not. done)
           cfg = Configuration(scalar=UnlimitedVector())
           call cfg%get_node_at_selector(node)
@@ -132,9 +137,10 @@ contains
           cfg = Configuration(scalar=OrderedStringUnlimitedMap())
           call cfg%get_node_at_selector(node)
 !!$          call cfg%get_node(node)
-          call this%process_sequence(node, lexr)
+          call this%process_mapping(node, lexr)
           done = .true.
        type is (FlowMappingStartToken)
+          print*,__FILE__,__LINE__
 !!$          __ASSERT__("Configuration can only have one top node.", .not. done)
           cfg = Configuration(scalar=OrderedStringUnlimitedMap())
           call cfg%get_node_at_selector(node)
@@ -157,7 +163,7 @@ contains
     class(AbstractToken), allocatable :: token
     logical :: expect_another
     type(Configuration) :: sub
-    class(*), pointer :: sub_node
+
 
     expect_another = .false.
     select type (node)
@@ -173,14 +179,11 @@ contains
 
           type is (BlockSequenceStartToken)
              call node%push_back(UnlimitedVector())
-             sub_node => node%back()
-             call this%process_sequence(sub_node, lexr)
+             call this%process_sequence(node%back(), lexr)
           type is (FlowNextEntryToken)
              expect_another = .true.
-
           type is (BlockNextEntryToken)
              expect_another = .true.
-
           type is (FlowSequenceEndToken)
              ! TODO must match block/flow 
 !!$             if (expect_another) then
@@ -194,13 +197,14 @@ contains
              exit
 
           type is (FlowSequenceStartToken)
-             sub = Configuration(UnlimitedVector())
-             call node%push_back(sub)
+             call node%push_back(UnlimitedVector())
              call this%process_sequence(node%back(), lexr)
 
           type is (FlowMappingStartToken)
-             sub = Configuration(OrderedStringUnlimitedMap())
-             call node%push_back(sub)
+             call node%push_back(OrderedStringUnlimitedMap())
+             call this%process_mapping(node%back(), lexr)
+          type is (BlockMappingStartToken)
+             call node%push_back(OrderedStringUnlimitedMap())
              call this%process_mapping(node%back(), lexr)
 
           class default
@@ -224,24 +228,27 @@ contains
 
     class(AbstractToken), allocatable :: token
     logical :: expect_another
-    type(Configuration) :: sub
     character(:), allocatable :: key
     class(AbstractToken), allocatable :: next_token
 
     expect_another = .false.
-
+    print*,__FILE__,__LINE__
     select type (q => node)
     type is (OrderedStringUnlimitedMap)
        do
           token = lexr%get_token()
+          print*,__FILE__,__LINE__, token%get_id()
 
           select type (token)
-
+          type is (ScalarToken)
+             print*,token%value
+             
           type is (KeyToken)
              next_token = lexr%get_token()
              select type(next_token)
              type is (ScalarToken)
                 key = next_token%value ! always a string
+                print*,__FILE__,__LINE__,'key: ', key
              class default
                 error stop
              end select
@@ -253,24 +260,25 @@ contains
                 error stop
              end select
              next_token = lexr%get_token()
+             print*,__FILE__,__LINE__, token%get_id()
              select type(next_token)
              type is (ScalarToken)
                 call q%insert(key, this%interpret(next_token))
              type is (FlowSequenceStartToken)
-                sub = Configuration(UnlimitedVector())
-                call q%insert(key,sub)
+                print*,__FILE__,__LINE__,'nested flow sequence'
+                call q%insert(key,UnlimitedVector())
                 call this%process_sequence(q%at(key), lexr)
              type is (FlowMappingStartToken)
-                sub = Configuration(OrderedStringUnlimitedMap())
-                call q%insert(key,sub)
+                print*,__FILE__,__LINE__,'starting nested flow mapping'
+                call q%insert(key,OrderedStringUnlimitedMap())
                 call this%process_mapping(q%at(key), lexr)
              type is (BlockSequenceStartToken)
-                sub = Configuration(UnlimitedVector())
+                print*,__FILE__,__LINE__,'nested block sequence'
                 call q%insert(key,UnlimitedVector())
                 call this%process_sequence(q%at(key), lexr)
              type is (BlockMappingStartToken)
-                sub = Configuration(OrderedStringUnlimitedMap())
-                call q%insert(key,sub)
+                print*,__FILE__,__LINE__,'starting nested block mapping'
+                call q%insert(key,OrderedStringUnlimitedMap())
                 call this%process_mapping(q%at(key), lexr)
              class default
                 error stop

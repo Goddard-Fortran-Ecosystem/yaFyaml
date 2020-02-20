@@ -364,8 +364,9 @@ contains
     integer :: status
 
     allocate(PointerNode :: q%node)
+    print*,__FILE__,__LINE__
     call this%get_config_at_selector(q, ARG_LIST, default=default, rc=status)
-
+    print*,__FILE__,__LINE__
   end function at
 
 
@@ -375,7 +376,7 @@ contains
     integer, intent(in) :: index
 
     sub = at(this, index)
-    
+
   end function at_index
 
   function at_key(this, key) result(sub)
@@ -545,10 +546,12 @@ contains
 
     class(*), pointer :: node
 
+    print*,'conversion?'
     node => this%node%get_node()
 
     select type(q => node)
     type is (ArrayWrapper)
+       print*,__FILE__,__LINE__,' arraywrapper'
        select type(qq => q%elements)
        type is (integer)
           values = qq
@@ -556,8 +559,10 @@ contains
           values = [integer :: ] ! empty array
        end select
     type is (UnlimitedVector)
+       print*,__FILE__,__LINE__,' unlimited vector'
        ! Check if all elements are default integer
        n = q%size()
+       print*,__FILE__,__LINE__,' unlimited vector size=', n
        do i = 1, n
           select type (qq => q%at(i))
           type is (integer)
@@ -574,6 +579,7 @@ contains
           end select
        end do
     class default ! category mismatch - not an array
+       print*,__FILE__,__LINE__,' unknown'
        values = [integer :: ] ! empty array
     end select
 

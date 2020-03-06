@@ -1,7 +1,6 @@
 module yafyaml
   use fy_Configuration
   use fy_ErrorCodes
-  use fy_ErrorHandling
 
   ! These should be private
   use fy_Abstractfile

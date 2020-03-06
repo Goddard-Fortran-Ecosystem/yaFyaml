@@ -231,9 +231,7 @@ contains
     do while (iter /= this%possible_simple_keys%end())
        possible_key => iter%value()
        if ((possible_key%line /= this%line()) .or. (this%index() - possible_key%index > 1024)) then
-          if (possible_key%required) then
-             __ASSERT__("Did not find expected ':' while scanning a simple key.",MISSING_COLON_WHILE_SCANNING_A_SIMPLE_KEY)
-          end if
+          __ASSERT__(.not. possible_key%required, MISSING_COLON_WHILE_SCANNING_A_SIMPLE_KEY)
           call this%possible_simple_keys%erase(iter)
        end if
        call iter%next()
@@ -291,7 +289,7 @@ contains
     integer :: status
 
     required = (this%current_flow_level == 0) .and. (this%indent == this%column())
-    __ASSERT__('impossible situation', this%allow_simple_key .or. (.not. required))
+    __ASSERT__(this%allow_simple_key .or. (.not. required), IMPOSSIBLE_COMBINATION)
 
     if (this%allow_simple_key) then
        call this%remove_stale_simple_keys(__RC__)
@@ -426,7 +424,7 @@ contains
     end if
 
     ! Error: ch cannot start any token
-    __ASSERT__("While lexing for the next token, found character that cannot start any token: <"//ch//">",UNEXPECTED_CHARACTER)
+    __FAIL__(UNEXPECTED_CHARACTER)
 
   end subroutine lex_tokens
 
@@ -455,6 +453,7 @@ contains
           found = .true.
        end if
     end do
+
   end subroutine scan_to_next_token
 
   ! Very simple (ignores international chars).  No test.
@@ -574,9 +573,7 @@ contains
     integer, optional, intent(out) :: rc
 
     if (this%current_flow_level == 0) then
-       if (.not. this%allow_simple_key) then
-          __ASSERT__("sequence entries not allowed here",ILLEGAL_SEQUENCE_ENTRY)
-       end if
+       __ASSERT__(this%allow_simple_key, ILLEGAL_SEQUENCE_ENTRY)
        if (this%add_indentation(this%column())) then
           call this%processed_tokens%push_back(BlockSequenceStartToken())
        end if
@@ -636,9 +633,7 @@ contains
     else
 
        if (this%current_flow_level == 0) then
-          if (.not. this%allow_simple_key) then
-             __ASSERT__("mapping values not allowed here.",ILLEGAL_VALUE_IN_MAPPING)
-          end if
+          __ASSERT__(this%allow_simple_key, ILLEGAL_VALUE_IN_MAPPING)
        end if
        this%allow_simple_key = (this%current_flow_level == 0)
        call this%remove_possible_simple_key()
@@ -705,7 +700,7 @@ contains
        if ((this%current_flow_level > 0) .and. ch == ':') then
           if (scan(this%peek(offset=n+1), WHITESPACE_CHARS) == 0) then
              call this%forward(offset=n)
-             __ASSERT__("Found unexpected ':' while lexing a plain scalar",UNEXPECTED_COLON_IN_PLAIN_SCALAR)
+             __FAIL__(UNEXPECTED_COLON_IN_PLAIN_SCALAR)
           end if
        end if
 
@@ -857,7 +852,7 @@ contains
 
     ch = this%peek()
     if (ch == C_NULL_CHAR) then
-       __ASSERT__("End of stream while lexing a quoted scalar.",END_OF_STREAM_INSIDE_QUOTES)
+       __FAIL__(END_OF_STREAM_INSIDE_QUOTES)
     elseif (scan(ch, CR//NL) > 0) then
        line_break = this%scan_line_break()
        breaks = this%scan_flow_scalar_breaks(style,__RC__)
@@ -887,7 +882,7 @@ contains
     do
        pfix = this%prefix(3)
        if ((pfix == '---' .or. pfix == '...') .and. scan(this%peek(offset=3), WHITESPACE_CHARS)>0) then
-          __ASSERT__("Found document separator while scanning a quoted scalar.",UNEXPECTED_DOCUMENT_SEPARATOR)
+          __FAIL__(UNEXPECTED_DOCUMENT_SEPARATOR)
        end if
        do while (scan(this%peek(),' '//TAB) > 0)
           call this%forward()
@@ -946,7 +941,7 @@ contains
              line_break = this%scan_line_break() ! updates internal state, but disregard output value
              text = text // this%scan_flow_scalar_breaks(style)
           else
-             __ASSERT__("Found unknown escape character while scanning a double quoted scalar.",UNKNOWN_ESCAPE_CHARACTER_IN_DOUBLE_QUOTED_SCALAR)
+             __FAIL__(UNKNOWN_ESCAPE_CHARACTER_IN_DOUBLE_QUOTED_SCALAR)
           end if
        else
           __RETURN__(SUCCESS)
@@ -1003,9 +998,7 @@ contains
     ! If not in flow context, may need to add a mapping start token.
     if (this%current_flow_level == 0) then
 
-       if (.not. this%allow_simple_key) then
-          __ASSERT__("mapping keys not allowed here", UNEXPECTED_MAPPING_KEY)
-       end if
+       __ASSERT__(this%allow_simple_key,UNEXPECTED_MAPPING_KEY)
 
        if (this%add_indentation(this%column())) then
           call this%processed_tokens%push_back(BlockMappingStartToken())

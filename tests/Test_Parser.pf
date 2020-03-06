@@ -16,7 +16,7 @@ contains
       cfg = p%load(EscapedTextStream("--- a\n..."))
 
       scalar = cfg
-#ifdef __GFORTRAN__
+#ifdef __GFORTRAN__NO
 #else
       @assert_that(scalar, is("a"))
 #endif

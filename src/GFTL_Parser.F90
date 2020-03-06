@@ -1,2 +1,0 @@
-module fyf_GFTL_Parser
-end module fyf_GFTL_Parser

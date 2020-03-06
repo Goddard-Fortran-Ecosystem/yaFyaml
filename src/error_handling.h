@@ -10,13 +10,12 @@
 #define __RETURN__(a)     call return_rc(a,__FILE__,__LINE__ ___rc___(rc)); __return__
 #define __VERIFY__(a)     if(verify(a,__FILE__,__LINE__ ___rc___(rc))) __return__
 
-#define __ASSERT_MSG_AND_LOC_AND_RC__(msg,cond,file,line,rc)  if(assert(msg,cond,file,line ___rc___(rc))) __return__
-#define __ASSERT_MSG_AND_LOC__(msg,cond,file,line) __ASSERT_MSG_AND_LOC_AND_RC__(msg,cond,file,line,rc)
-#define __ASSERT__(msg,cond) __ASSERT_MSG_AND_LOC__(msg,cond,__FILE__,__LINE__)
-#define __ASSERT_NOMSG__(cond) __ASSERT__('needs informative message',cond)
-#define __FAIL__(msg) __ASSERT__(msg,.false.)
+#define __ASSERT_CODE_AND_LOC_AND_RC__(cond,code,file,line,rc)  if(assert(cond,code,file,line ___rc___(rc))) __return__
+#define __ASSERT_CODE_AND_LOC__(cond,code,file,line) __ASSERT_CODE_AND_LOC_AND_RC__(cond,code,file,line,rc)
+#define __ASSERT__(cond,code) __ASSERT_CODE_AND_LOC__(cond,code,__FILE__,__LINE__)
+#define __FAIL__(code) __ASSERT__(.false.,code)
 
 ! The following macro is useful in suppressing unused dummy variable warnings.
 ! Unused dummys are not unusual in OO code, and the warnings are a distraction.
 ! Use wisely ...
-#    define _UNUSED_DUMMY(x) if (.false.) print*,shape(x)
+#define __UNUSED_DUMMY__(x) if (.false.) print*,shape(x)

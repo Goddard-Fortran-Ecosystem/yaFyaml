@@ -48,6 +48,7 @@
 !
 
 
+#include 'error_handling.h'
 module fy_Configuration
   use fy_ArrayWrapper
   use fy_KeywordEnforcer
@@ -55,6 +56,8 @@ module fy_Configuration
   use gFTL_UnlimitedVector
   use fy_OrderedStringUnlimitedMap
   use fy_String
+  use fy_ErrorCodes
+  use fy_ErrorHandling
   implicit none
   private
 
@@ -157,6 +160,16 @@ module fy_Configuration
 !!$
 
      procedure :: is_none
+
+     procedure :: get_integer_at_key
+     procedure :: get_string_at_key
+     procedure :: get_real_at_key
+     procedure :: get_logical_at_key
+
+     generic :: get => get_integer_at_key
+     generic :: get => get_string_at_key
+     generic :: get => get_logical_at_key
+     generic :: get => get_real_at_key
   end type Configuration
 
 
@@ -217,7 +230,7 @@ contains
 #define ARG_LIST arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9
 
 
-  subroutine get_node_at_selector(this, q, ARG_LIST, unused, default, rc)
+  subroutine get_node_at_selector(this, q, ARG_LIST, unused, is_present, rc)
     class(Configuration), target, intent(in) :: this
     class(*), pointer :: q
     class(*), optional, intent(in) :: arg1
@@ -230,7 +243,7 @@ contains
     class(*), optional, intent(in) :: arg8
     class(*), optional, intent(in) :: arg9
     class(KeywordEnforcer), optional, intent(in) :: unused
-    class(*), optional, intent(in) :: default
+    logical, optional, intent(out) :: is_present
     integer, optional, intent(out) :: rc
 
     type (UnlimitedVector) :: v
@@ -271,13 +284,21 @@ contains
        end select
 
        node => next_node
-       if (.not. associated(node)) exit
+       if (.not. associated(node)) then
+          if (present(is_present)) then
+             is_present = .false.
+          end if
+       end if
+          
        call iter%next()
 
     end do
 
     q => node
 
+    if (present(is_present)) is_present = .true.
+    __RETURN__(SUCCESS)
+    
   contains
 
     subroutine save_args(v)
@@ -832,11 +853,22 @@ contains
 
   end function is_none
 
+#define TYPE_NAME integer
+#include 'get_value.inc'
+#undef TYPE_NAME
 
+#define TYPE_NAME string
+#define STRING
+#include 'get_value.inc'
+#undef STRING
+#undef TYPE_NAME
+
+#define TYPE_NAME real
+#include 'get_value.inc'
+#undef TYPE_NAME
+
+#define TYPE_NAME logical
+#include 'get_value.inc'
+#undef TYPE_NAME
 
 end module fy_Configuration
-
-! type(OrderedStringUnlimitedMap), pointer :: my_map
-! call cfg%get(my_map, ...)
-
-! call cfg%get(sub_config, ...)

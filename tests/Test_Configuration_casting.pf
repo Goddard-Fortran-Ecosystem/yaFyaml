@@ -98,7 +98,7 @@ contains
 
     c = Configuration(scalar=String(expected))
     found = c ! overloaded assignment
-#ifdef __GFORTRAN__
+#ifdef __GFORTRAN__NO
     @assertEqual(found, expected)
 #else
     @assert_that(found, is(equal_to(expected)))
@@ -306,8 +306,8 @@ contains
   end subroutine test_assign_to_real_array_fail
   
 
-#ifndef __GFORTRAN__
-  @test(ifndef=__GFORTRAN__)
+#ifndef __GFORTRAN__NO
+  @test(ifndef=__GFORTRAN__NO)
   subroutine test_assign_to_string_array()
     character(:), allocatable :: found(:)
     
@@ -318,8 +318,8 @@ contains
 #endif
 
   ! Support varying length strings with StringVector
-#ifndef __GFORTRAN__
-  @test(ifndef=__GFORTRAN__)
+#ifndef __GFORTRAN__NO
+  @test(ifndef=__GFORTRAN__NO)
   subroutine test_assign_to_string_vector()
     use gFTL_StringVector
     type (StringVector) :: found
@@ -362,7 +362,7 @@ contains
     end select
     found = c
     
-#ifdef __GFORTRAN__
+#ifdef __GFORTRAN__NO
     @assertEqual(found(1), 'cat ')
     @assertEqual(found(2), 'food')
     @assertEqual(found(3), '    ')
@@ -564,7 +564,7 @@ contains
     @assert_that(found_real,is(equal_to(1.234)))
 
     found_string = c%at(4)
-#ifdef __GFORTRAN__
+#ifdef __GFORTRAN__NO
     @assertEqual(found_string, 'foo')
 #else
     @assert_that(found_string,is(equal_to('foo')))

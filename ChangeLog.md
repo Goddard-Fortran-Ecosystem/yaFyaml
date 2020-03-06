@@ -5,6 +5,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Added
+
+- new interfaces for Configuration::get()
+  . allow for default values and testing if present
+  . overload for each type; just scalars for now
+
+
 ## [0.1.0] - 2020-02-07
 	
 	

@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Added
 
-- new interfaces for Configuration::get()
+- New interfaces for Configuration::get()
   . allow for default values and testing if present
   . overload for each type; just scalars for now
+- Improved error handling throughout
+  . still needs more work.
 
 
 ## [0.1.0] - 2020-02-07

@@ -5,7 +5,6 @@ module yafyaml
 
   ! These should be private
   use fy_Abstractfile
-  use fy_YAML_Parser
   use fy_Parser
   use fy_Tokens
   use fy_AbstractTextStream

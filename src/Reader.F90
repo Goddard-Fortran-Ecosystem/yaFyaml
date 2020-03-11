@@ -79,7 +79,11 @@ contains
     end if
 
     pos = this%local_pos + offset_
-    buffer = this%buffer(pos:pos)
+    if (pos > len(this%buffer)) then
+       buffer = C_NULL_CHAR
+    else
+       buffer = this%buffer(pos:pos)
+    end if
 
   end function peek
 

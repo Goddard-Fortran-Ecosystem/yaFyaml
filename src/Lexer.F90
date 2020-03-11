@@ -290,7 +290,6 @@ contains
 
     required = (this%current_flow_level == 0) .and. (this%indent == this%column())
     __ASSERT__(this%allow_simple_key .or. (.not. required), IMPOSSIBLE_COMBINATION)
-
     if (this%allow_simple_key) then
        call this%remove_stale_simple_keys(__RC__)
        token_number = this%num_tokens_given + this%processed_tokens%size()
@@ -336,7 +335,6 @@ contains
 
     ! Determine type of token from first character
     ch = this%peek()
-
     ! Cannot quite use SELECT CASE here.  Some cases require further
     ! processing to ascertain their relevancy.
 
@@ -557,6 +555,8 @@ contains
   subroutine process_flow_next_entry(this)
     class(Lexer), intent(inout) :: this
 
+    this%allow_simple_key = .true.
+    call this%remove_possible_simple_key()
     call this%forward()
     call this%processed_tokens%push_back(FlowNextEntryToken())
   end subroutine process_flow_next_entry
@@ -616,6 +616,7 @@ contains
     type(IntegerSimpleKeyMapIterator) :: iter
     type(SimpleKey) :: key
 
+
     if (this%possible_simple_keys%count(this%current_flow_level) > 0) then
        iter = this%possible_simple_keys%find(this%current_flow_level)
        key = iter%value()
@@ -635,6 +636,7 @@ contains
        if (this%current_flow_level == 0) then
           __ASSERT__(this%allow_simple_key, ILLEGAL_VALUE_IN_MAPPING)
        end if
+
        this%allow_simple_key = (this%current_flow_level == 0)
        call this%remove_possible_simple_key()
 
@@ -663,7 +665,16 @@ contains
   logical function is_plain_scalar(this)
     class(Lexer), intent(inout) :: this
 
-    is_plain_scalar = .true.
+    character(1) :: ch
+
+    ch = this%peek()
+    
+    is_plain_scalar = scan(ch, WHITESPACE_CHARS//"-?:,[]{}#&*!|>%@`"//"'"//'"') == 0
+    if (.not. is_plain_scalar) then
+       ch = this%peek(offset=1)
+       is_plain_scalar = (scan(ch, WHITESPACE_CHARS) == 0) &
+            .and. (ch == '-' .or. (this%current_flow_level > 0 .and. scan(ch,'?:')> 0))
+    end if
   end function is_plain_scalar
 
   subroutine process_plain_scalar(this, unused, rc)
@@ -757,7 +768,7 @@ contains
        end if
 
        breaks = ''
-       do while (scan(this%peek(), WHITESPACE_CHARS) > 0)
+       do while (scan(this%peek(), CR // NL) > 0)
           if (this%peek() == ' ') then
              call this%forward()
           else
@@ -791,7 +802,9 @@ contains
 
     integer :: status
     class(AbstractToken), allocatable :: token
-    
+
+    call this%save_simple_key()
+    this%allow_simple_key = .false.
     token = this%scan_flow_scalar(style, __RC__)
     call this%processed_tokens%push_back(token)
     __RETURN__(SUCCESS)
@@ -819,7 +832,7 @@ contains
 
     token = ScalarToken(chunks,is_plain=.false.,style=style)
 
-    __RETURN__(rc)
+    __RETURN__(status)
 
 
   end function scan_flow_scalar
@@ -838,6 +851,7 @@ contains
     character(:), allocatable :: line_break, breaks
 
     integer :: status
+
     if (present(rc)) rc = SUCCESS ! unless
     
     text = ''
@@ -915,7 +929,7 @@ contains
 
     do
        n = 0
-       do while (scan(this%peek(offset=n), "'"//'"'//BACKSLASH//C_NULL_CHAR//TAB//CR//NL) == 0)
+       do while (scan(this%peek(offset=n), "'"//'"'//BACKSLASH//' '//C_NULL_CHAR//TAB//CR//NL) == 0)
           n = n + 1
        end do
        if (n > 0) then
@@ -926,7 +940,7 @@ contains
        if ((style /= '"') .and. (ch == "'") .and. (this%peek(offset=1) == "'")) then
           text = text // "'"
           call this%forward(offset=2)
-       elseif (style == '"' .or. (style == "'" .and. scan(ch,'"'//BACKSLASH) > 0)) then
+       elseif ((style == '"' .and. (ch == "'")) .or. (style == "'" .and. scan(ch,'"'//BACKSLASH) > 0)) then
           text = text // ch
           call this%forward()
        elseif ((style == '"') .and. ch == BACKSLASH) then

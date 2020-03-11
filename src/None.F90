@@ -2,7 +2,8 @@ module fy_None
   implicit none
   private
 
-  public :: None
+  public :: none
+  public :: NoneType
   
   type :: NoneType
      private

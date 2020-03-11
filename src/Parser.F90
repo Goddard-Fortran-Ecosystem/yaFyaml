@@ -201,7 +201,7 @@ contains
              call this%process_mapping(node%back(), lexr)
 
           class default
-             error stop 'illegal token encountered'
+             error stop 'illegal token encountered A'
           end select
           deallocate(token)
        end do
@@ -229,10 +229,8 @@ contains
     type is (OrderedStringUnlimitedMap)
        do
           token = lexr%get_token()
-
           select type (token)
           type is (ScalarToken)
-             print*,token%value
              
           type is (KeyToken)
              next_token = lexr%get_token()
@@ -277,7 +275,7 @@ contains
           type is (BlockEndToken)
              exit
           class default
-             error stop 'illegal token encountered'
+             error stop 'illegal token encountered B'
           end select
 
        end do

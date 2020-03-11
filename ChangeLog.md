@@ -9,9 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - New interfaces for Configuration::get()
   . allow for default values and testing if present
-  . overload for each type; just scalars for now
+  . overload for intrinsics:  integer, logical, real, deferred length char
+- Introduced iterator to loop over elements at a single level
+  . still requires SELECT TYPE as iterator must use CLASS(*)
 - Improved error handling throughout
   . still needs more work.
+
+## Fixed
+
+- Some errors in lexing were exposed with pFlogger use cases.
 
 
 ## [0.1.0] - 2020-02-07

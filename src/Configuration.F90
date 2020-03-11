@@ -54,6 +54,7 @@ module fy_Configuration
   use fy_KeywordEnforcer
   use fy_None
   use gFTL_UnlimitedVector
+  use gFTL_StringVector
   use fy_OrderedStringUnlimitedMap
   use fy_String
   use fy_ErrorCodes
@@ -62,6 +63,7 @@ module fy_Configuration
   private
 
   public :: Configuration
+  public :: ConfigurationIterator
 
   type, abstract :: BaseNode
    contains
@@ -162,17 +164,43 @@ module fy_Configuration
      procedure :: is_none
 
      procedure :: get_integer_at_key
-     procedure :: get_string_at_key
      procedure :: get_real_at_key
      procedure :: get_logical_at_key
+     procedure :: get_string_at_key
+     procedure :: get_StringVector_at_key
 
      generic :: get => get_integer_at_key
-     generic :: get => get_string_at_key
      generic :: get => get_logical_at_key
      generic :: get => get_real_at_key
+     generic :: get => get_string_at_key
+     generic :: get => get_StringVector_at_key
+
+     procedure :: is_sequence
+     procedure :: is_mapping
+     procedure :: is_scalar
+
+     procedure :: begin
+     procedure :: end
   end type Configuration
 
+  type :: ConfigurationIterator
+     private
+     ! One type or the other should be allocated; never both
+     type(OrderedStringUnlimitedMapIterator), allocatable :: map_iter
+     type(UnlimitedVectorIterator), allocatable :: vector_iter
+     type(Configuration), pointer :: scalar_iter => null()
+  contains
+     procedure :: key
+     procedure :: value
+     procedure :: get
+     procedure :: next
 
+     procedure :: equal_to_config
+     generic :: operator(==) => equal_to_config
+     procedure :: not_equal_to_config
+     generic :: operator(/=) => not_equal_to_config
+  end type ConfigurationIterator
+  
   interface Configuration
      module procedure new_Configuration_scalar ! including map and 
      module procedure new_Configuration_array
@@ -853,22 +881,207 @@ contains
 
   end function is_none
 
+
 #define TYPE_NAME integer
+#define _INTEGER_
 #include 'get_value.inc'
+#undef _INTEGER_
 #undef TYPE_NAME
 
-#define TYPE_NAME string
+#define TYPE_NAME real
+#define _REAL_
+#include 'get_value.inc'
+#undef _REAL_
+#undef TYPE_NAME
+
+#define TYPE_NAME logical
+#define _LOGICAL_
+#include 'get_value.inc'
+#undef _LOGICAL_
+#undef TYPE_NAME
+
+#define TYPE_NAME String
 #define STRING
 #include 'get_value.inc'
 #undef STRING
 #undef TYPE_NAME
 
-#define TYPE_NAME real
+#define TYPE_NAME StringVector
+#define _STRING_VECTOR_
 #include 'get_value.inc'
+#undef _STRING_VECTOR_
 #undef TYPE_NAME
 
-#define TYPE_NAME logical
-#include 'get_value.inc'
-#undef TYPE_NAME
+  
+
+  function begin(this) result(iter)
+     type(ConfigurationIterator) :: iter
+     class(Configuration), target, intent(in) :: this
+
+     class(*), pointer :: node
+     
+     node => this%node%get_node()
+     
+     select type (q => node)
+     type is (OrderedStringUnlimitedMap)
+        iter%map_iter = q%begin()
+     type is (UnlimitedVector)
+        iter%vector_iter = q%begin()
+     type is (NoneType) ! not a collection
+        iter%scalar_iter => null()
+     class default ! not a collection
+        iter%scalar_iter => this
+     end select
+
+  end function begin
+
+  function end(this) result(iter)
+     type(ConfigurationIterator) :: iter
+     class(Configuration), target, intent(in) :: this
+
+     class(*), pointer :: node
+     
+     node => this%node%get_node()
+     
+     select type (q => node)
+     type is (OrderedStringUnlimitedMap)
+        iter%map_iter = q%end()
+     type is (UnlimitedVector)
+        iter%vector_iter = q%end()
+     type is (NoneType) ! not a collection
+        iter%scalar_iter => null()
+     class default ! not a collection
+        iter%scalar_iter => null()
+     end select
+
+  end function end
+
+
+  logical function equal_to_config(a, b)
+     class(ConfigurationIterator), intent(in) :: a
+     class(ConfigurationIterator), intent(in) :: b
+
+     ! assert (allocated(a%map_iter) .eqv. allocated(b%map_iter))
+     ! assert (allocated(a%vector_iter) .eqv. allocated(b%vector_iter))
+
+     if (allocated(a%map_iter)) then
+        equal_to_config = a%map_iter == b%map_iter
+     elseif (allocated(a%vector_iter)) then
+        equal_to_config = a%vector_iter == b%vector_iter
+     else
+        if (associated(a%scalar_iter)) then
+           equal_to_config = associated(a%scalar_iter, b%scalar_iter)
+        else
+           equal_to_config = .not. associated(b%scalar_iter)
+        end if
+           
+     end if
+  end function equal_to_config
+
+
+  logical function not_equal_to_config(a, b)
+     class(ConfigurationIterator), intent(in) :: a
+     class(ConfigurationIterator), intent(in) :: b
+
+     not_equal_to_config = .not. (a == b)
+     
+  end function not_equal_to_config
+
+  subroutine next(this)
+     class(ConfigurationIterator), intent(inout) :: this
+
+     if (allocated(this%map_iter)) then
+        call this%map_iter%next()
+     elseif (allocated(this%vector_iter)) then
+        call this%vector_iter%next()
+     else
+        this%scalar_iter => null()
+     end if
+        
+  end subroutine next
+
+
+  function key(this)
+     character(:), pointer :: key
+     class(ConfigurationIterator), intent(in) :: this
+
+     key => this%map_iter%key()
+  end function key
+
+  function value(this) result(config)
+     type(Configuration) :: config
+     class(ConfigurationIterator), intent(in) :: this
+
+     allocate(PointerNode :: config%node)
+     select type (q => config%node)
+     type is (PointerNode)
+        q%node => this%map_iter%value()
+     end select
+
+  end function value
+
+  function get(this) result(config)
+     type(Configuration) :: config
+     class(ConfigurationIterator), intent(in) :: this
+
+     if (allocated(this%vector_iter)) then
+        allocate(PointerNode :: config%node)
+        select type (q => config%node)
+        type is (PointerNode)
+           q%node => this%vector_iter%get()
+        end select
+     else
+        config%node = this%scalar_iter%node
+     end if
+                
+  end function get
+
+
+  logical function is_sequence(this)
+     class(Configuration), target, intent(in) :: this
+
+     class(*), pointer :: node
+
+     node => this%node%get_node()
+     select type (node)
+     type is (UnlimitedVector)
+        is_sequence = .true.
+     class default
+        is_sequence = .false.
+     end select
+     
+  end function is_sequence
+
+  logical function is_mapping(this)
+     class(Configuration), target, intent(in) :: this
+
+     class(*), pointer :: node
+
+     node => this%node%get_node()
+     select type (node)
+     type is (OrderedStringUnlimitedMap)
+        is_mapping = .true.
+     class default
+        is_mapping = .false.
+     end select
+     
+  end function is_mapping
+
+  logical function is_scalar(this)
+     class(Configuration), target, intent(in) :: this
+
+     class(*), pointer :: node
+
+     node => this%node%get_node()
+     select type (node)
+     type is (UnlimitedVector)
+        is_scalar = .false.
+     type is (OrderedStringUnlimitedMap)
+        is_scalar = .false.
+     class default
+        is_scalar = .true.
+     end select
+     
+  end function is_scalar
 
 end module fy_Configuration

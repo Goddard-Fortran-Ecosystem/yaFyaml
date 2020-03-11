@@ -23,7 +23,6 @@ add_library (yafyaml
 
   Configuration.F90
   KeywordEnforcer.F90
-  YAML_Parser.F90
   ErrorCodes.F90
   SimpleKey.F90
   ErrorHandling.F90

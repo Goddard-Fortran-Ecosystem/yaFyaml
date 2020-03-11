@@ -1,5 +1,6 @@
 module yafyaml
   use fy_Configuration
+  use fy_OrderedStringUnlimitedMap
   use fy_ErrorCodes
 
   ! These should be private
@@ -14,4 +15,5 @@ module yafyaml
   use fy_Reader
   use fy_Lexer
   use fy_File
+  use fy_none
 end module yafyaml

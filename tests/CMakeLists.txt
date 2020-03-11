@@ -1,7 +1,6 @@
 set (pf_tests
   Test_Configuration_casting.pf
   Test_Configuration_dump.pf
-  Test_YAML_Parser.pf
   Test_FileStream.pf
   Test_File.pf
   Test_Reader.pf

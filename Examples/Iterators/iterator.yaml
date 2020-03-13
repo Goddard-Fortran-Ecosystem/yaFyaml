@@ -1,0 +1,15 @@
+primes:
+    - 2
+    - 3
+    - 5
+    - 7
+shapes:
+    triangle:
+            num_edges: 3
+            edge_length: 3.12
+    square:
+            num_edges: 4
+            edge_length: 6.8
+
+    
+    

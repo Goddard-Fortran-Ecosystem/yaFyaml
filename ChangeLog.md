@@ -9,10 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Added
 ## Fixed
 
+## [0.2.1] - 2020-03-13
+
+## Added
+
+- Added examples - apparently failed to commit thes previously.  Build
+  with 'make Examples', and go to the build directory to run.
+
 
 ## [0.2.0] - 2020-03-11
 
-## Added
+### Added
 
 - New interfaces for Configuration::get()
   . allow for default values and testing if present
@@ -22,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved error handling throughout
   . still needs more work.
 
-## Fixed
+### Fixed
 
 - Some errors in lexing were exposed with pFlogger use cases.
 

@@ -1,269 +1,279 @@
 module Test_Lexer
-  use, intrinsic :: iso_c_binding, only: NL => C_NEW_LINE
-  use yaFyaml
-  use funit
-  use fy_TokenVector
-  implicit none
+   use, intrinsic :: iso_c_binding, only: NL => C_NEW_LINE
+   use yaFyaml
+   use funit
+   use fy_TokenVector
+   implicit none
 
 contains
 
 
-  @test
-  subroutine test_is_at_document_start()
-    type(Lexer) :: lexr
+   @test
+   subroutine test_is_at_document_start()
+      type(Lexer) :: lexr
 
-    lexr = Lexer(Reader(TextStream("---")))
-    @assertTrue(lexr%is_at_document_boundary('---'))
+      lexr = Lexer(Reader(TextStream("---")))
+      @assertTrue(lexr%is_at_document_boundary('---'))
 
-    lexr = Lexer(Reader(TextStream("- -")))
-    @assertFalse(lexr%is_at_document_boundary('---'))
+      lexr = Lexer(Reader(TextStream("- -")))
+      @assertFalse(lexr%is_at_document_boundary('---'))
 
-    ! Must start in 0th column
-    lexr = Lexer(Reader(TextStream(" ---")))
-    @assertFalse(lexr%is_at_document_boundary('---'))
+      ! Must start in 0th column
+      lexr = Lexer(Reader(TextStream(" ---")))
+      @assertFalse(lexr%is_at_document_boundary('---'))
 
-    ! cannot have regular character immediately next
-    lexr = Lexer(Reader(TextStream("---a")))
-    @assertFalse(lexr%is_at_document_boundary('---'))
-    
-  end subroutine test_is_at_document_start
-    
-    
-  @test
-  subroutine test_is_at_document_end()
-    type(Lexer) :: lexr
+      ! cannot have regular character immediately next
+      lexr = Lexer(Reader(TextStream("---a")))
+      @assertFalse(lexr%is_at_document_boundary('---'))
 
-    lexr = Lexer(Reader(TextStream("...")))
-    @assertTrue(lexr%is_at_document_boundary('...'))
+   end subroutine test_is_at_document_start
 
-    lexr = Lexer(Reader(TextStream(". .")))
-    @assertFalse(lexr%is_at_document_boundary('...'))
 
-    ! Must end in 0th column
-    lexr = Lexer(Reader(TextStream(" ...")))
-    @assertFalse(lexr%is_at_document_boundary('...'))
+   @test
+   subroutine test_is_at_document_end()
+      type(Lexer) :: lexr
 
-    ! cannot have regular character immediately next
-    lexr = Lexer(Reader(TextStream("...a")))
-    @assertFalse(lexr%is_at_document_boundary('...'))
-    
-  end subroutine test_is_at_document_end
+      lexr = Lexer(Reader(TextStream("...")))
+      @assertTrue(lexr%is_at_document_boundary('...'))
 
-  @test
-  subroutine test_scan_to_next_token()
-    type(Lexer) :: lexr
+      lexr = Lexer(Reader(TextStream(". .")))
+      @assertFalse(lexr%is_at_document_boundary('...'))
 
-    lexr = Lexer(Reader(TextStream("a")))
-    call lexr%scan_to_next_token()
+      ! Must end in 0th column
+      lexr = Lexer(Reader(TextStream(" ...")))
+      @assertFalse(lexr%is_at_document_boundary('...'))
+
+      ! cannot have regular character immediately next
+      lexr = Lexer(Reader(TextStream("...a")))
+      @assertFalse(lexr%is_at_document_boundary('...'))
+
+   end subroutine test_is_at_document_end
+
+   @test
+   subroutine test_scan_to_next_token()
+      type(Lexer) :: lexr
+
+      lexr = Lexer(Reader(TextStream("a")))
+      call lexr%scan_to_next_token()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(lexr%peek(), is('a'))
+      @assert_that(lexr%peek(), is('a'))
 #endif
 
-    lexr = Lexer(Reader(TextStream("b")))
-    call lexr%scan_to_next_token()
+      lexr = Lexer(Reader(TextStream("b")))
+      call lexr%scan_to_next_token()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(lexr%peek(), is('b'))
+      @assert_that(lexr%peek(), is('b'))
 #endif    
-    lexr = Lexer(Reader(TextStream("  b")))
-    call lexr%scan_to_next_token()
+      lexr = Lexer(Reader(TextStream("  b")))
+      call lexr%scan_to_next_token()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(lexr%peek(), is('b'))
+      @assert_that(lexr%peek(), is('b'))
 #endif
-    lexr = Lexer(Reader(EscapedTextStream("  \n  b")))
-    call lexr%scan_to_next_token()
+      lexr = Lexer(Reader(EscapedTextStream("  \n  b")))
+      call lexr%scan_to_next_token()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(lexr%peek(), is('b'))
+      @assert_that(lexr%peek(), is('b'))
 #endif    
-    lexr = Lexer(Reader(EscapedTextStream("  # comment \n  :")))
-    call lexr%scan_to_next_token()
+      lexr = Lexer(Reader(EscapedTextStream("  # comment \n  :")))
+      call lexr%scan_to_next_token()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(lexr%peek(), is(':'))
+      @assert_that(lexr%peek(), is(':'))
 #endif
-    lexr = Lexer(Reader(EscapedTextStream("  # comment \n  \n# foo  #\n -")))
-    call lexr%scan_to_next_token()
+      lexr = Lexer(Reader(EscapedTextStream("  # comment \n  \n# foo  #\n -")))
+      call lexr%scan_to_next_token()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(lexr%peek(), is('-'))
+      @assert_that(lexr%peek(), is('-'))
 #endif
-  end subroutine test_scan_to_next_token
+   end subroutine test_scan_to_next_token
 
-  @test
-  subroutine test_flow_sequence_end_token()
-    type(Lexer) :: lexr
-    class(AbstractToken), allocatable :: token
-    character(:), allocatable :: id
+   @test
+   subroutine test_flow_sequence_end_token()
+      type(Lexer) :: lexr
+      class(AbstractToken), allocatable :: token
+      character(:), allocatable :: id
 
-    lexr = Lexer(Reader(TextStream("]")))
+      lexr = Lexer(Reader(TextStream("]")))
 
-    token = lexr%get_token() ! skip stream start
-    token = lexr%get_token()
-    id = token%get_id()
+      token = lexr%get_token() ! skip stream start
+      token = lexr%get_token()
+      id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(id, is(equal_to(']')))
+      @assert_that(id, is(equal_to(']')))
 #endif
-    
-  end subroutine test_flow_sequence_end_token
 
-  @test
-  subroutine test_flow_mapping_end_token()
-    type(Lexer) :: lexr
-    class(AbstractToken), allocatable :: token
-    character(:), allocatable :: id
+   end subroutine test_flow_sequence_end_token
 
-    lexr = Lexer(Reader(TextStream("}")))
+   @test
+   subroutine test_flow_mapping_end_token()
+      type(Lexer) :: lexr
+      class(AbstractToken), allocatable :: token
+      character(:), allocatable :: id
 
-    token = lexr%get_token() ! skip stream start
-    token = lexr%get_token()
-    id = token%get_id()
+      lexr = Lexer(Reader(TextStream("}")))
+
+      token = lexr%get_token() ! skip stream start
+      token = lexr%get_token()
+      id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(id, is(equal_to(FLOW_MAPPING_END_INDICATOR)))
+      @assert_that(id, is(equal_to(FLOW_MAPPING_END_INDICATOR)))
 #endif
-  end subroutine test_flow_mapping_end_token
+   end subroutine test_flow_mapping_end_token
 
 
-  @test
-  subroutine test_flow_next_entry()
-    type(Lexer) :: lexr
-    class(AbstractToken), allocatable :: token
-    character(:), allocatable :: id
+   @test
+   subroutine test_flow_next_entry()
+      type(Lexer) :: lexr
+      class(AbstractToken), allocatable :: token
+      character(:), allocatable :: id
 
-    lexr = Lexer(Reader(TextStream(",")))
+      lexr = Lexer(Reader(TextStream(",")))
 
-    token = lexr%get_token() ! skip stream start
-    token = lexr%get_token()
-    id = token%get_id()
+      token = lexr%get_token() ! skip stream start
+      token = lexr%get_token()
+      id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(id, is(equal_to(FLOW_NEXT_ENTRY_INDICATOR)))
+      @assert_that(id, is(equal_to(FLOW_NEXT_ENTRY_INDICATOR)))
 #endif
-    
-  end subroutine test_flow_next_entry
 
-  @test
-  subroutine test_block_next_entry()
-    type(Lexer) :: lexr
-    class(AbstractToken), allocatable :: token
-    character(:), allocatable :: id
+   end subroutine test_flow_next_entry
 
-    lexr = Lexer(Reader(TextStream("- a")))
+   @test
+   subroutine test_block_next_entry()
+      type(Lexer) :: lexr
+      class(AbstractToken), allocatable :: token
+      character(:), allocatable :: id
 
-    token = lexr%get_token() ! skip stream start
-    token = lexr%get_token()
-    id = token%get_id()
-    @assertEqual(id, "<block sequence start>")
-    token = lexr%get_token()
-    id = token%get_id()
+      lexr = Lexer(Reader(TextStream("- a")))
+
+      token = lexr%get_token() ! skip stream start
+      token = lexr%get_token()
+      id = token%get_id()
+      @assertEqual(id, "<block sequence start>")
+      token = lexr%get_token()
+      id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(id, is(equal_to(BLOCK_NEXT_ENTRY_INDICATOR)))
+      @assert_that(id, is(equal_to(BLOCK_NEXT_ENTRY_INDICATOR)))
 #endif
-  end subroutine test_block_next_entry
+   end subroutine test_block_next_entry
 
 
-  @test
-  subroutine test_value()
-    type(Lexer) :: lexr
-    class(AbstractToken), allocatable :: token
-    character(:), allocatable :: id
+   @test
+   subroutine test_value()
+      type(Lexer) :: lexr
+      class(AbstractToken), allocatable :: token
+      character(:), allocatable :: id
 
-    lexr = Lexer(Reader(TextStream("a:")))
+      lexr = Lexer(Reader(TextStream("a:")))
 
-    token = lexr%get_token() ! skip stream start
-    token = lexr%get_token() ! document start
-    token = lexr%get_token()
-    id = token%get_id()
+      token = lexr%get_token() ! skip stream start
+      token = lexr%get_token() ! document start
+      token = lexr%get_token()
+      id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(id, is(equal_to(KEY_INDICATOR)))
+      @assert_that(id, is(equal_to(KEY_INDICATOR)))
 #endif
-    token = lexr%get_token() ! scalar token
-    token = lexr%get_token()
-    id = token%get_id()
+      token = lexr%get_token() ! scalar token
+      token = lexr%get_token()
+      id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(id, is(equal_to(VALUE_INDICATOR)))
+      @assert_that(id, is(equal_to(VALUE_INDICATOR)))
 #endif
-  end subroutine test_value
+   end subroutine test_value
 
-  @test
-  subroutine test_plain_scalar()
-    type(Lexer) :: lexr
-    class(AbstractToken), allocatable :: token
-    character(:), allocatable :: id
+   @test
+   subroutine test_plain_scalar()
+      type(Lexer) :: lexr
+      class(AbstractToken), allocatable :: token
+      character(:), allocatable :: id
 
-    lexr = Lexer(Reader(TextStream("abc d ")))
+      lexr = Lexer(Reader(TextStream("abc d ")))
 
-    token = lexr%get_token() ! skip stream start
-    token = lexr%get_token()
-    id = token%get_id()
-    @assert_that(id, is(equal_to('<scalar>')))
+      token = lexr%get_token() ! skip stream start
+      token = lexr%get_token()
+      id = token%get_id()
+      @assert_that(id, is(equal_to('<scalar>')))
 
-    select type (token)
-    type is (ScalarToken)
-       @assert_that(token%is_plain, is(true()))
+      select type (token)
+      type is (ScalarToken)
+         @assert_that(token%is_plain, is(true()))
 #ifdef __GFORTRAN__
 #else
-       @assert_that(token%value, is(equal_to('abc d')))
+         @assert_that(token%value, is(equal_to('abc d')))
 #endif
-    end select
+      end select
 
-  end subroutine test_plain_scalar
+   end subroutine test_plain_scalar
 
 
-  @test
-  subroutine test_is_value()
-    type(Lexer) :: lexr
-    class(AbstractToken), allocatable :: token
-    character(:), allocatable :: id
+   @test
+   subroutine test_is_value()
+      type(Lexer) :: lexr
+      class(AbstractToken), allocatable :: token
+      character(:), allocatable :: id
 
-    ! flow context
-    lexr = Lexer(Reader(TextStream("  a : b")))
-    token = lexr%get_token() ! skip stream start
-    token = lexr%get_token() ! skip block mapping start
-    token = lexr%get_token() ! skip key 
-    token = lexr%get_token() ! skip scalar "a"
-    token = lexr%get_token()
-    id = token%get_id()
+      ! flow context
+      lexr = Lexer(Reader(TextStream("  a : b")))
+      token = lexr%get_token() ! skip stream start
+      token = lexr%get_token() ! skip block mapping start
+      token = lexr%get_token() ! skip key 
+      token = lexr%get_token() ! skip scalar "a"
+      token = lexr%get_token()
+      id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(id, is(equal_to(':')))
+      @assert_that(id, is(equal_to(':')))
 #endif
-    ! block context - no space after ":"
-    lexr = Lexer(Reader(TextStream("{? a : b}")))
-    token = lexr%get_token() ! skip stream start
-    token = lexr%get_token() ! "{"
-    id = token%get_id()
+      ! block context - no space after ":"
+      lexr = Lexer(Reader(TextStream("{? a : b}")))
+      token = lexr%get_token() ! skip stream start
+      token = lexr%get_token() ! "{"
+      id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(id, is(equal_to('{')))
+      @assert_that(id, is(equal_to('{')))
 #endif
-    token = lexr%get_token() ! key marker
-    id = token%get_id()
+      token = lexr%get_token() ! key marker
+      id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(id, is(equal_to('?')))
+      @assert_that(id, is(equal_to('?')))
 #endif
-    token = lexr%get_token() ! a
-    id = token%get_id()
+      token = lexr%get_token() ! a
+      id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(id, is(equal_to('<scalar>')))
+      @assert_that(id, is(equal_to('<scalar>')))
 #endif
-    token = lexr%get_token()
-    id = token%get_id()
+      token = lexr%get_token()
+      id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-    @assert_that(id, is(equal_to(':')))
+      @assert_that(id, is(equal_to(':')))
 #endif    
-    
-  end subroutine test_is_value
+
+   end subroutine test_is_value
+
+   @
+   subroutine test_anchor()
+      type(Lexer) :: lexr
+      class(AbstractToken), allocatable :: token
+      character(:), allocatable :: id
+
+      lexr = Lexer(Reader(EscapedTextStream("  a : b")))
+      token = lexr%get_token() ! skip stream start
+      
 
 end module Test_Lexer
 

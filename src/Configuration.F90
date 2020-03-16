@@ -48,7 +48,7 @@
 !
 
 
-#include 'error_handling.h'
+#include "error_handling.h"
 module fy_Configuration
   use fy_ArrayWrapper
   use fy_KeywordEnforcer
@@ -884,31 +884,31 @@ contains
 
 #define TYPE_NAME integer
 #define _INTEGER_
-#include 'get_value.inc'
+#include "get_value.inc"
 #undef _INTEGER_
 #undef TYPE_NAME
 
 #define TYPE_NAME real
 #define _REAL_
-#include 'get_value.inc'
+#include "get_value.inc"
 #undef _REAL_
 #undef TYPE_NAME
 
 #define TYPE_NAME logical
 #define _LOGICAL_
-#include 'get_value.inc'
+#include "get_value.inc"
 #undef _LOGICAL_
 #undef TYPE_NAME
 
 #define TYPE_NAME String
 #define STRING
-#include 'get_value.inc'
+#include "get_value.inc"
 #undef STRING
 #undef TYPE_NAME
 
 #define TYPE_NAME StringVector
 #define _STRING_VECTOR_
-#include 'get_value.inc'
+#include "get_value.inc"
 #undef _STRING_VECTOR_
 #undef TYPE_NAME
 

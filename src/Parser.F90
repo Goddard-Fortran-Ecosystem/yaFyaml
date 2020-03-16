@@ -290,6 +290,7 @@ contains
      
 
   function interpret(this, scalar) result(value)
+     use fy_String
     class(*), allocatable :: value
     class(Parser), intent(in) :: this
     type(ScalarToken) :: scalar
@@ -308,8 +309,8 @@ contains
     elseif(this%schema%matches_real(text)) then
        value = this%schema%to_real(text)
     else
-       ! anything else is a string
-       value = text
+       ! anything else is a string (workaround for gFortran)
+       value = String(text)
     end if
 
   end function interpret

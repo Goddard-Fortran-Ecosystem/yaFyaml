@@ -265,15 +265,5 @@ contains
 
    end subroutine test_is_value
 
-   @
-   subroutine test_anchor()
-      type(Lexer) :: lexr
-      class(AbstractToken), allocatable :: token
-      character(:), allocatable :: id
-
-      lexr = Lexer(Reader(EscapedTextStream("  a : b")))
-      token = lexr%get_token() ! skip stream start
-      
-
 end module Test_Lexer
 

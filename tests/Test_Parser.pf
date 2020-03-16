@@ -16,7 +16,7 @@ contains
       cfg = p%load(EscapedTextStream("--- a\n..."))
 
       scalar = cfg
-#ifdef __GFORTRAN__NO
+#ifdef __GFORTRAN__
 #else
       @assert_that(scalar, is("a"))
 #endif
@@ -157,6 +157,31 @@ contains
 
    end subroutine test_pflogger_reproducer2
 
+
+   ! Another pflogger use case that breaks
+   ! gfortran
+   @test
+   subroutine test_mapping_with_strings
+      type(Configuration), target :: c
+      type(Parser) :: p
+      class(*), pointer :: node
+      
+      c = Configuration(OrderedStringUnlimitedMap())
+      call c%get_node_at_selector(node)
+
+      select type (node)
+      type is (OrderedStringUnlimitedMap)
+         call node%insert('format', "%(asctime)a %(message)a")
+         call node%insert('datemft', 'date')
+      end select
+
+         
+         p = Parser()
+         c = p%load(EscapedTextStream( &
+           & ' format: "%(asctime)a %(message)a"\n' // &
+           & " datefmt: date \n"))
+
+   end subroutine test_mapping_with_strings
 
 end module Test_Parser
 

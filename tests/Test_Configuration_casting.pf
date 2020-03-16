@@ -98,7 +98,7 @@ contains
 
     c = Configuration(scalar=String(expected))
     found = c ! overloaded assignment
-#ifdef __GFORTRAN__NO
+#ifdef __GFORTRAN__
     @assertEqual(found, expected)
 #else
     @assert_that(found, is(equal_to(expected)))
@@ -306,8 +306,8 @@ contains
   end subroutine test_assign_to_real_array_fail
   
 
-#ifndef __GFORTRAN__NO
-  @test(ifndef=__GFORTRAN__NO)
+#ifndef __GFORTRAN__
+  @test(ifndef=__GFORTRAN__)
   subroutine test_assign_to_string_array()
     character(:), allocatable :: found(:)
     
@@ -318,8 +318,8 @@ contains
 #endif
 
   ! Support varying length strings with StringVector
-#ifndef __GFORTRAN__NO
-  @test(ifndef=__GFORTRAN__NO)
+#ifndef __GFORTRAN__
+  @test(ifndef=__GFORTRAN__)
   subroutine test_assign_to_string_vector()
     use gFTL_StringVector
     type (StringVector) :: found
@@ -362,7 +362,7 @@ contains
     end select
     found = c
     
-#ifdef __GFORTRAN__NO
+#ifdef __GFORTRAN__
     @assertEqual(found(1), 'cat ')
     @assertEqual(found(2), 'food')
     @assertEqual(found(3), '    ')
@@ -541,7 +541,6 @@ contains
     integer :: found_integer
     real :: found_real
     character(:), allocatable :: found_string
-
     class(*), pointer :: node
 
     c = Configuration(UnlimitedVector())
@@ -564,7 +563,7 @@ contains
     @assert_that(found_real,is(equal_to(1.234)))
 
     found_string = c%at(4)
-#ifdef __GFORTRAN__NO
+#ifdef __GFORTRAN__
     @assertEqual(found_string, 'foo')
 #else
     @assert_that(found_string,is(equal_to('foo')))
@@ -602,5 +601,102 @@ contains
     @assert_that(n,is(equal_to(4)))
 
   end subroutine test_at_index_map
+
+
+  ! The following test is to explore compiler issue encountered with
+  ! GFortran while processing simple.yaml in the examples.
+
+  @test
+  subroutine test_simple_example()
+    type(Configuration), target :: c
+    type(OrderedStringUnlimitedMap) :: found_map
+
+    class(*), pointer :: node, node2
+    integer :: v1, v2, v3
+    logical :: is_present
+    integer :: status
+
+    c = Configuration(OrderedStringUnlimitedMap())
+    call c%get_node_at_selector(node)
+
+    select type (node)
+    type is (OrderedStringUnlimitedMap)
+       call node%insert('x', 1.234)
+       call node%insert('name', 'Fred')
+       call node%insert('flag', .true.)
+
+       call node%insert('sequence_a', UnlimitedVector())
+       node2 => node%at('sequence_a')
+       select type (node2)
+       type is (unlimitedVector)
+          call node2%push_back(1)
+          call node2%push_back(2)
+          call node2%push_back(3)
+          call node2%push_back(4)
+       end select
+
+       call node%insert('sequence_b', Unlimitedvector())
+       node2 => node%at('sequence_a')
+       select type (node2)
+       type is (unlimitedVector)
+          call node2%push_back(1)
+          call node2%push_back(2)
+          call node2%push_back(3)
+          call node2%push_back(4)
+       end select
+
+       call node%insert('mapping_b', OrderedStringUnlimitedMap())
+       node2 => node%at('mapping_b')
+       select type (node2)
+       type is(OrderedStringUnlimitedMap)
+          call node2%insert('v1', 7)
+          call node2%insert('v2', 8)
+       end select
+
+       call node%insert('mapping_a', OrderedStringUnlimitedMap())
+       node2 => node%at('mapping_a')
+       select type (node2)
+       type is(OrderedStringUnlimitedMap)
+          call node2%insert('v1', 7)
+          call node2%insert('v2', 8)
+       end select
+
+    end select
+
+    ! This works:
+    v1 = c .at. 'mapping_b' .at. 'v1'
+    @assert_that(v1,is(equal_to(7)))
+    v2 = c .at. 'mapping_b' .at. 'v2'
+    @assert_that(v2,is(equal_to(8)))
+
+
+    block
+      type(Configuration) :: cc
+
+      cc = c%at('mapping_b', 'v1')
+      v1 = cc
+      @assert_that(v1,is(equal_to(7)))
+    end block
+
+    ! but this does crashes:
+    v1 = c%at('mapping_b', 'v1')
+    @assert_that(v1,is(equal_to(7)))
+    v2 = c%at('mapping_b', 'v2')
+    @assert_that(v2,is(equal_to(8)))
+
+    ! And this:
+   v1 = -1
+   call c%get(v1, 'mapping_b', 'v1', is_present=is_present, rc=status)
+   @assert_that(v1, is(equal_to(7)))
+   @assert_that(is_present, is(true()))
+   @assert_that(status, is(equal_to(SUCCESS)))
+
+   ! As does this
+   call c%get(v3, 'mapping_b', 'v3', default=17, is_present=is_present, rc=status)
+
+   @assert_that(v3, is(equal_to(17)))
+   @assert_that(is_present, is(false()))
+    
+ end subroutine test_simple_example
 
 end module Test_Configuration_casting

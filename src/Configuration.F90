@@ -367,6 +367,7 @@ contains
     
     
     call this%get_node_at_selector(node, ARG_LIST, rc=status)
+    __VERIFY__(status)
 
     if (.not. associated(node) .and. .not.present(default)) then
        node => None
@@ -386,8 +387,8 @@ contains
        end select
     end if
        
-!!$    VERIFY(status)
 
+    __RETURN__(SUCCESS)
   end subroutine get_config_at_selector
 
 

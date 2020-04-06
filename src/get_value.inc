@@ -95,21 +95,6 @@ subroutine NAME_(TYPE_NAME)(this, value, ARG_LIST, unusable, default, is_present
       class default
          if (present(is_present)) is_present = .true.
          if (present(default)) value = default
-#ifdef _INTEGER_ 
-         print*,'integer'
-#endif
-#ifdef _REAL_ 
-         print*,'real'
-#endif
-#ifdef _LOGICAL_ 
-         print*,'logical'
-#endif
-#ifdef _STRING_VECTOR_ 
-         print*,'string vector'
-#endif
-#ifdef STRING
-         print*,'string'
-#endif
          __FAIL__(INCONSISTENT_TYPE)
       end select
    end if

@@ -23,6 +23,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bugfix for #include.   GNU CPP requires double quotes for include files.
 
+## [0.3.0] - 2020-4-06
+
+## Fixed
+ - varous missing checks on return status
+ - eliminated some debug print statements
+
+## [0.2.2] - 2020-03-16
+
+## Fixed
+
+- Bugfix for #include.   GNU CPP requires double quotes for include files.
+
 ## [0.2.1] - 2020-03-13
 
 ## Added

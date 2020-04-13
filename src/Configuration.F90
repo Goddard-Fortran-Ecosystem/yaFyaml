@@ -332,16 +332,27 @@ contains
     subroutine save_args(v)
       type (UnlimitedVector), intent(out) :: v
 
-      if (present(arg1)) call v%push_back(arg1)
-      if (present(arg2)) call v%push_back(arg2)
-      if (present(arg3)) call v%push_back(arg3)
-      if (present(arg4)) call v%push_back(arg4)
-      if (present(arg5)) call v%push_back(arg5)
-      if (present(arg6)) call v%push_back(arg6)
-      if (present(arg7)) call v%push_back(arg7)
-      if (present(arg8)) call v%push_back(arg8)
-      if (present(arg9)) call v%push_back(arg9)
-    end subroutine save_args
+      if (present(arg1)) call save_one(v, arg1)
+      if (present(arg2)) call save_one(v, arg2)
+      if (present(arg3)) call save_one(v, arg3)
+      if (present(arg4)) call save_one(v, arg4)
+      if (present(arg5)) call save_one(v, arg5)
+      if (present(arg6)) call save_one(v, arg6)
+      if (present(arg7)) call save_one(v, arg7)
+      if (present(arg8)) call save_one(v, arg8)
+      if (present(arg9)) call save_one(v, arg9)
+   end subroutine save_args
+
+   subroutine save_one(v, arg)
+      type(UnlimitedVector), intent(inout) :: v
+      class(*), intent(in) :: arg
+      select type (arg)
+      type is (character(*))
+         call v%push_back(String(arg))
+      class default
+         call v%push_back(arg)
+      end select
+   end subroutine save_one
     
   end subroutine get_node_at_selector
     

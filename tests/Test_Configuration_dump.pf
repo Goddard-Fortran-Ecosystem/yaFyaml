@@ -16,7 +16,7 @@ contains
 
     cfg = Configuration(.true.)
     write(buffer,"(DT)") cfg
-#ifdef __GFORTRAN__NO
+#ifdef __GFORTRAN__
 #else
     @assert_that(trim(buffer),is(equal_to('true')))
 #endif
@@ -35,7 +35,7 @@ contains
     cfg = Configuration(1)
     write(buffer,'(DT)') cfg
 
-#ifdef __GFORTRAN__NO
+#ifdef __GFORTRAN__
 #else
     @assert_that(trim(buffer),is(equal_to('1')))
 #endif
@@ -55,7 +55,7 @@ contains
     expected = trim(adjustl(buffer))
     write(buffer,'(DT)') cfg
 
-#ifdef __GFORTRAN__NO
+#ifdef __GFORTRAN__
 #else
     @assert_that(trim(adjustl(buffer)),is(equal_to(expected)))
 #endif
@@ -70,7 +70,7 @@ contains
     cfg = Configuration(('heptagon'))
     write(buffer,'(DT)') cfg
 
-#ifdef __GFORTRAN__NO
+#ifdef __GFORTRAN__
 #else
     @assert_that(trim(buffer),is(equal_to("'heptagon'")))
 #endif    
@@ -96,7 +96,7 @@ contains
     
     write(buffer,'(DT)',iostat=status) cfg
     @assert_that(status, is(equal_to(0)))
-#ifdef __GFORTRAN__NO
+#ifdef __GFORTRAN__
     @assert_that(trim(buffer) == "[1,'enigma',false]",is(true()))
 #else
     @assert_that(trim(buffer),is(equal_to("[1,'enigma',false]")))
@@ -110,7 +110,7 @@ contains
     type(OrderedStringUnlimitedMap) :: m
 
     class(*), pointer :: node
-    character(100) :: buffer
+    character(200) :: buffer
     integer :: status
 
     cfg = Configuration(OrderedStringUnlimitedMap())
@@ -125,7 +125,7 @@ contains
 
     write(buffer,'(DT)', iostat=status) cfg
     @assert_that(status, is(equal_to(0)))
-#ifdef __GFORTRAN__NO
+#ifdef __GFORTRAN__
     @assert_that(trim(buffer) == "{'triangle': 3,'square': 4,'heptadecagon': 17}", is(true()))
 #else
     @assert_that(trim(buffer),is(equal_to("{'triangle': 3,'square': 4,'heptadecagon': 17}")))
@@ -137,9 +137,8 @@ contains
   subroutine test_dump_nested_sequence()
     type(Configuration) :: cfg
     class(*), pointer :: node, sub
-    character(100) :: buffer
+    character(200) :: buffer
     character(:), allocatable :: expected
-
 
     integer :: status
     
@@ -171,7 +170,7 @@ contains
 
     write(buffer,'(DT)', iostat=status) cfg
     @assert_that(status, is(equal_to(0)))
-#ifdef __GFORTRAN__NO
+#ifdef __GFORTRAN__
     @assert_that(trim(buffer) == expected,is(true()))
 #else
     @assert_that(trim(buffer),is(equal_to(expected)))

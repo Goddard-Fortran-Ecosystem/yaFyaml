@@ -150,6 +150,7 @@ module fy_Configuration
      
      procedure :: write_formatted
      generic :: write(formatted) => write_formatted
+     procedure :: to_json
 
      
 !!$
@@ -882,6 +883,87 @@ contains
     end subroutine write_one
     
   end subroutine write_formatted
+
+  subroutine to_json(this, str)
+     class(Configuration), intent(in) :: this
+     character(:), allocatable :: str
+
+    class(*), pointer :: node
+
+    node => this%node%get_node()
+    str = ""
+    call write_one(node, str)
+
+  contains
+
+    recursive subroutine write_one(node, str)
+      class(*), intent(in) :: node
+      character(:), allocatable :: str
+
+      type(OrderedStringUnlimitedMapIterator) :: iter
+      integer :: i
+      character(1000) :: buffer
+      character(:), allocatable :: str2
+      integer :: iostat
+
+      select type (q => node)
+      type is (logical)
+         if (q) then
+            str = str // 'true'
+         else
+            str = str // 'false'
+         end if
+      type is (integer)
+         write(buffer,'(i0)',iostat=iostat) q
+         str = str // trim(buffer)
+      type is (real)
+         write(buffer,'(g0)',iostat=iostat) q
+         str = str // trim(buffer)
+      type is (string)
+         write(buffer,'(a1,a,a1)',iostat=iostat)"'",q%s,"'"
+         str = str // trim(buffer)
+      type is (character(*))
+         write(buffer,'(a1,a,a1)',iostat=iostat) "'",q,"'"
+         str = str // trim(buffer)
+      type is (UnlimitedVector)
+         str = str // "["
+         do i = 1, q%size()
+            call write_one(q%at(i), str2)
+            str = str // str2
+            if (i < q%size()) then
+               str = str // ","
+            end if
+         end do
+         str = str // "]"
+
+      type is (OrderedStringUnlimitedMap)
+         str = str // "{"
+         iter = q%begin()
+         if (iter /= q%end()) then
+            call write_one(iter%key(), str2)
+            str = str // str2
+            str = str // ": "
+            call write_one(iter%value(), str2)
+            str = str // str2
+            call iter%next()
+         end if
+         do while (iter /= q%end())
+            str = str // "'"
+            call write_one(iter%key(), str2)
+            str = str // str2
+            str = str // ":"
+            call write_one(iter%value(), str2)
+            str = str // str2
+            call iter%next
+         end do
+         str = str // "}"
+      class default
+         str = "error"
+      end select
+
+    end subroutine write_one
+
+  end subroutine to_json
 
   logical function is_none(this)
     class(Configuration), target, intent(in) :: this

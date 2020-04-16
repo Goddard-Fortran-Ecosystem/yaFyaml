@@ -13,8 +13,12 @@ contains
   subroutine test_dump_scalar_logical()
     type(Configuration) :: cfg
     character(100) :: buffer
+!!$    character(:), allocatable :: str
 
     cfg = Configuration(.true.)
+!!$    call cfg%to_json(str)
+!!$    buffer = str
+
     write(buffer,"(DT)") cfg
 #ifdef __GFORTRAN__
 #else
@@ -22,6 +26,9 @@ contains
 #endif
 
     cfg = Configuration(.false.)
+!!$    call cfg%to_json(str)
+!!$    buffer = str
+         print*,__FILE__,__LINE__
     write(buffer,'(DT)') cfg
     @assert_that(trim(buffer),is(equal_to('false')))
     

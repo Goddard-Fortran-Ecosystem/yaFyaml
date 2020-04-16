@@ -54,20 +54,24 @@ contains
     type(Parser) :: p
     class(AbstractSchema), intent(in) :: schema
 
-    p%schema = schema
+    allocate(p%schema,source=schema)
   end function new_Parser_schema
 
   function new_Parser_schema_name(schema_name) result(p)
     type(Parser) :: p
     character(*), intent(in) :: schema_name
-
+    type(JSONSchema) :: json
+    type(CoreSchema) :: core
+    type(FailsafeSchema) :: failsafe
+    
+    
     select case (schema_name)
     case ('json','JSON')
-       p = Parser(JSONSchema())
+       p = Parser(json)
     case ('core','Core')
-       p = Parser(CoreSchema())
+       p = Parser(core)
     case ('failsafe','Failsafe')
-       p = Parser(FailsafeSchema())
+       p = Parser(failsafe)
     case default
        error stop "Unknown schema"
     end select
@@ -100,7 +104,7 @@ contains
 
     done = .false.
     do
-       token = lexr%get_token()
+       allocate(token, source=lexr%get_token())
        select type (token)
        type is (StreamStartToken)
        type is (StreamEndToken)
@@ -143,6 +147,7 @@ contains
        class default
           error stop 'unsupported token type in top'
        end select
+       deallocate(token)
     end do
 
   end subroutine top
@@ -162,7 +167,7 @@ contains
     select type (node)
     type is (UnlimitedVector)
        do
-          token = lexr%get_token()
+          allocate(token,source = lexr%get_token())
 
 
           select type (token)
@@ -228,26 +233,28 @@ contains
     select type (q => node)
     type is (OrderedStringUnlimitedMap)
        do
-          token = lexr%get_token()
+          allocate(token, source = lexr%get_token())
           select type (token)
           type is (ScalarToken)
              
           type is (KeyToken)
-             next_token = lexr%get_token()
+             allocate(next_token, source=lexr%get_token())
              select type(next_token)
              type is (ScalarToken)
                 key = next_token%value ! always a string
              class default
                 error stop
              end select
-             next_token = lexr%get_token()
+             deallocate(next_token)
+             allocate(next_token, source = lexr%get_token())
              select type(next_token)
              type is (ValueToken)
                 ! mandatory before value
              class default
                 error stop
              end select
-             next_token = lexr%get_token()
+             deallocate(next_token)
+             allocate(next_token, source = lexr%get_token())
              select type(next_token)
              type is (ScalarToken)
                 call q%insert(key, this%interpret(next_token))
@@ -266,6 +273,7 @@ contains
              class default
                 error stop
              end select
+             deallocate(next_token)
 
           type is (FlowNextEntryToken)
              expect_another = .true.
@@ -278,6 +286,7 @@ contains
              error stop 'illegal token encountered B'
           end select
 
+          deallocate(token)
        end do
        
     class default
@@ -301,16 +310,16 @@ contains
     text = scalar%value
 
     if (this%schema%matches_null(text)) then
-       value = None
+       allocate(value, source=none)
     elseif (this%schema%matches_logical(text)) then
-       value = this%schema%to_logical(text)
+       allocate(value, source = this%schema%to_logical(text))
     elseif (this%schema%matches_integer(text)) then
-       value = this%schema%to_integer(text)
+       allocate(value, source = this%schema%to_integer(text))
     elseif(this%schema%matches_real(text)) then
-       value = this%schema%to_real(text)
+       allocate(value, source = this%schema%to_real(text))
     else
        ! anything else is a string (workaround for gFortran)
-       value = String(text)
+       allocate(value, source = String(text))
     end if
 
   end function interpret

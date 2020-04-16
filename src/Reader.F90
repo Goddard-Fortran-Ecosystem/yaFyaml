@@ -55,7 +55,7 @@ contains
   function new_Reader(stream) result(r)
     type(Reader) :: r
     class(AbstractTextStream), intent(in) :: stream
-    r%stream = stream
+    allocate(r%stream, source=stream)
     r%raw_buffer = ''
     r%buffer = ''
   end function new_Reader

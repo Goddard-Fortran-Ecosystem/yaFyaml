@@ -1125,7 +1125,7 @@ contains
            q%node => this%vector_iter%get()
         end select
      else
-        config%node = this%scalar_iter%node
+        allocate(config%node, source=this%scalar_iter%node)
      end if
                 
   end function get

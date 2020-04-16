@@ -162,12 +162,14 @@ contains
     do
        need_more = this%need_more_tokens(rc=status)
        if (status /= SUCCESS) then
-          token = NullToken()
+          allocate(token, source=NullToken())
           __RETURN__(status)
        end if
        if (need_more) then
           call this%lex_tokens(rc=status)
-          if (status /= SUCCESS) token = NullToken()
+          if (status /= SUCCESS) then
+             allocate(token, source=NullToken())
+          end if
           __VERIFY__(status)
        else
           exit
@@ -176,9 +178,9 @@ contains
 
     if (this%processed_tokens%size() >= 0) then
        this%num_tokens_given = this%num_tokens_given + 1
-       token = this%pop_token()
+       call this%pop_token(token)
     else
-       token = NullToken()
+       allocate(token, source=NullToken())
     end if
 
     __RETURN__(SUCCESS)
@@ -304,16 +306,16 @@ contains
 
   ! Have not implemented stack in gFTL, so
   ! vector will have to suffice
-  function pop_token(this) result(token)
-    class(AbstractToken), allocatable :: token
+  subroutine pop_token(this, token)
     class(Lexer), intent(inout) :: this
+    class(AbstractToken), allocatable, intent(out) :: token
 
     associate (tokens => this%processed_tokens)
-      token = tokens%at(1)
+      allocate(token, source=tokens%at(1))
       call tokens%erase(tokens%begin())
     end associate
 
-  end function pop_token
+ end subroutine pop_token
     
 
   ! All the different cases ...
@@ -805,15 +807,15 @@ contains
 
     call this%save_simple_key()
     this%allow_simple_key = .false.
-    token = this%scan_flow_scalar(style, __RC__)
+    call this%scan_flow_scalar(token, style, __RC__)
     call this%processed_tokens%push_back(token)
     __RETURN__(SUCCESS)
   end subroutine process_quoted_scalar
 
 
-  function scan_flow_scalar(this, style, unused, rc) result(token)
-    class(AbstractToken), allocatable :: token
+  subroutine scan_flow_scalar(this, token, style, unused, rc)
     class(Lexer), intent(inout) :: this
+    class(AbstractToken), allocatable, intent(out) :: token
     character, intent(in) :: style
     class(KeywordEnforcer), optional, intent(in) :: unused
     integer, optional, intent(out) :: rc
@@ -830,12 +832,12 @@ contains
     end do
     call this%forward()
 
-    token = ScalarToken(chunks,is_plain=.false.,style=style)
+    allocate(token, source=ScalarToken(chunks,is_plain=.false.,style=style))
 
     __RETURN__(status)
 
 
-  end function scan_flow_scalar
+ end subroutine scan_flow_scalar
 
 
   function scan_flow_scalar_spaces(this, style, unused, rc) result(text)

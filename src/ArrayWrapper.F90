@@ -24,7 +24,7 @@ contains
 #ifdef __GFORTRAN__
       allocate(wrapper%elements, source=array)
 #else
-      wrapper%elements = array
+      allocate(wrapper%elements, source=array)
 #endif
 
    end function new_ArrayWrapper

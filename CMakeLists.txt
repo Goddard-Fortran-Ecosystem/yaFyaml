@@ -18,6 +18,8 @@ if(NOT found)
   message( FATAL_ERROR "Unrecognized Fortran compiler. Please use ifort, gfortran, NAG, PGI, or XL.")
 endif()
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 find_package (GFTL)
 find_package (GFTL_SHARED)
 find_package (PFUNIT 4.1 QUIET)

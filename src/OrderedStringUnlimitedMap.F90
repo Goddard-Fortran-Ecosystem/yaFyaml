@@ -2,13 +2,13 @@ module fy_OrderedStringUnlimitedMap
   use gFTL_StringIntegerMap
   use gFTL_StringVector
   use gFTL_UnlimitedVector
-  use gFTL_StringUnlimitedMap, only: pair
+  use gFTL_StringUnlimitedMap, only: StringUnlimitedPair
   implicit none
   private
 
   public :: OrderedStringUnlimitedMap
   public :: OrderedStringUnlimitedMapIterator
-  public :: pair
+  public :: StringUnlimitedPair
   type :: OrderedStringUnlimitedMap
      private
      type(StringIntegerMap) :: map
@@ -102,7 +102,7 @@ contains
 
   subroutine insert_pair(this, p)
     class(OrderedStringUnlimitedMap), intent(inout) :: this
-    type(pair), intent(in) :: p
+    type(StringUnlimitedPair), intent(in) :: p
 
     call this%insert(p%key, p%value)
 

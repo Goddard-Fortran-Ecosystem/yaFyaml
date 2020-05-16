@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 
 project (YAFYAML
-  VERSION 0.3.0
+  VERSION 0.3.1
   LANGUAGES Fortran)
 
 # Most users of this software do not (should not?) have permissions to
@@ -18,8 +18,8 @@ if(NOT found)
   message( FATAL_ERROR "Unrecognized Fortran compiler. Please use ifort, gfortran, NAG, PGI, or XL.")
 endif()
 
-find_package (GFTL)
-find_package (GFTL_SHARED)
+find_package (GFTL REQUIRED)
+find_package (GFTL_SHARED REQUIRED VERSION 1.0.4)
 find_package (PFUNIT 4.1 QUIET)
 
 add_subdirectory (src)

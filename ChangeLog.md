@@ -8,7 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Added
 ## Fixed
 
-## [0.3.0] - 2020-4-06
+## [0.3.1] - 2020-05-16
+
+## Fixed
+
+- adapting to recent minor interface change in gFTL-shared
+  Derived type "Pair" is now given a less generic name.
+
+## [0.3.0] - 2020-04-06
 
 ## Fixed
  - varous missing checks on return status

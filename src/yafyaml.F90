@@ -1,6 +1,7 @@
 module yafyaml
   use fy_Configuration
   use fy_OrderedStringUnlimitedMap
+  use fy_String
   use fy_ErrorCodes
 
   ! These should be private

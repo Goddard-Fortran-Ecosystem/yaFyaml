@@ -1,0 +1,23 @@
+# exercising the basics and non-nested sequences/mappings
+x:  1.234
+name: ABCDEFGHIJKLMONPQRSTUVWXYZ
+flag: True
+
+# flow sequence
+sequence_a:  [ 1 , 2 , 3 , 4 ]
+
+# block sequence
+sequence_b:
+  - 1
+  - 2
+  - 3
+  - 4
+
+# block mapping
+mapping_b:
+  v1: 7.0
+  v2: 8.0
+
+# flow mapping
+mapping_a: { v1: 7.0 , v2: 8.0 }
+

@@ -75,7 +75,7 @@ program main
    if (v1 == 7 .and. v2 == 8) then
       print*,'success'
    else
-      print*,'failure in handling flow mapping', v1, v2
+      print*,'failure in handling block mapping', v1, v2
    end if
 
    call config%get(subconfig, 'mapping_b')

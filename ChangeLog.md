@@ -5,6 +5,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2020-05-16
+
+## Fixed
+- adapting to recent minor interface change in gFTL-shared
+  Derived type "Pair" is now given a less generic name.
+
 ## [0.3.2] - 2020-05-12
 
 ### Changed

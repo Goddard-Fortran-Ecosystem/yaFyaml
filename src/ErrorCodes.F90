@@ -17,12 +17,14 @@ module fy_ErrorCodes
      enumerator :: ILLEGAL_SEQUENCE_ENTRY
      enumerator :: IMPOSSIBLE_COMBINATION
      enumerator :: PARSER_ERROR
+     enumerator :: NON_ALPHANUMERIC_CHARACTER
      ! Config use errors
      enumerator :: INCONSISTENT_TYPE
      enumerator :: KEY_NOT_FOUND
      enumerator :: SELECTOR_NOT_FOUND
      enumerator :: ATTEMPTED_MAP_ACCESS_ON_NONMAP_NODE
      enumerator :: ATTEMPTED_VECTOR_ACCESS_ON_NONVECTOR_NODE
+
   end enum
 
 contains
@@ -59,6 +61,8 @@ contains
          message = "Impossible situaition in lexer."
       case (PARSER_ERROR)
          message = "Error during parsing."
+      case (NON_ALPHANUMERIC_CHARACTER)
+         message = "Found nonalphanumeric character in anchor."
       case (INCONSISTENT_TYPE)
          message = 'Type of request does not match type in config.'
       case (KEY_NOT_FOUND)

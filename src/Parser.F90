@@ -13,6 +13,7 @@ module fy_Parser
   use fy_None
   use gFTL_UnlimitedVector
   use fy_OrderedStringUnlimitedMap
+  use fy_StringUnlimitedPointerMap
   use fy_AbstractSchema
   use fy_FailsafeSchema
   use fy_JSONSchema
@@ -25,6 +26,7 @@ module fy_Parser
   type :: Parser
      private
      class(AbstractSchema), allocatable :: schema
+     type(StringUnlimitedPointerMap) :: anchors
    contains
      procedure :: load
      procedure :: top
@@ -90,7 +92,7 @@ contains
 
 
   subroutine top(this, cfg, lexr)
-    class(Parser), intent(in) :: this
+    class(Parser), intent(inout) :: this
     type(Configuration), intent(inout) :: cfg
     type(Lexer), intent(inout) :: lexr
 
@@ -149,7 +151,7 @@ contains
 
 
   recursive subroutine process_sequence(this, node, lexr)
-    class(Parser), intent(in) :: this
+    class(Parser), intent(inout) :: this
     class(*), pointer, intent(in) :: node ! pointer association is not modified
     type(Lexer), intent(inout) :: lexr 
 
@@ -215,7 +217,7 @@ contains
 
 
   recursive subroutine process_mapping(this, node, lexr)
-    class(Parser), intent(in) :: this
+    class(Parser), intent(inout) :: this
     class(*), pointer, intent(in) :: node
     type(Lexer), intent(inout) :: lexr
 
@@ -223,6 +225,7 @@ contains
     logical :: expect_another
     character(:), allocatable :: key
     class(AbstractToken), allocatable :: next_token
+    character(:), allocatable :: anchor
 
     expect_another = .false.
     select type (q => node)
@@ -248,6 +251,23 @@ contains
                 error stop
              end select
              next_token = lexr%get_token()
+
+             ! Possible anchor or alias?
+             select type(qq => next_token)
+             type is (AnchorToken)
+                anchor = qq%value
+                next_token = lexr%get_token()
+             type is (AliasToken)
+                anchor = qq%value
+                if (this%anchors%count(anchor) > 0) then
+                   call q%insert(key, this%anchors%at(anchor))
+                   cycle
+                else
+                   error stop "no such anchor"
+                end if
+                next_token = lexr%get_token()
+             end select
+
              select type(next_token)
              type is (ScalarToken)
                 call q%insert(key, this%interpret(next_token))
@@ -264,8 +284,17 @@ contains
                 call q%insert(key,OrderedStringUnlimitedMap())
                 call this%process_mapping(q%at(key), lexr)
              class default
-                error stop
+                error stop 'illegal token encountered C'
              end select
+             if (allocated(anchor)) then
+                block
+                  class(*), pointer :: ptr
+                  ptr => q%at(key)
+                  call this%anchors%insert(anchor, ptr)
+                end block
+!!$                call this%anchors%insert(anchor, q%at(key))
+             end if
+
 
           type is (FlowNextEntryToken)
              expect_another = .true.

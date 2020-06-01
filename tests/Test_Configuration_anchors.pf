@@ -1,0 +1,12 @@
+module Test_Configuration_anchors
+   use funit
+   use fy_Configuration
+   implicit none
+
+contains
+
+   @test
+   subroutine test_simple_anchor()
+   end subroutine test_simple_anchor
+
+end module Test_Configuration_anchors

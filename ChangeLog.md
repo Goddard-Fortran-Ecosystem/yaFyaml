@@ -5,9 +5,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Support for very simple anchor/alias use cases.
+  No merges, just vanilly copy-in-place.  
+
 ## [0.3.3] - 2020-05-16
 
-## Fixed
+### Fixed
 - adapting to recent minor interface change in gFTL-shared
   Derived type "Pair" is now given a less generic name.
 

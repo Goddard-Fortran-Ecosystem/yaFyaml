@@ -265,5 +265,45 @@ contains
 
    end subroutine test_is_value
 
+   @test
+   subroutine test_is_anchor()
+      type(Lexer) :: lexr
+      class(AbstractToken), allocatable :: token
+      character(:), allocatable :: id
+
+      lexr = Lexer(Reader(TextStream("&anchor ")))
+      token = lexr%get_token() ! skip stream start
+
+      token = lexr%get_token()
+      id = token%get_id()
+#ifdef __GFORTRAN__
+#else
+      @assert_that(id, is(equal_to('<anchor>')))
+#endif
+      
+
+   end subroutine test_is_anchor
+
+
+   @test
+   subroutine test_is_alias()
+      type(Lexer) :: lexr
+      class(AbstractToken), allocatable :: token
+      character(:), allocatable :: id
+
+      lexr = Lexer(Reader(TextStream("*alias ")))
+      token = lexr%get_token() ! skip stream start
+
+      token = lexr%get_token()
+      id = token%get_id()
+#ifdef __GFORTRAN__
+#else
+      @assert_that(id, is(equal_to('<alias>')))
+#endif
+
+   end subroutine test_is_alias
+
+
+
 end module Test_Lexer
 

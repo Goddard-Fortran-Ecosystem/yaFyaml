@@ -92,6 +92,10 @@ module fy_Lexer
      procedure :: process_quoted_scalar
      procedure :: process_plain_scalar
 
+     procedure :: process_alias
+     procedure :: process_anchor
+     procedure :: scan_anchor_or_alias
+
      procedure :: remove_stale_simple_keys
      procedure :: remove_possible_simple_key
      procedure :: get_nearest_possible_simple_key
@@ -150,10 +154,10 @@ contains
   end subroutine initialize
 
   ! return the next token
-  function get_token(this, unused, rc) result(token)
+  function get_token(this, unusable, rc) result(token)
     class(AbstractToken), allocatable :: token
     class(Lexer), intent(inout) :: this
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(out) :: rc
 
     logical :: need_more
@@ -185,9 +189,9 @@ contains
 
   end function get_token
 
-  logical function need_more_tokens(this, unused, rc)
+  logical function need_more_tokens(this, unusable, rc)
     class(Lexer), intent(inout) :: this
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(out) :: rc
 
     integer :: status
@@ -219,9 +223,9 @@ contains
 
   ! Remove entries in possible simple keys that are no longer, er,
   ! possible.
-  subroutine remove_stale_simple_keys(this, unused, rc)
+  subroutine remove_stale_simple_keys(this, unusable, rc)
     class(Lexer), target, intent(inout) :: this
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(out) :: rc
 
     type(SimpleKey), pointer :: possible_key
@@ -278,9 +282,9 @@ contains
   end function get_nearest_possible_simple_key
 
 
-  subroutine save_simple_key(this, unused, rc)
+  subroutine save_simple_key(this, unusable, rc)
     class(Lexer), intent(inout) :: this
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(out) :: rc
 
     logical :: required
@@ -317,9 +321,9 @@ contains
     
 
   ! All the different cases ...
-  subroutine lex_tokens(this, unused, rc)
+  subroutine lex_tokens(this, unusable, rc)
     class(Lexer), intent(inout) :: this
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(out) :: rc
 
     character(1) :: ch
@@ -393,18 +397,18 @@ contains
        __RETURN__(SUCCESS)
     end if
 
- !!$    if (ch == ALIAS_INDICATOR) then
- !!$       call this%process_alias()
- !!$       __RETURN__(SUCCESS)
- !!$   end if
- !!$    if (ch == ANCHOR_INDICATOR) then
- !!$       call this%process_anchor()
- !!$       __RETURN__(SUCCESS)
- !!$   end if
- !!$    if (ch == TAG_INDICATOR) then
- !!$       call this%process_TAG()
- !!$       __RETURN__(SUCCESS)
-!!$   end if
+    if (ch == ALIAS_INDICATOR) then
+       call this%process_alias(__RC__)
+       __RETURN__(SUCCESS)
+    end if
+    if (ch == ANCHOR_INDICATOR) then
+       call this%process_anchor(__RC__)
+       __RETURN__(SUCCESS)
+    end if
+!!$    if (ch == TAG_INDICATOR) then
+!!$       call this%process_TAG()
+!!$       __RETURN__(SUCCESS)
+!!$    end if
 
     if (ch == SINGLE_QUOTED_SCALAR_INDICATOR) then
        call this%process_quoted_scalar(style="'",__RC__)
@@ -567,9 +571,9 @@ contains
     is_block_next_entry = (scan(this%peek(offset=1),WHITESPACE_CHARS) > 0)
   end function is_block_next_entry
 
-  subroutine process_block_next_entry(this, unused, rc)
+  subroutine process_block_next_entry(this, unusable, rc)
     class(Lexer), intent(inout) :: this
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(out) :: rc
 
     if (this%current_flow_level == 0) then
@@ -607,9 +611,9 @@ contains
   end function add_indentation
 
 
-  subroutine process_value(this, unused, rc)
+  subroutine process_value(this, unusable, rc)
     class(Lexer), target, intent(inout) :: this
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(out) :: rc
     
 
@@ -677,9 +681,9 @@ contains
     end if
   end function is_plain_scalar
 
-  subroutine process_plain_scalar(this, unused, rc)
+  subroutine process_plain_scalar(this, unusable, rc)
     class(Lexer), intent(inout) :: this
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(out) :: rc
 
     integer :: n
@@ -794,10 +798,10 @@ contains
 
   end function scan_plain_spaces
 
-  subroutine process_quoted_scalar(this, style, unused, rc)
+  subroutine process_quoted_scalar(this, style, unusable, rc)
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style ! "'" or '"'
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(out) :: rc
 
     integer :: status
@@ -811,11 +815,11 @@ contains
   end subroutine process_quoted_scalar
 
 
-  function scan_flow_scalar(this, style, unused, rc) result(token)
+  function scan_flow_scalar(this, style, unusable, rc) result(token)
     class(AbstractToken), allocatable :: token
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(out) :: rc
 
     character(:), allocatable :: chunks
@@ -838,11 +842,11 @@ contains
   end function scan_flow_scalar
 
 
-  function scan_flow_scalar_spaces(this, style, unused, rc) result(text)
+  function scan_flow_scalar_spaces(this, style, unusable, rc) result(text)
     character(:), allocatable :: text
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(out) :: rc
 
     integer :: n
@@ -883,11 +887,11 @@ contains
     
   end function scan_flow_scalar_spaces
 
-  function scan_flow_scalar_breaks(this, style, unused, rc) result(text)
+  function scan_flow_scalar_breaks(this, style, unusable, rc) result(text)
     character(:), allocatable :: text
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(out) :: rc
 
     character(:), allocatable :: pfix
@@ -913,11 +917,11 @@ contains
   end function scan_flow_scalar_breaks
 
 
-  function scan_flow_scalar_non_spaces(this, style, unused, rc) result(text)
+  function scan_flow_scalar_non_spaces(this, style, unusable, rc) result(text)
     character(:), allocatable :: text
     class(Lexer), intent(inout) :: this
     character, intent(in) :: style
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(out) :: rc
 
     integer :: n
@@ -1004,9 +1008,9 @@ contains
     
   end function is_key
 
-  subroutine process_key(this, unused, rc)
+  subroutine process_key(this, unusable, rc)
     class(Lexer), intent(inout) :: this
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(out) :: rc
 
     ! If not in flow context, may need to add a mapping start token.
@@ -1033,10 +1037,10 @@ contains
   ! corresponding methods on the reader component.  These are just for
   ! convenience/clarity.
   
-  function peek(this, unused, offset) result(ch)
+  function peek(this, unusable, offset) result(ch)
     character(len=1) :: ch
     class(Lexer), intent(inout) :: this
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(in) :: offset
     ch = this%r%peek(offset=offset)
   end function peek
@@ -1049,9 +1053,9 @@ contains
   end function prefix
 
 
-  subroutine forward(this, unused, offset)
+  subroutine forward(this, unusable, offset)
     class(Lexer), intent(inout) :: this
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(in) :: offset
     call this%r%forward(offset=offset)
   end subroutine forward
@@ -1072,6 +1076,116 @@ contains
     class(Lexer), intent(in) :: this
     index = this%r%get_index()
   end function index
+
+  subroutine process_alias(this, unusable, rc)
+     class(Lexer), intent(inout) :: this
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     integer, optional, intent(out) :: rc
+
+     class(AbstractToken), allocatable :: token
+     integer :: status
+
+     token = NullToken() ! unless
+     
+     ! Starting a simple key?
+     call this%save_simple_key()
+
+     ! No simple keys after this
+     this%allow_simple_key = .false.
+
+     ! Add anchor
+     token = this%scan_anchor_or_alias('alias',__RC__)
+     call this%processed_tokens%push_back(token)
+
+
+  end subroutine process_alias
+
+  subroutine process_anchor(this, unusable, rc)
+     class(Lexer), intent(inout) :: this
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     integer, optional, intent(out) :: rc
+
+     class(AbstractToken), allocatable :: token
+     integer :: status
+
+     ! Starting a simple key?
+     call this%save_simple_key()
+
+     ! No simple keys after this
+     this%allow_simple_key = .false.
+
+     ! Add anchor
+     token = this%scan_anchor_or_alias('anchor', __RC__)
+     call this%processed_tokens%push_back(token)
+     
+  end subroutine process_anchor
+
+
+  function scan_anchor_or_alias(this, type, unusable, rc) result(token)
+     class(AbstractToken), allocatable :: token
+     class(Lexer), intent(inout) :: this
+     character(*), intent(in) :: type
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     integer, optional, intent(out) :: rc
+
+     character(1) :: ch
+     character(:), allocatable :: name
+     character(:), allocatable :: value
+     integer :: length
+     integer :: status
+
+     token = NullToken() ! unless ...
+     ! Following Python YAML: aliases must be numbers and ASCII
+     ! characters.
+     ch = this%peek()
+     if (ch == '*') then
+        name = 'alias'
+     else
+        name = 'anchor'
+     end if
+
+     call this%forward()
+     length = 0
+     ch = this%peek(offset=length)
+     do while (is_alphanumeric(ch))
+        length = length + 1
+        ch = this%peek(offset=length)
+     end do
+     if (length == 0) then
+        __FAIL__(NON_ALPHANUMERIC_CHARACTER)
+     end if
+
+     value = this%prefix(n=length)
+     call this%forward(offset=length)
+     
+     ch = this%peek()
+
+     if (scan(ch, C_NULL_CHAR // ' ' // TAB // CR // NL // '?:,]{%@') == 0) then
+        __FAIL__(UNEXPECTED_CHARACTER)
+     end if
+
+     select case (type)
+     case ('anchor')
+        token = AnchorToken(value)
+     case ('alias')
+        token = AliasToken(value)
+     case default
+        __FAIL__(NONSPECIFIC_ERROR)
+     end select
+
+     __RETURN__(SUCCESS)
+  end function scan_anchor_or_alias
+
+  logical  function is_alphanumeric(c)
+     character(1), intent(in) :: c
+     
+     is_alphanumeric = &
+          & ('0' <= c .and. c <= '9') .or. &
+          & ('a' <= c .and. c <= 'z') .or. &
+          & ('A' <= c .and. c <= 'Z') .or. &
+          & (c == '-' .or. c == '_')
+     
+  end function is_alphanumeric
 
 
 end module fy_Lexer

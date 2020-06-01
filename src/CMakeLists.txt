@@ -3,6 +3,7 @@ add_library (yafyaml
   ArrayWrapper.F90
   AbstractFile.F90
   File.F90
+  StringUnlimitedPointerMap.F90
 
   String.F90
   UnlimitedUtilities.F90

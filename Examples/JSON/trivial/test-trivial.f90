@@ -4,13 +4,13 @@ program main
 
    type(Parser) p
    type(Configuration) c
-   logical :: fauxnews=.true.
+   logical :: science=.false.
 
    p = Parser('core')
    c = p%load(FileStream('trivial.json'))
-   fauxnews = c%at('fauxnews') ! this should overwrite fauxnews with .false.
+   science = c%at('science') ! this should overwrite science with .true.
 
-   if (fauxnews) error stop "Test failed"
+   if (.not. science) error stop "Test failed"
 
    sync all
    if (this_image()==1) print *,"Test passed"

@@ -26,25 +26,37 @@ find_package (PFUNIT 4.1 QUIET)
 
 add_subdirectory (src)
 
-#if (examples)
-#  add_subdirectory(Examples)
-#endif()
+enable_testing()
+
+if (NOT TARGET (tests))
+  add_custom_target(tests
+    COMMAND ${CMAKE_CTEST_COMMAND}
+    EXCLUDE_FROM_ALL)
+endif ()
+if (NOT TARGET (build-tests))
+  add_custom_target(build-tests)
+  add_dependencies(tests build-tests)
+endif ()
 
 if (PFUNIT_FOUND)
   set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${GFTL_SOURCE_DIR}/cmake_utils")
   include (${CMAKE_Fortran_COMPILER_ID} RESULT_VARIABLE found)
-
-  enable_testing()
-  if (NOT TARGET (tests))
-    add_custom_target(tests COMMAND ${CMAKE_CTEST_COMMAND})
-  endif ()
-  
-  add_subdirectory(tests)
+  add_subdirectory (tests EXCLUDE_FROM_ALL)
 endif ()
+
+# The following forces tests to be built when using "make ctest" even if some targets
+# are EXCLUDE_FROM_ALL
+# From https://stackoverflow.com/questions/733475/cmake-ctest-make-test-doesnt-build-tests/56448477#56448477
+build_command(CTEST_CUSTOM_PRE_TEST TARGET build-tests)
+string(CONFIGURE \"@CTEST_CUSTOM_PRE_TEST@\" CTEST_CUSTOM_PRE_TEST_QUOTED ESCAPE_QUOTES)
+file(WRITE "${CMAKE_BINARY_DIR}/CTestCustom.cmake" "set(CTEST_CUSTOM_PRE_TEST ${CTEST_CUSTOM_PRE_TEST_QUOTED})" "\n")
 
 if (NOT TARGET (examples))
-  add_custom_target(examples COMMAND ${CMAKE_CTEST_COMMAND})
+  add_custom_target(examples
+    COMMAND ${CMAKE_CTEST_COMMAND}
+    EXCLUDE_FROM_ALL)
 endif ()
+
 add_subdirectory (Examples EXCLUDE_FROM_ALL)
 
 # find_package() support

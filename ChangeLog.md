@@ -5,9 +5,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Quoted strings that contained non-string values (e.g., "2004") were
+  being intrepreted as non-strings.
+
 ## [0.3.3] - 2020-05-16
 
-## Fixed
+### Fixed
 - adapting to recent minor interface change in gFTL-shared
   Derived type "Pair" is now given a less generic name.
 

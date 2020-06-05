@@ -9,4 +9,8 @@ add_dependencies (examples simple.x simple2.x)
 
 FILE (COPY simple.yaml DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 FILE (COPY simple2.yaml DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+FILE (COPY foo.yaml DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+add_executable (foo.x foo.F90)
+target_link_libraries (foo.x yafyaml gftl-shared)
+add_dependencies (examples foo.x)

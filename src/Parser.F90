@@ -300,8 +300,12 @@ contains
 
     text = scalar%value
 
-    if (this%schema%matches_null(text)) then
+    if (any(scalar%style == ['"',"'"])) then
+       value = String(text)
+    elseif (this%schema%matches_null(text)) then
        value = None
+    elseif (this%schema%matches_logical(text)) then
+       value = this%schema%to_logical(text)
     elseif (this%schema%matches_logical(text)) then
        value = this%schema%to_logical(text)
     elseif (this%schema%matches_integer(text)) then

@@ -183,5 +183,22 @@ contains
 
    end subroutine test_mapping_with_strings
 
+   ! Reproducer for issue #13
+   @test
+   subroutine test_quoted_integer()
+      type(Parser) :: p
+      type(Configuration) :: cfg
+
+      character(:), allocatable :: s
+
+      p = Parser()
+      cfg = p%load(EscapedTextStream(' key1: "2004" \n'))
+
+      call cfg%get(s,"key1", default="ABCDEFG")
+
+      @assert_that(s, is(equal_to("2004")))
+      print*,"hi"
+   end subroutine test_quoted_integer
+
 end module Test_Parser
 

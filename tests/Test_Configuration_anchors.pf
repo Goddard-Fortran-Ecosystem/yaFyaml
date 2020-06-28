@@ -1,0 +1,52 @@
+module Test_Configuration_anchors
+   use funit
+   use fy_Parser
+   use fy_EscapedTextStream
+   use fy_Configuration
+   implicit none
+
+contains
+
+   @test
+   subroutine test_merge_key()
+
+      type(Parser) :: p
+      type(Configuration) :: cfg
+      type(Configuration) :: sub
+
+      integer :: i_a, i_b
+      integer :: j_a, j_b
+
+      p = Parser()
+      cfg = p%load(EscapedTextStream( &
+           & "---\n" // &
+           & "map1: \n" // &
+           & "  - &anchor \n" // &
+           & "    i: 1 \n" // &
+           & "    j: 2 \n" // &
+           & "map3: \n" // &
+           & "  - i: 1 \n" // &
+           & "    j: 2 \n" // &
+           & "map2: \n" // &
+           & "  - <<: *anchor \n" // &
+!!$           & "  - i: 2 \n" //&
+           & "    j: 3 \n" // &
+           & "..."))
+
+      i_a = cfg%at('map1', 1, 'i')
+      @assert_that(i_a, is(equal_to(1)))
+      
+      j_a = cfg%at('map1', 1, 'j')
+      @assert_that(j_a, is(equal_to(2)))
+      
+      i_b = cfg%at('map2', 1, 'i')
+      @assert_that(i_b, is(equal_to(1)))
+      
+      j_b = cfg%at('map2', 1, 'j')
+      @assert_that(j_b, is(equal_to(3)))
+      
+
+   end subroutine test_merge_key
+
+
+end module Test_Configuration_anchors

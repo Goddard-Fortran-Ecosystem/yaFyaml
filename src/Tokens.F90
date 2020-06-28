@@ -26,6 +26,9 @@ module fy_Tokens
   public :: ValueToken
   public :: ScalarToken
 
+  public :: AnchorToken
+  public :: AliasToken
+
   type, abstract :: AbstractToken
 !!$     private
      character(:), allocatable :: id
@@ -166,6 +169,23 @@ module fy_Tokens
   interface BlockMappingStartToken
      module procedure new_BlockMappingStartToken
   end interface BlockMappingStartToken
+
+  type, extends(AbstractToken) :: AliasToken
+     character(:), allocatable :: value
+  end type AliasToken
+
+  interface AliasToken
+     module procedure new_AliasToken
+  end interface AliasToken
+  
+  type, extends(AbstractToken) :: AnchorToken
+     character(:), allocatable :: value
+  end type AnchorToken
+
+  interface AnchorToken
+     module procedure new_AnchorToken
+  end interface AnchorToken
+  
 
 !!$  type, extends(AbstractToken) :: FlowMappingStartToken
 !!$  end type FlowMappingStartToken
@@ -315,5 +335,25 @@ contains
     this%id = id
   end subroutine set_id
 
+
+  function new_AliasToken(value) result(token)
+     type(AliasToken) :: token
+     character(*), intent(in) :: value
+
+     call token%set_id('<alias>')
+     token%value = value
+
+  end function new_AliasToken
+
+
+
+  function new_AnchorToken(value) result(token)
+     type(AnchorToken) :: token
+     character(*), intent(in) :: value
+
+     call token%set_id('<anchor>')
+     token%value = value
+
+  end function new_AnchorToken
 
 end module fy_Tokens

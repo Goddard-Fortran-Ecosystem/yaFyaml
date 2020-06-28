@@ -157,7 +157,7 @@ contains
   function at(this, key) result(res)
     class(OrderedStringUnlimitedMap), target, intent(in) :: this
     character(len=*) , intent(in) :: key
-    class(*) , pointer :: res
+    class(*), pointer :: res
 
     integer, pointer :: n
 

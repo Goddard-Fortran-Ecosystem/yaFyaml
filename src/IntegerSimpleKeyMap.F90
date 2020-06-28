@@ -4,6 +4,7 @@ module fy_IntegerSimpleKeyMap
 #define _key integer
 #define _value type(SimpleKey)
 #define _map IntegerSimpleKeyMap
+#define _pair IntegerSimpleKeyPair
 #define _alt
 #define _iterator IntegerSimpleKeyMapIterator
 #include "templates/map.inc"

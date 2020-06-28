@@ -3,6 +3,7 @@ add_library (yafyaml
   ArrayWrapper.F90
   AbstractFile.F90
   File.F90
+  StringUnlimitedPointerMap.F90
 
   String.F90
   UnlimitedUtilities.F90
@@ -41,7 +42,12 @@ target_include_directories(yafyaml PUBLIC
   $<INSTALL_INTERFACE:${dest}/include>
 )  
 
+add_executable(to_json.x to_json.F90)
+target_link_libraries(to_json.x PRIVATE yafyaml)
+
+
 install (TARGETS yafyaml EXPORT YAFYAML DESTINATION ${dest}/lib)
+install (TARGETS to_json.x DESTINATION ${dest}/bin)
 install (DIRECTORY  ${PROJECT_BINARY_DIR}/include/ DESTINATION ${dest}/include)
 install (EXPORT YAFYAML DESTINATION "${dest}/cmake")
 

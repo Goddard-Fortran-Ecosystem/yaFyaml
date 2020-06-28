@@ -56,7 +56,7 @@ module fy_Tokens
   type, extends(AbstractToken) :: ScalarToken
      character(:), allocatable :: value
      logical :: is_plain
-     character :: style
+     character :: style = ''
   end type ScalarToken
 
   interface ScalarToken

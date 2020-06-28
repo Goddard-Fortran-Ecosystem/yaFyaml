@@ -9,4 +9,3 @@ add_dependencies (examples simple.x simple2.x)
 
 FILE (COPY simple.yaml DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 FILE (COPY simple2.yaml DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-

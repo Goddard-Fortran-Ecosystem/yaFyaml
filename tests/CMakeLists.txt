@@ -21,8 +21,7 @@ add_pfunit_ctest (yafyaml_tests.x
 
 set_target_properties (yafyaml_tests.x PROPERTIES EXCLUDE_FROM_ALL True)
 
-add_dependencies (tests yafyaml_tests.x)
-
+add_dependencies (build-tests yafyaml_tests.x)
 
 add_executable(demo demo.F90)
 target_link_libraries(demo PRIVATE yafyaml)

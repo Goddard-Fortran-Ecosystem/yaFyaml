@@ -1,0 +1,1 @@
+{ "dag" : { "vertices" : [ {"depends_on" : [2,3]}, {"depends_on" : [3]}, {"depends_on" : []} ] } }

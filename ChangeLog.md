@@ -4,6 +4,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.4.0] - 2020-06-28
+### Added
+- Support for simple anchor/alias use cases.
+  No merges, just vanilly copy-in-place.
+
+- Simple driver "to_json.x" that takes a YAML file name argument on the
+  command line, parses the file, and dumps JSON formet to OUTPUT_UNIT.
+  E.g., 
+  ```./to_json.x test.yaml >  test.json```
+
+### Fixed
+- Improved formatting of JSON output.
+
+
 ## [0.3.5] - 2020-06-05
 
 ### Fixed

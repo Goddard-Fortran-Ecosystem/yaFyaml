@@ -6,9 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Support for very simple anchor/alias use cases.
-  No merges, just vanilly copy-in-place.  
+- Support for simple anchor/alias use cases.
+  No merges, just vanilly copy-in-place.
 
+- Simple driver "to_json.x" that takes a YAML file name argument on the
+  command line, parses the file, and dumps JSON formet to OUTPUT_UNIT.
+  E.g., 
+  ```./to_json.x test.yaml >  test.json```
+
+### Fixed
+- Improved formatting of JSON output.
+	
 ## [0.3.3] - 2020-05-16
 
 ### Fixed

@@ -42,6 +42,7 @@ module fy_Parser
      module procedure new_Parser_schema_name
   end interface Parser
 
+  character(*), parameter :: MERGE_KEY = '<<'
 
 contains
 
@@ -158,23 +159,32 @@ contains
     class(AbstractToken), allocatable :: token
     logical :: expect_another
     type(Configuration) :: sub
+    character(:), allocatable :: anchor
 
 
     expect_another = .false.
-    select type (node)
+    select type (q => node)
     type is (UnlimitedVector)
        do
           token = lexr%get_token()
 
 
-          select type (token)
+          select type(qq => token)
+          type is (AnchorToken)
+             anchor = qq%value
+             token = lexr%get_token()
+          type is (AliasToken)
+             print*, 'found alias unexpectedly'
+             error stop
+          end select
 
+          select type (token)
           type is (ScalarToken)
-             call node%push_back(this%interpret(token))
+             call q%push_back(this%interpret(token))
 
           type is (BlockSequenceStartToken)
-             call node%push_back(UnlimitedVector())
-             call this%process_sequence(node%back(), lexr)
+             call q%push_back(UnlimitedVector())
+             call this%process_sequence(q%back(), lexr)
           type is (FlowNextEntryToken)
              expect_another = .true.
           type is (BlockNextEntryToken)
@@ -192,20 +202,32 @@ contains
              exit
 
           type is (FlowSequenceStartToken)
-             call node%push_back(UnlimitedVector())
-             call this%process_sequence(node%back(), lexr)
+             call q%push_back(UnlimitedVector())
+             call this%process_sequence(q%back(), lexr)
 
           type is (FlowMappingStartToken)
-             call node%push_back(OrderedStringUnlimitedMap())
-             call this%process_mapping(node%back(), lexr)
+             call q%push_back(OrderedStringUnlimitedMap())
+             call this%process_mapping(q%back(), lexr)
           type is (BlockMappingStartToken)
-             call node%push_back(OrderedStringUnlimitedMap())
-             call this%process_mapping(node%back(), lexr)
+             call q%push_back(OrderedStringUnlimitedMap())
+             call this%process_mapping(q%back(), lexr)
 
           class default
              error stop 'illegal token encountered A'
           end select
+
+
+          if (allocated(anchor)) then
+             block
+               class(*), pointer :: ptr
+               ptr => q%back()
+               call this%anchors%insert(anchor, ptr)
+               deallocate(anchor)
+             end block
+          end if
           deallocate(token)
+
+          
        end do
 
     class default
@@ -226,15 +248,16 @@ contains
     character(:), allocatable :: key
     class(AbstractToken), allocatable :: next_token
     character(:), allocatable :: anchor
+    character(:), allocatable :: alias
 
     expect_another = .false.
     select type (q => node)
     type is (OrderedStringUnlimitedMap)
        do
           token = lexr%get_token()
+
           select type (token)
           type is (ScalarToken)
-             
           type is (KeyToken)
              next_token = lexr%get_token()
              select type(next_token)
@@ -260,12 +283,19 @@ contains
              type is (AliasToken)
                 anchor = qq%value
                 if (this%anchors%count(anchor) > 0) then
-                   call q%insert(key, this%anchors%at(anchor))
-                   cycle
+
+                   if (key == MERGE_KEY) then
+                      call merge(q, this%anchors%at(anchor))
+                      deallocate(anchor)
+                      cycle
+                   else
+                      call q%insert(key, this%anchors%at(anchor))
+                      deallocate(anchor)
+                      cycle
+                   end if
                 else
                    error stop "no such anchor"
                 end if
-                next_token = lexr%get_token()
              end select
 
              select type(next_token)
@@ -291,10 +321,9 @@ contains
                   class(*), pointer :: ptr
                   ptr => q%at(key)
                   call this%anchors%insert(anchor, ptr)
+                  deallocate(anchor)
                 end block
-!!$                call this%anchors%insert(anchor, q%at(key))
              end if
-
 
           type is (FlowNextEntryToken)
              expect_another = .true.
@@ -313,8 +342,57 @@ contains
        error stop 'inconsistent state in parser:: process_mapping()'
 
     end select
+
+ contains
+
+    subroutine merge(m1, q)
+       use fy_String
+       use fy_OrderedStringUnlimitedMap
+       use gftl_UnlimitedVector
+       type(OrderedStringUnlimitedMap), intent(inout) :: m1
+       class(*), intent(in) :: q
+
+       type (OrderedStringUnlimitedMapIterator) :: iter
+
+       character(:), pointer :: key
+       class(*), pointer :: v
+
+
+       select type (q)
+       type is (OrderedStringUnlimitedMap)
+          iter = q%begin()
+          do while (iter /= q%end())
+             key => iter%key()
+             if (m1%count(key) == 0) then
+                v => iter%value()
+                ! Unfortunately, GFortran 9.3 fails with a direct
+                ! insert here.  Thus we need to do a select case over
+                ! each type/kind even though it results in the exact same
+                ! procedure being called in each case.  Sigh.
+                select type (v)
+                type is (integer)
+                   call m1%insert(key, v)
+                type is (real)
+                   call m1%insert(key, v)
+                type is (logical)
+                   call m1%insert(key, v)
+                type is (character(*))
+                   call m1%insert(key, v)
+                type is (String)
+                   call m1%insert(key, v)
+                type is (UnlimitedVector)
+                   call m1%insert(key, v)
+                type is (OrderedStringUnlimitedMap)
+                   call m1%insert(key, v)
+                end select
+             end if
+             call iter%next()
+          end do
+       end select
+
+    end subroutine merge
     
-  end subroutine process_mapping
+ end subroutine process_mapping
 
      
 

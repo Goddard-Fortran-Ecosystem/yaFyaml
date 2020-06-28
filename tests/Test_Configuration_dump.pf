@@ -83,6 +83,7 @@ contains
     character(100) :: buffer
     class(*), pointer :: node
     integer :: status
+    character(:), allocatable :: expected
 
     cfg = Configuration(UnlimitedVector())
     call cfg%get_node_at_selector(node)
@@ -96,10 +97,17 @@ contains
     
     write(buffer,'(DT)',iostat=status) cfg
     @assert_that(status, is(equal_to(0)))
+    expected = "["//new_line('a')// &
+         & "    1,"//new_line('a') // &
+         & "    'enigma',"//new_line('a') // &
+         & "    false"//new_line('a')// &
+         & "]"
+
 #ifdef __GFORTRAN__
-    @assert_that(trim(buffer) == "[1,'enigma',false]",is(true()))
+    print*,trim(buffer)
+    @assert_that(trim(buffer) == expected)
 #else
-    @assert_that(trim(buffer),is(equal_to("[1,'enigma',false]")))
+    @assert_that(trim(buffer),is(equal_to(expected)))
 #endif
     
   end subroutine test_dump_sequence
@@ -112,6 +120,7 @@ contains
     class(*), pointer :: node
     character(200) :: buffer
     integer :: status
+    character(:), allocatable :: expected
 
     cfg = Configuration(OrderedStringUnlimitedMap())
     call cfg%get_node_at_selector(node)
@@ -128,7 +137,13 @@ contains
 #ifdef __GFORTRAN__
     @assert_that(trim(buffer) == "{'triangle': 3,'square': 4,'heptadecagon': 17}", is(true()))
 #else
-    @assert_that(trim(buffer),is(equal_to("{'triangle': 3,'square': 4,'heptadecagon': 17}")))
+
+    expected = "{" // new_line('a') // &
+         & "    'triangle': 3," // new_line('a') // &
+         & "    'square': 4," // new_line('a') // &
+         & "    'heptadecagon': 17" // new_line('a') // &
+         & "}"
+    @assert_that(trim(buffer),is(equal_to(expected)))
 #endif
     
   end subroutine test_dump_map
@@ -166,7 +181,17 @@ contains
     end select
 
     write(buffer,'(g0)') 1.234
-    expected = "[true," // trim(buffer) // ",[-5,'enough'],[false]]"
+    expected = "[" // new_line('a') // &
+         & "    true," // new_line('a') // &
+         & "    "//trim(buffer)// "," // new_line('a') // &
+         & "    [" // new_line('a') // &
+         & "        -5," // new_line('a') // &
+         & "        'enough'" // new_line('a') // &
+         & "    ]," // new_line('a') // &
+         & "    [" // new_line('a') // &
+         & "        false" // new_line('a') // &
+         & "    ]" // new_line('a') // &
+         & "]"
 
     write(buffer,'(DT)', iostat=status) cfg
     @assert_that(status, is(equal_to(0)))

@@ -820,17 +820,19 @@ contains
     class(*), pointer :: node
 
     node => this%node%get_node()
-    call write_one(unit, node)
+    call write_one(unit, node, depth=0)
 
   contains
 
-    recursive subroutine write_one(unit, node)
+    recursive subroutine write_one(unit, node, depth)
       integer, intent(in) :: unit
       class(*), intent(in) :: node
+      integer, intent(in) :: depth
 
+      character(*), parameter :: indent = '    '
       type(OrderedStringUnlimitedMapIterator) :: iter
       integer :: i
-      
+
       iostat = 0
       select type (q => node)
       type is (logical)
@@ -849,30 +851,38 @@ contains
          write(unit,'(a1,a,a1)',iostat=iostat) "'",q,"'"
       type is (UnlimitedVector)
          write(unit,'(a1)') "["
+         write(unit,'(a)') new_line('a')
          do i = 1, q%size()
-            call write_one(unit,q%at(i))
+            write(unit,'(a)') repeat(indent, depth+1)
+            call write_one(unit,q%at(i),depth+1)
             if (i < q%size()) then
                write(unit,'(a1)') ","
+               write(unit,'(a)')new_line('a')
             end if
          end do
+         write(unit,'(a,a)') new_line('a'), repeat(indent,depth)
          write(unit,'(a1)') "]"
 
       type is (OrderedStringUnlimitedMap)
          write(unit,'(a1)')"{"
+         write(unit,'(a)') new_line('a')
          iter = q%begin()
          if (iter /= q%end()) then
-            call write_one(unit,iter%key())
+            write(unit,'(a)') repeat(indent, depth+1)
+            call write_one(unit,iter%key(), depth+1)
             write(unit,'(a2)') ": "
-            call write_one(unit,iter%value())
+            call write_one(unit,iter%value(), depth+1)
             call iter%next()
          end if
          do while (iter /= q%end())
             write(unit,'(a1)') ","
-            call write_one(unit,iter%key())
+            write(unit,'(a,a)')new_line('a'), repeat(indent,depth+1)
+            call write_one(unit,iter%key(), depth+1)
             write(unit,'(a2)') ": "
-            call write_one(unit,iter%value())
+            call write_one(unit,iter%value(), depth+1)
             call iter%next
          end do
+         write(unit,'(a,a)') new_line('a'), repeat(indent,depth)
          write(unit,'(a1)') "}"
 
       class default

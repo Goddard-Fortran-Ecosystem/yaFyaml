@@ -1,3 +1,12 @@
+get_filename_component(barename ${CMAKE_Fortran_COMPILER} NAME)
+
+if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall -std=f2018")
+  if("${barename}" MATCHES gfortran)
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fcoarray=single")
+  endif()
+endif()
+
 foreach (test_name
     trivial
     integer-array

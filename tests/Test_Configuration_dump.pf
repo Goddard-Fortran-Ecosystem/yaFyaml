@@ -104,8 +104,7 @@ contains
          & "]"
 
 #ifdef __GFORTRAN__
-    print*,trim(buffer)
-    @assert_that(trim(buffer) == expected)
+    @assert_that(trim(buffer) == expected, is(true()))
 #else
     @assert_that(trim(buffer),is(equal_to(expected)))
 #endif

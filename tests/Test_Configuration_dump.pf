@@ -133,15 +133,15 @@ contains
 
     write(buffer,'(DT)', iostat=status) cfg
     @assert_that(status, is(equal_to(0)))
-#ifdef __GFORTRAN__
-    @assert_that(trim(buffer) == "{'triangle': 3,'square': 4,'heptadecagon': 17}", is(true()))
-#else
 
     expected = "{" // new_line('a') // &
          & "    'triangle': 3," // new_line('a') // &
          & "    'square': 4," // new_line('a') // &
          & "    'heptadecagon': 17" // new_line('a') // &
          & "}"
+#ifdef __GFORTRAN__
+    @assert_that(trim(buffer) == expected, is(true()))
+#else
     @assert_that(trim(buffer),is(equal_to(expected)))
 #endif
     

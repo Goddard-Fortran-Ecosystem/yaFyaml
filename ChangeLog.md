@@ -5,6 +5,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2020-08-25
+
+### Fixed
+- Bug fixed when value of key value pair starts with the dash character.
+  The check to ensure the next char was not whitespace was incorrectly
+  implemented.   Reproducer added to test suite.
+
+
 ## [0.4.0] - 2020-06-28
 ### Added
 - Support for simple anchor/alias use cases.

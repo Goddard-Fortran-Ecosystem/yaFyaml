@@ -226,5 +226,23 @@ contains
    end subroutine test_quoted_integer
 
 
+
+   @test
+   subroutine test_pflogger_reproducer3
+      type(Parser) :: p
+      type(Configuration) :: cfg
+      integer :: unit
+
+      p = Parser()
+      cfg = p%load(EscapedTextStream( &
+           & "A: \n" // &
+           & "  class: StreamHandler \n" // &
+           & "  unit: -129\n" // &
+           & "  level: INFO"))
+
+      unit = cfg%at("A", "unit")
+      @assert_that(unit, is(-129))
+   end subroutine test_pflogger_reproducer3
+
 end module Test_Parser
 

@@ -12,6 +12,6 @@ program main
 
    if (.not. science) error stop "Test failed"
 
-   sync all
+!   sync all
    if (this_image()==1) print *,"Test passed"
 end program

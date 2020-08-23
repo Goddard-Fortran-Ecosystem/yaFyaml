@@ -101,6 +101,7 @@ contains
       lexr = Lexer(Reader(TextStream("]")))
 
       token = lexr%get_token() ! skip stream start
+      deallocate(token)
       token = lexr%get_token()
       id = token%get_id()
 #ifdef __GFORTRAN__
@@ -119,6 +120,7 @@ contains
       lexr = Lexer(Reader(TextStream("}")))
 
       token = lexr%get_token() ! skip stream start
+      deallocate(token)
       token = lexr%get_token()
       id = token%get_id()
 #ifdef __GFORTRAN__
@@ -137,6 +139,7 @@ contains
       lexr = Lexer(Reader(TextStream(",")))
 
       token = lexr%get_token() ! skip stream start
+      deallocate(token)
       token = lexr%get_token()
       id = token%get_id()
 #ifdef __GFORTRAN__
@@ -155,9 +158,11 @@ contains
       lexr = Lexer(Reader(TextStream("- a")))
 
       token = lexr%get_token() ! skip stream start
+      deallocate(token)
       token = lexr%get_token()
       id = token%get_id()
       @assertEqual(id, "<block sequence start>")
+      deallocate(token)
       token = lexr%get_token()
       id = token%get_id()
 #ifdef __GFORTRAN__
@@ -176,14 +181,18 @@ contains
       lexr = Lexer(Reader(TextStream("a:")))
 
       token = lexr%get_token() ! skip stream start
+      deallocate(token)
       token = lexr%get_token() ! document start
+      deallocate(token)
       token = lexr%get_token()
       id = token%get_id()
 #ifdef __GFORTRAN__
 #else
       @assert_that(id, is(equal_to(KEY_INDICATOR)))
 #endif
+      deallocate(token)
       token = lexr%get_token() ! scalar token
+      deallocate(token)
       token = lexr%get_token()
       id = token%get_id()
 #ifdef __GFORTRAN__
@@ -201,6 +210,7 @@ contains
       lexr = Lexer(Reader(TextStream("abc d ")))
 
       token = lexr%get_token() ! skip stream start
+      deallocate(token)
       token = lexr%get_token()
       id = token%get_id()
       @assert_that(id, is(equal_to('<scalar>')))
@@ -223,12 +233,20 @@ contains
       class(AbstractToken), allocatable :: token
       character(:), allocatable :: id
 
+      ! We must deallocate token before each reassignment because of
+      ! some weird bug in gfortran 10.  Apparently only under Linux.
+      ! Sigh.
+
       ! flow context
       lexr = Lexer(Reader(TextStream("  a : b")))
       token = lexr%get_token() ! skip stream start
+      deallocate(token)
       token = lexr%get_token() ! skip block mapping start
+      deallocate(token)
       token = lexr%get_token() ! skip key 
+      deallocate(token)
       token = lexr%get_token() ! skip scalar "a"
+      deallocate(token)
       token = lexr%get_token()
       id = token%get_id()
 #ifdef __GFORTRAN__
@@ -237,25 +255,30 @@ contains
 #endif
       ! block context - no space after ":"
       lexr = Lexer(Reader(TextStream("{? a : b}")))
+      deallocate(token)
       token = lexr%get_token() ! skip stream start
+      deallocate(token)
       token = lexr%get_token() ! "{"
       id = token%get_id()
 #ifdef __GFORTRAN__
 #else
       @assert_that(id, is(equal_to('{')))
 #endif
+      deallocate(token)
       token = lexr%get_token() ! key marker
       id = token%get_id()
 #ifdef __GFORTRAN__
 #else
       @assert_that(id, is(equal_to('?')))
 #endif
+      deallocate(token)
       token = lexr%get_token() ! a
       id = token%get_id()
 #ifdef __GFORTRAN__
 #else
       @assert_that(id, is(equal_to('<scalar>')))
 #endif
+      deallocate(token)
       token = lexr%get_token()
       id = token%get_id()
 #ifdef __GFORTRAN__
@@ -274,6 +297,7 @@ contains
       lexr = Lexer(Reader(TextStream("&anchor ")))
       token = lexr%get_token() ! skip stream start
 
+      deallocate(token)
       token = lexr%get_token()
       id = token%get_id()
 #ifdef __GFORTRAN__
@@ -294,6 +318,7 @@ contains
       lexr = Lexer(Reader(TextStream("*alias ")))
       token = lexr%get_token() ! skip stream start
 
+      deallocate(token)
       token = lexr%get_token()
       id = token%get_id()
 #ifdef __GFORTRAN__
@@ -302,7 +327,6 @@ contains
 #endif
 
    end subroutine test_is_alias
-
 
 
 end module Test_Lexer

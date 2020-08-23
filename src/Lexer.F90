@@ -669,14 +669,15 @@ contains
   logical function is_plain_scalar(this)
     class(Lexer), intent(inout) :: this
 
-    character(1) :: ch
+    character(1) :: ch, next
 
     ch = this%peek()
+    is_plain_scalar = scan(ch, WHITESPACE_CHARS//"-?:,[]{}#&*!|>'%@`"//'"') == 0
     
-    is_plain_scalar = scan(ch, WHITESPACE_CHARS//"-?:,[]{}#&*!|>%@`"//"'"//'"') == 0
     if (.not. is_plain_scalar) then
-       ch = this%peek(offset=1)
-       is_plain_scalar = (scan(ch, WHITESPACE_CHARS) == 0) &
+       ! Can start with [-?:] if following character is non-space
+       next = this%peek(offset=1)
+       is_plain_scalar = (scan(next, WHITESPACE_CHARS) == 0) &
             .and. (ch == '-' .or. (this%current_flow_level > 0 .and. scan(ch,'?:')> 0))
     end if
   end function is_plain_scalar
@@ -1094,10 +1095,11 @@ contains
      this%allow_simple_key = .false.
 
      ! Add anchor
+     deallocate(token)
      token = this%scan_anchor_or_alias('alias',__RC__)
      call this%processed_tokens%push_back(token)
 
-
+     __RETURN__(SUCCESS)
   end subroutine process_alias
 
   subroutine process_anchor(this, unusable, rc)
@@ -1118,6 +1120,7 @@ contains
      token = this%scan_anchor_or_alias('anchor', __RC__)
      call this%processed_tokens%push_back(token)
      
+     __RETURN__(SUCCESS)
   end subroutine process_anchor
 
 
@@ -1166,8 +1169,10 @@ contains
 
      select case (type)
      case ('anchor')
+        deallocate(token)
         token = AnchorToken(value)
      case ('alias')
+        deallocate(token)
         token = AliasToken(value)
      case default
         __FAIL__(NONSPECIFIC_ERROR)

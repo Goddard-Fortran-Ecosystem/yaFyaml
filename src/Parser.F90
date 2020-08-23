@@ -103,6 +103,7 @@ contains
 
     done = .false.
     do
+       if (allocated(token)) deallocate(token)
        token = lexr%get_token()
        select type (token)
        type is (StreamStartToken)
@@ -166,12 +167,13 @@ contains
     select type (q => node)
     type is (UnlimitedVector)
        do
+          if (allocated(token)) deallocate(token)
           token = lexr%get_token()
-
 
           select type(qq => token)
           type is (AnchorToken)
              anchor = qq%value
+             if (allocated(token)) deallocate(token)
              token = lexr%get_token()
           type is (AliasToken)
              print*, 'found alias unexpectedly'
@@ -254,11 +256,13 @@ contains
     select type (q => node)
     type is (OrderedStringUnlimitedMap)
        do
+          if (allocated(token)) deallocate(token)
           token = lexr%get_token()
 
           select type (token)
           type is (ScalarToken)
           type is (KeyToken)
+             if (allocated(next_token)) deallocate(next_token)
              next_token = lexr%get_token()
              select type(next_token)
              type is (ScalarToken)
@@ -266,6 +270,7 @@ contains
              class default
                 error stop
              end select
+             if (allocated(next_token)) deallocate(next_token)
              next_token = lexr%get_token()
              select type(next_token)
              type is (ValueToken)
@@ -273,12 +278,14 @@ contains
              class default
                 error stop
              end select
+             if (allocated(next_token)) deallocate(next_token)
              next_token = lexr%get_token()
 
              ! Possible anchor or alias?
              select type(qq => next_token)
              type is (AnchorToken)
                 anchor = qq%value
+                if (allocated(next_token)) deallocate(next_token)
                 next_token = lexr%get_token()
              type is (AliasToken)
                 anchor = qq%value

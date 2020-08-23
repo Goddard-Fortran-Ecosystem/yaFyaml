@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bug fixed when value of key value pair starts with the dash character.
   The check to ensure the next char was not whitespace was incorrectly
   implemented.   Reproducer added to test suite.
+- Introduced workaround for gfortran-10 that was causing all sorts of 
+  memory corruption.  (Ugly pervasive manual deallocation of polymorphic
+  objects.)
+
 
 
 ## [0.4.0] - 2020-06-28

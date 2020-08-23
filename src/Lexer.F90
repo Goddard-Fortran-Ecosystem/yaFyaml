@@ -1095,10 +1095,11 @@ contains
      this%allow_simple_key = .false.
 
      ! Add anchor
+     deallocate(token)
      token = this%scan_anchor_or_alias('alias',__RC__)
      call this%processed_tokens%push_back(token)
 
-
+     __RETURN__(SUCCESS)
   end subroutine process_alias
 
   subroutine process_anchor(this, unusable, rc)
@@ -1119,6 +1120,7 @@ contains
      token = this%scan_anchor_or_alias('anchor', __RC__)
      call this%processed_tokens%push_back(token)
      
+     __RETURN__(SUCCESS)
   end subroutine process_anchor
 
 
@@ -1167,8 +1169,10 @@ contains
 
      select case (type)
      case ('anchor')
+        deallocate(token)
         token = AnchorToken(value)
      case ('alias')
+        deallocate(token)
         token = AliasToken(value)
      case default
         __FAIL__(NONSPECIFIC_ERROR)

@@ -426,6 +426,8 @@ contains
 
     allocate(PointerNode :: q%node)
     call this%get_config_at_selector(q, ARG_LIST, default=default, rc=status)
+
+    __RETURN__(SUCCESS)
   end function at
 
 

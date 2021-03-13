@@ -32,6 +32,8 @@ add_library (yafyaml
   yafyaml.F90
   )
 
+add_library(YAFYAML::yafyaml ALIAS yafyaml)
+
 set_target_properties (yafyaml PROPERTIES Fortran_MODULE_DIRECTORY ${YAFYAML_BINARY_DIR}/include)
 target_link_libraries(yafyaml GFTL_SHARED::gftl-shared)
 
@@ -47,8 +49,7 @@ target_link_libraries(to_json.x PRIVATE yafyaml)
 
 
 install (TARGETS yafyaml EXPORT YAFYAML DESTINATION ${dest}/lib)
-install (TARGETS to_json.x DESTINATION ${dest}/bin)
 install (DIRECTORY  ${PROJECT_BINARY_DIR}/include/ DESTINATION ${dest}/include)
-install (EXPORT YAFYAML DESTINATION "${dest}/cmake")
+install (TARGETS to_json.x DESTINATION ${dest}/bin)
 
 

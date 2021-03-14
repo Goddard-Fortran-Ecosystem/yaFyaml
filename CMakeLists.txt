@@ -81,6 +81,9 @@ set (YAFYAML_TOP_DIR "${CMAKE_INSTALL_PREFIX}/${top_dir}" CACHE PATH "")
 # parent project builds yafyaml as a subproject.
 set (YAFYAML_TOP_DIR "${CMAKE_INSTALL_PREFIX}/${top_dir}" CACHE PATH "")
 configure_file (YAFYAML.mk.in ${PROJECT_BINARY_DIR}/YAFYAML.mk @ONLY)
+install (
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/YAFYAML.mk ${CMAKE_CURRENT_BINARY_DIR}/YAFYAML.mk
+  DESTINATION "${top_dir}/include")
 
 
 install (EXPORT YAFYAML

@@ -5,6 +5,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Changed
+
+## [0.5.0] - 2021-03-15
+
+### CHANGED
+
+- Adopted CMake namespaces for package integration/management
+
 ## [0.4.2] - 2020-12-07
 
 ### Fixed

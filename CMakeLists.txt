@@ -22,7 +22,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 find_package (GFTL REQUIRED)
 find_package (GFTL_SHARED REQUIRED VERSION 1.0.4)
-find_package (PFUNIT 4.1 QUIET)
+find_package (PFUNIT 4.2 REQUIRED)
 
 add_subdirectory (src)
 
@@ -59,9 +59,14 @@ endif ()
 
 add_subdirectory (Examples EXCLUDE_FROM_ALL)
 
-# find_package() support
-configure_file (YAFYAMLConfig-version.cmake.in ${PROJECT_BINARY_DIR}/YAFYAMLConfig-version.cmake @ONLY)
-configure_file (YAFYAMLConfig.cmake.in ${PROJECT_BINARY_DIR}/YAFYAMLConfig.cmake @ONLY)
+include(CMakePackageConfigHelpers)
+configure_package_config_file(YAFYAMLConfig.cmake.in YAFYAMLConfig.cmake
+  INSTALL_DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/YAYFAMLConfig.cmake
+  )
+write_basic_package_version_file(YAFYAMLConfig-version.cmake
+  VERSION ${PACKAGE_VERSION}
+  COMPATIBILITY SameMajorVersion
+  )
 
 set (top_dir YAFYAML-${YAFYAML_VERSION_MAJOR}.${YAFYAML_VERSION_MINOR})
 install (
@@ -69,12 +74,25 @@ install (
   DESTINATION "${top_dir}/cmake")
 
 # The following is needed for external projects using *nix make when
+# parent project builds gFTL-shared as a subproject.
+set (YAFYAML_TOP_DIR "${CMAKE_INSTALL_PREFIX}/${top_dir}" CACHE PATH "")
+
+# The following is needed for external projects using *nix make when
 # parent project builds yafyaml as a subproject.
 set (YAFYAML_TOP_DIR "${CMAKE_INSTALL_PREFIX}/${top_dir}" CACHE PATH "")
 configure_file (YAFYAML.mk.in ${PROJECT_BINARY_DIR}/YAFYAML.mk @ONLY)
-#install (
-#  FILES ${CMAKE_CURRENT_BINARY_DIR}/YAFYAML.mk ${CMAKE_CURRENT_BINARY_DIR}/YAFYAML.mk
-#  DESTINATION "${top_dir}/include")
+install (
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/YAFYAML.mk ${CMAKE_CURRENT_BINARY_DIR}/YAFYAML.mk
+  DESTINATION "${top_dir}/include")
 
-#install (EXPORT YAFYAML DESTINATION "${top_dir}/cmake")
+
+install (EXPORT YAFYAML
+  FILE YAFYAMLTargets.cmake
+  NAMESPACE YAFYAML::
+  DESTINATION "${top_dir}/cmake")
+
+export(EXPORT YAFYAML
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/YAFYAMLTargets.cmake"
+  NAMESPACE YAFYAML::
+  )
 

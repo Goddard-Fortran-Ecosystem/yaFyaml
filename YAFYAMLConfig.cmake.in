@@ -1,7 +1,10 @@
 # Package configuration file
 
-get_filename_component (SELF_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
-set (PREFIX ${SELF_DIR}/../..)
-set (YAFYAML_TOP_DIR ${PREFIX}/YAFYAML-@YAFYAML_VERSION_MAJOR@.@YAFYAML_VERSION_MINOR@ CACHE PATH "")
-include ("${YAFYAML_TOP_DIR}/cmake/YAFYAML.cmake")
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(GFTL)
+find_dependency(GFTL_SHARED)
+
+include ("${CMAKE_CURRENT_LIST_DIR}/YAFYAMLTargets.cmake")
 

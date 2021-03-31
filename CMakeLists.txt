@@ -20,9 +20,13 @@ endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-find_package (GFTL REQUIRED)
-find_package (GFTL_SHARED REQUIRED VERSION 1.0.4)
-find_package (PFUNIT 4.2 REQUIRED)
+if (NOT TARGET GFTL::gftl)
+  find_package (GFTL REQUIRED)
+endif ()
+if (NOT TARGET GFTL_SHARED::gftl-shared)
+  find_package (GFTL_SHARED REQUIRED VERSION 1.0.4)
+endif ()
+find_package (PFUNIT 4.2 QUIET)
 
 add_subdirectory (src)
 

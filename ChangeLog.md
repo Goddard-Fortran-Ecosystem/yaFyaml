@@ -5,6 +5,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2021-04-01
+
 ### Fixed
 
 - Ability to embed yaFyaml alongside the other GFE libraries in a superproject.

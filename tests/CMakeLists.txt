@@ -10,13 +10,21 @@ set (pf_tests
   Test_UnlimitedUtilities.pf
   Test_JSONSchema.pf
   Test_CoreSchema.pf
+
+  Test_IntNode.pf
+  Test_SequenceNode.pf
   )
+
+
 
 
 add_pfunit_ctest (yafyaml_tests.x
   TEST_SOURCES ${pf_tests}
   OTHER_SOURCES MockFile.F90
   LINK_LIBRARIES yafyaml
+  OTHER_SOURCES    InitializeTests.F90
+  EXTRA_INITIALIZE Initialize
+  EXTRA_USE        InitializeTests_mod
   )
 
 set_target_properties (yafyaml_tests.x PROPERTIES EXCLUDE_FROM_ALL True)

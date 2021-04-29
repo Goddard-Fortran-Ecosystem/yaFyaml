@@ -53,7 +53,7 @@ module fy_Configuration
   use fy_ArrayWrapper
   use fy_KeywordEnforcer
   use fy_None
-  use gFTL_UnlimitedVector
+  use gFTL1_UnlimitedVector
   use gFTL_StringVector
   use fy_OrderedStringUnlimitedMap
   use fy_String
@@ -325,7 +325,7 @@ contains
     q => node
 
     if (present(is_present)) is_present = .true.
-    __RETURN__(SUCCESS)
+    __RETURN__(YAFYAML_SUCCESS)
     
   contains
 
@@ -399,7 +399,7 @@ contains
     end if
        
 
-    __RETURN__(SUCCESS)
+    __RETURN__(YAFYAML_SUCCESS)
   end subroutine get_config_at_selector
 
 
@@ -427,7 +427,7 @@ contains
     allocate(PointerNode :: q%node)
     call this%get_config_at_selector(q, ARG_LIST, default=default, rc=status)
 
-    __RETURN__(SUCCESS)
+    __RETURN__(YAFYAML_SUCCESS)
   end function at
 
 

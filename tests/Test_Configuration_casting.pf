@@ -689,7 +689,7 @@ contains
    call c%get(v1, 'mapping_b', 'v1', is_present=is_present, rc=status)
    @assert_that(v1, is(equal_to(7)))
    @assert_that(is_present, is(true()))
-   @assert_that(status, is(equal_to(SUCCESS)))
+   @assert_that(status, is(equal_to(YAFYAML_SUCCESS)))
 
    ! As does this
    call c%get(v3, 'mapping_b', 'v3', default=17, is_present=is_present, rc=status)

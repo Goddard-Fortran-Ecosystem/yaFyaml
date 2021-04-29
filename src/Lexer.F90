@@ -165,13 +165,13 @@ contains
     
     do
        need_more = this%need_more_tokens(rc=status)
-       if (status /= SUCCESS) then
+       if (status /= YAFYAML_SUCCESS) then
           token = NullToken()
           __RETURN__(status)
        end if
        if (need_more) then
           call this%lex_tokens(rc=status)
-          if (status /= SUCCESS) token = NullToken()
+          if (status /= YAFYAML_SUCCESS) token = NullToken()
           __VERIFY__(status)
        else
           exit
@@ -185,7 +185,7 @@ contains
        token = NullToken()
     end if
 
-    __RETURN__(SUCCESS)
+    __RETURN__(YAFYAML_SUCCESS)
 
   end function get_token
 
@@ -196,7 +196,7 @@ contains
 
     integer :: status
 
-    rc = SUCCESS ! unless
+    rc = YAFYAML_SUCCESS ! unless
 
     if (this%reached_end_of_stream) then
        need_more_tokens = .false.
@@ -215,7 +215,7 @@ contains
        end if
     end if
 
-    if (present(rc)) rc = SUCCESS
+    if (present(rc)) rc = YAFYAML_SUCCESS
     return
 
   end function need_more_tokens
@@ -235,13 +235,13 @@ contains
     do while (iter /= this%possible_simple_keys%end())
        possible_key => iter%value()
        if ((possible_key%line /= this%line()) .or. (this%index() - possible_key%index > 1024)) then
-          __ASSERT__(.not. possible_key%required, MISSING_COLON_WHILE_SCANNING_A_SIMPLE_KEY)
+          __ASSERT__(.not. possible_key%required, YAFYAML_MISSING_COLON_WHILE_SCANNING_A_SIMPLE_KEY)
           call this%possible_simple_keys%erase(iter)
        end if
        call iter%next()
     end do
 
-    __RETURN__(SUCCESS)
+    __RETURN__(YAFYAML_SUCCESS)
 
   end subroutine remove_stale_simple_keys
 
@@ -293,7 +293,7 @@ contains
     integer :: status
 
     required = (this%current_flow_level == 0) .and. (this%indent == this%column())
-    __ASSERT__(this%allow_simple_key .or. (.not. required), IMPOSSIBLE_COMBINATION)
+    __ASSERT__(this%allow_simple_key .or. (.not. required), YAFYAML_IMPOSSIBLE_COMBINATION)
     if (this%allow_simple_key) then
        call this%remove_stale_simple_keys(__RC__)
        token_number = this%num_tokens_given + this%processed_tokens%size()
@@ -301,7 +301,7 @@ contains
        call this%possible_simple_keys%insert(this%current_flow_level,key)
     end if
 
-    __RETURN__(SUCCESS)
+    __RETURN__(YAFYAML_SUCCESS)
   end subroutine save_simple_key
 
 
@@ -344,89 +344,89 @@ contains
 
     if (ch == C_NULL_CHAR) then
        call this%process_end_of_stream()
-       __RETURN__(SUCCESS)
+       __RETURN__(YAFYAML_SUCCESS)
     end if
 !!$ !!$    if (ch == DIRECTIVE_INDICATOR .and. this%is_at_directive())  then
 !!$ !!$       call this%process_directive()
-!!$           __RETURN__(SUCCESS)
+!!$           __RETURN__(YAFYAML_SUCCESS)
 !!$ !!$    end if
     if ((ch == DOCUMENT_START_INDICATOR) .and. this%is_at_document_boundary('---')) then
        call this%process_document_boundary(DocumentStartToken())
-       __RETURN__(SUCCESS)
+       __RETURN__(YAFYAML_SUCCESS)
     end if
     if (ch == DOCUMENT_END_INDICATOR .and. this%is_at_document_boundary('...')) then
        call this%process_document_boundary(DocumentEndToken())
-       __RETURN__(SUCCESS)
+       __RETURN__(YAFYAML_SUCCESS)
     end if
 
     if (ch == FLOW_SEQUENCE_START_INDICATOR) then
        call this%process_flow_collection_start(FlowSequenceStartToken())
-       __RETURN__(SUCCESS)
+       __RETURN__(YAFYAML_SUCCESS)
     end if
     if (ch == FLOW_SEQUENCE_END_INDICATOR) then
        call this%process_flow_collection_end(FlowSequenceEndToken())
-       __RETURN__(SUCCESS)
+       __RETURN__(YAFYAML_SUCCESS)
     end if
     if (ch == FLOW_MAPPING_START_INDICATOR) then
        call this%process_flow_collection_start(FlowMappingStartToken())
-       __RETURN__(SUCCESS)
+       __RETURN__(YAFYAML_SUCCESS)
     end if
     if (ch == FLOW_MAPPING_END_INDICATOR) then
        call this%process_flow_collection_end(FlowMappingEndToken())
-       __RETURN__(SUCCESS)
+       __RETURN__(YAFYAML_SUCCESS)
     end if
     if (ch == FLOW_NEXT_ENTRY_INDICATOR) then
        call this%process_flow_next_entry()
-       __RETURN__(SUCCESS)
+       __RETURN__(YAFYAML_SUCCESS)
     end if
     if (ch == BLOCK_NEXT_ENTRY_INDICATOR) then
        if (this%is_block_next_entry()) then
           call this%process_block_next_entry(__RC__)
-          __RETURN__(SUCCESS)
+          __RETURN__(YAFYAML_SUCCESS)
        end if
     end if
     if (ch == KEY_INDICATOR) then
        if (this%is_key()) then
           call this%process_key(rc=status)
-          __RETURN__(SUCCESS)
+          __RETURN__(YAFYAML_SUCCESS)
        end if
     end if
 
     if (ch == VALUE_INDICATOR .and. this%is_value()) then
        call this%process_value(__RC__)
-       __RETURN__(SUCCESS)
+       __RETURN__(YAFYAML_SUCCESS)
     end if
 
     if (ch == ALIAS_INDICATOR) then
        call this%process_alias(__RC__)
-       __RETURN__(SUCCESS)
+       __RETURN__(YAFYAML_SUCCESS)
     end if
     if (ch == ANCHOR_INDICATOR) then
        call this%process_anchor(__RC__)
-       __RETURN__(SUCCESS)
+       __RETURN__(YAFYAML_SUCCESS)
     end if
 !!$    if (ch == TAG_INDICATOR) then
 !!$       call this%process_TAG()
-!!$       __RETURN__(SUCCESS)
+!!$       __RETURN__(YAFYAML_SUCCESS)
 !!$    end if
 
     if (ch == SINGLE_QUOTED_SCALAR_INDICATOR) then
        call this%process_quoted_scalar(style="'",__RC__)
-       __RETURN__(SUCCESS)
+       __RETURN__(YAFYAML_SUCCESS)
     end if
 
     if (ch == DOUBLE_QUOTED_SCALAR_INDICATOR) then
        call this%process_quoted_scalar(style='"')
-       __RETURN__(SUCCESS)
+       __RETURN__(YAFYAML_SUCCESS)
     end if
     
     if (this%is_plain_scalar()) then
        call this%process_plain_scalar()
-       __RETURN__(SUCCESS)
+       __RETURN__(YAFYAML_SUCCESS)
     end if
 
     ! Error: ch cannot start any token
-    __FAIL__(UNEXPECTED_CHARACTER)
+    __FAIL__(YAFYAML_UNEXPECTED_CHARACTER)
 
   end subroutine lex_tokens
 
@@ -577,7 +577,7 @@ contains
     integer, optional, intent(out) :: rc
 
     if (this%current_flow_level == 0) then
-       __ASSERT__(this%allow_simple_key, ILLEGAL_SEQUENCE_ENTRY)
+       __ASSERT__(this%allow_simple_key, YAFYAML_ILLEGAL_SEQUENCE_ENTRY)
        if (this%add_indentation(this%column())) then
           call this%processed_tokens%push_back(BlockSequenceStartToken())
        end if
@@ -589,7 +589,7 @@ contains
     call this%forward()
     call this%processed_tokens%push_back(BlockNextEntryToken())
 
-    __RETURN__(SUCCESS)
+    __RETURN__(YAFYAML_SUCCESS)
 
   end subroutine process_block_next_entry
 
@@ -638,7 +638,7 @@ contains
     else
 
        if (this%current_flow_level == 0) then
-          __ASSERT__(this%allow_simple_key, ILLEGAL_VALUE_IN_MAPPING)
+          __ASSERT__(this%allow_simple_key, YAFYAML_ILLEGAL_VALUE_IN_MAPPING)
        end if
 
        this%allow_simple_key = (this%current_flow_level == 0)
@@ -648,7 +648,7 @@ contains
              
     call this%forward()
     call this%processed_tokens%push_back(ValueToken())
-    __RETURN__(SUCCESS)
+    __RETURN__(YAFYAML_SUCCESS)
   end subroutine process_value
 
   ! In block context, a leading ":" indicates a ValueToken only if it
@@ -716,7 +716,7 @@ contains
        if ((this%current_flow_level > 0) .and. ch == ':') then
           if (scan(this%peek(offset=n+1), WHITESPACE_CHARS) == 0) then
              call this%forward(offset=n)
-             __FAIL__(UNEXPECTED_COLON_IN_PLAIN_SCALAR)
+             __FAIL__(YAFYAML_UNEXPECTED_COLON_IN_PLAIN_SCALAR)
           end if
        end if
 
@@ -733,7 +733,7 @@ contains
 
     call this%processed_tokens%push_back(ScalarToken(chunks, is_plain=.true.))
 
-    if (present(rc)) rc = SUCCESS
+    if (present(rc)) rc = YAFYAML_SUCCESS
     return
     
   end subroutine process_plain_scalar
@@ -812,7 +812,7 @@ contains
     this%allow_simple_key = .false.
     token = this%scan_flow_scalar(style, __RC__)
     call this%processed_tokens%push_back(token)
-    __RETURN__(SUCCESS)
+    __RETURN__(YAFYAML_SUCCESS)
   end subroutine process_quoted_scalar
 
 
@@ -857,7 +857,7 @@ contains
 
     integer :: status
 
-    if (present(rc)) rc = SUCCESS ! unless
+    if (present(rc)) rc = YAFYAML_SUCCESS ! unless
     
     text = ''
     n = 0
@@ -871,7 +871,7 @@ contains
 
     ch = this%peek()
     if (ch == C_NULL_CHAR) then
-       __FAIL__(END_OF_STREAM_INSIDE_QUOTES)
+       __FAIL__(YAFYAML_END_OF_STREAM_INSIDE_QUOTES)
     elseif (scan(ch, CR//NL) > 0) then
        line_break = this%scan_line_break()
        breaks = this%scan_flow_scalar_breaks(style,__RC__)
@@ -884,7 +884,7 @@ contains
        text = text // whitespaces
     end if
 
-    __RETURN__(SUCCESS)
+    __RETURN__(YAFYAML_SUCCESS)
     
   end function scan_flow_scalar_spaces
 
@@ -901,7 +901,7 @@ contains
     do
        pfix = this%prefix(3)
        if ((pfix == '---' .or. pfix == '...') .and. scan(this%peek(offset=3), WHITESPACE_CHARS)>0) then
-          __FAIL__(UNEXPECTED_DOCUMENT_SEPARATOR)
+          __FAIL__(YAFYAML_UNEXPECTED_DOCUMENT_SEPARATOR)
        end if
        do while (scan(this%peek(),' '//TAB) > 0)
           call this%forward()
@@ -909,12 +909,12 @@ contains
        if (scan(this%peek(), CR//NL) > 0) then
           text = text // this%scan_line_break()
        else
-          __RETURN__(SUCCESS)
+          __RETURN__(YAFYAML_SUCCESS)
           return
        end if
     end do
 
-    __RETURN__(SUCCESS)
+    __RETURN__(YAFYAML_SUCCESS)
   end function scan_flow_scalar_breaks
 
 
@@ -960,14 +960,14 @@ contains
              line_break = this%scan_line_break() ! updates internal state, but disregard output value
              text = text // this%scan_flow_scalar_breaks(style)
           else
-             __FAIL__(UNKNOWN_ESCAPE_CHARACTER_IN_DOUBLE_QUOTED_SCALAR)
+             __FAIL__(YAFYAML_UNKNOWN_ESCAPE_CHARACTER_IN_DOUBLE_QUOTED_SCALAR)
           end if
        else
-          __RETURN__(SUCCESS)
+          __RETURN__(YAFYAML_SUCCESS)
        end if
     end do
 
-    __RETURN__(SUCCESS)
+    __RETURN__(YAFYAML_SUCCESS)
 
   end function scan_flow_scalar_non_spaces
 
@@ -1017,7 +1017,7 @@ contains
     ! If not in flow context, may need to add a mapping start token.
     if (this%current_flow_level == 0) then
 
-       __ASSERT__(this%allow_simple_key,UNEXPECTED_MAPPING_KEY)
+       __ASSERT__(this%allow_simple_key,YAFYAML_UNEXPECTED_MAPPING_KEY)
 
        if (this%add_indentation(this%column())) then
           call this%processed_tokens%push_back(BlockMappingStartToken())
@@ -1030,7 +1030,7 @@ contains
     call this%forward()
     call this%processed_tokens%push_back(KeyToken())
 
-    __RETURN__(SUCCESS)
+    __RETURN__(YAFYAML_SUCCESS)
 
   end subroutine process_key
 
@@ -1099,7 +1099,7 @@ contains
      token = this%scan_anchor_or_alias('alias',__RC__)
      call this%processed_tokens%push_back(token)
 
-     __RETURN__(SUCCESS)
+     __RETURN__(YAFYAML_SUCCESS)
   end subroutine process_alias
 
   subroutine process_anchor(this, unusable, rc)
@@ -1120,7 +1120,7 @@ contains
      token = this%scan_anchor_or_alias('anchor', __RC__)
      call this%processed_tokens%push_back(token)
      
-     __RETURN__(SUCCESS)
+     __RETURN__(YAFYAML_SUCCESS)
   end subroutine process_anchor
 
 
@@ -1155,7 +1155,7 @@ contains
         ch = this%peek(offset=length)
      end do
      if (length == 0) then
-        __FAIL__(NON_ALPHANUMERIC_CHARACTER)
+        __FAIL__(YAFYAML_NON_ALPHANUMERIC_CHARACTER)
      end if
 
      value = this%prefix(n=length)
@@ -1164,7 +1164,7 @@ contains
      ch = this%peek()
 
      if (scan(ch, C_NULL_CHAR // ' ' // TAB // CR // NL // '?:,]{%@') == 0) then
-        __FAIL__(UNEXPECTED_CHARACTER)
+        __FAIL__(YAFYAML_UNEXPECTED_CHARACTER)
      end if
 
      select case (type)
@@ -1175,10 +1175,10 @@ contains
         deallocate(token)
         token = AliasToken(value)
      case default
-        __FAIL__(NONSPECIFIC_ERROR)
+        __FAIL__(YAFYAML_NONSPECIFIC_ERROR)
      end select
 
-     __RETURN__(SUCCESS)
+     __RETURN__(YAFYAML_SUCCESS)
   end function scan_anchor_or_alias
 
   logical  function is_alphanumeric(c)

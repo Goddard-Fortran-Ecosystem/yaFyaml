@@ -2,7 +2,7 @@ module Test_UnlimitedUtilities
   use funit
   use fy_UnlimitedUtilities
   use fy_ArrayWrapper
-  use gFTL_UnlimitedVector
+  use gFTL2_UnlimitedVector
   implicit none
 
 contains

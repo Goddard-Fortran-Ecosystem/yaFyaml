@@ -4,7 +4,9 @@
 ! set_throw_method() with a procedure of their own.
 !---------
 
+#include "string_handling.h"
 module fy_ErrorHandling
+   use fy_KeywordEnforcer
    use fy_ErrorCodes
    implicit none
    private
@@ -17,10 +19,10 @@ module fy_ErrorHandling
 
 
    abstract interface
-      subroutine throw_interface(message, filename, line_number)
-         character(len=*), intent(in) :: message
+      subroutine throw_interface(filename, line_number, message)
          character(len=*), intent(in) :: filename
          integer, intent(in) :: line_number
+         character(len=*), intent(in) :: message
       end subroutine throw_interface
    end interface
 
@@ -42,13 +44,13 @@ module fy_ErrorHandling
 contains
 
 
-   subroutine throw_(message, filename, line_number)
-      character(len=*), intent(in) :: message
+   subroutine throw_(filename, line_number, message)
       character(len=*), intent(in) :: filename
       integer, intent(in) :: line_number
+      character(len=*), intent(in) :: message
 
       if (.not. initialized) call initialize()
-      call throw_method(message, filename, line_number)
+      call throw_method(filename, line_number, message)
 
    end subroutine throw_
 
@@ -63,34 +65,39 @@ contains
       fail = .not. condition
 
       if (fail) then
-         call throw(message, filename, line)
+         call throw(filename, line, message)
          if (present(rc)) rc = -1
       end if
 
    end function assert_message
 
 
-   logical function assert_code(condition, code, filename, line, rc) result(fail)
+   logical function assert_code(condition, code, filename, line, unusable, err_msg, rc) result(fail)
       logical, intent(in) :: condition
       integer, intent(in) :: code
       character(*), intent(in) :: filename
       integer, intent(in) :: line
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc ! Not present in MAIN
 
       fail = (.not. condition)
 
       if (fail) then
-         call throw(error_message(code), filename, line)
+         call throw(filename, line, error_message(code))
+         if (present(err_msg)) err_msg = error_message(code)
          if (present(rc)) rc = code
       end if
 
    end function assert_code
 
 
-   logical function verify(status, filename, line, rc) result(fail)
+   logical function verify(status, filename, line, unusable, err_msg, rc) result(fail)
       integer, intent(in) :: status
       character(*), intent(in) :: filename
       integer, intent(in) :: line
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc ! Not present in MAIN
 
       logical :: condition
@@ -103,7 +110,8 @@ contains
       if (fail) then
          write(status_string,'(i0)') status
          message = 'status=' // status_string
-         call throw(message, filename, line)
+         call throw(filename, line, message)
+         if (present(err_msg)) err_msg = error_message(status)
          if (present(rc)) rc = status
       end if
 
@@ -126,7 +134,7 @@ contains
       if (fail) then
          write(status_string,'(i0)') status
          message = 'status=' // status_string
-         call throw(message, filename, line)
+         call throw(filename, line, message)
       end if
       ! Regardless of error:
       if (present(rc)) rc = status 
@@ -142,11 +150,11 @@ contains
    end subroutine initialize
 
 
-   subroutine default_throw_method(message, filename, line_number)
+   subroutine default_throw_method(filename, line_number, message)
       use, intrinsic :: iso_fortran_env, only: ERROR_UNIT
-      character(len=*), intent(in) :: message
       character(len=*), intent(in) :: filename
       integer, intent(in) :: line_number
+      character(len=*), intent(in) :: message
 
       integer, parameter :: FIELD_WIDTH=40
       character(FIELD_WIDTH) :: use_name

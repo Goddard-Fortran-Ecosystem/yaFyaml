@@ -1,0 +1,69 @@
+#include "error_handling.h"
+#include "string_handling.h"
+module fy_MappingNode
+   use fy_AbstractNode
+   use fy_BaseNode
+   use fy_NodeNodeOrderedMap
+   use fy_ErrorCodes
+   use fy_ErrorHandling
+   use fy_keywordEnforcer
+   implicit none
+   private
+
+   public :: MappingNode
+   public :: to_mapping
+   
+   type, extends(BaseNode) :: MappingNode
+      private
+      type(NodeNodeOrderedMap) :: value
+      integer :: placeholder
+   contains
+      procedure, pass(this) :: assign_to_mapping
+      procedure :: less_than
+   end type MappingNode
+
+   interface
+      module function less_than(a,b)
+         implicit none
+         logical :: less_than
+         class(MappingNode), intent(in) :: a
+         class(AbstractNode), intent(in) :: b
+      end function less_than
+   end interface
+
+
+   type(NodeNodeOrderedMap), target :: DEFAULT_MAPPING
+
+   
+contains
+
+   subroutine assign_to_mapping(mapping, this)
+      type(NodeNodeOrderedMap), intent(out) :: mapping
+      class(MappingNode), intent(in) :: this
+      
+!!$      mapping = this%value
+      
+   end subroutine assign_to_mapping
+   
+
+   function to_mapping(this, unusable, err_msg, rc) result(ptr)
+      type(NodeNodeOrderedMap), pointer :: ptr
+      class(AbstractNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      select type (this)
+      type is (MappingNode)
+         ptr => this%value
+      class default
+         ptr => DEFAULT_MAPPING
+         __FAIL2__(YAFYAML_TYPE_MISMATCH)
+      end select
+
+      __RETURN__(YAFYAML_SUCCESS)
+   end function to_mapping
+   
+
+   
+end module fy_MappingNode

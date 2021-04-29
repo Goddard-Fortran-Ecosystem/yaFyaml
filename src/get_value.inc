@@ -76,11 +76,11 @@ subroutine NAME_(TYPE_NAME)(this, value, ARG_LIST, unusable, default, is_present
 
    if (.not. associated(node)) then
       if (.not. (present(is_present) .or. present(default))) then
-         __FAIL__(SELECTOR_NOT_FOUND)
+         __FAIL__(YAFYAML_INVALID_SEQUENCE_INDEX)
       else
          if (present(is_present)) is_present = .false.
          if (present(default)) value = default
-         __RETURN__(SUCCESS)
+         __RETURN__(YAFYAML_SUCCESS)
       end if
    else
 
@@ -100,11 +100,11 @@ subroutine NAME_(TYPE_NAME)(this, value, ARG_LIST, unusable, default, is_present
       class default
          if (present(is_present)) is_present = .true.
          if (present(default)) value = default
-         __FAIL__(INCONSISTENT_TYPE)
+         __FAIL__(YAFYAML_TYPE_MISMATCH)
       end select
    end if
 
-   __RETURN__(SUCCESS)
+   __RETURN__(YAFYAML_SUCCESS)
 
 contains
 

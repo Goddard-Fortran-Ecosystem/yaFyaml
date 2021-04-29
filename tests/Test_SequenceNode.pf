@@ -1,0 +1,18 @@
+module Test_SequenceNode
+   use fy_SequenceNode
+   use funit
+   implicit none
+
+contains
+
+   
+   @test
+   ! Empty sequences are ==, so not <
+   subroutine test_less_than_trivial()
+      type(SequenceNode) :: a, b 
+
+      @assertFalse(a < b)
+
+   end subroutine test_less_than_trivial
+   
+end module Test_SequenceNode

@@ -1,0 +1,153 @@
+module Test_IntNode
+   use funit
+   use fy_Nodes
+   use fy_ErrorCodes
+   use, intrinsic :: iso_fortran_env, only: INT32, INT64
+   use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
+   implicit none
+
+contains
+
+   @test
+   subroutine test_is_int()
+      class(AbstractNode), allocatable :: node
+      class(AbstractNode), pointer :: pNode
+      type(IntNode), target :: iNode
+      logical :: flag
+
+      print*,__FILE__,__LINE__
+      allocate(node,source=IntNode(1_INT32))
+      iNode = IntNode(1_INT32)
+      print*,__FILE__,__LINE__
+      pNode => iNode
+      print*,__FILE__,__LINE__
+      @assertTrue(pNode%is_int())
+      print*,__FILE__,__LINE__
+      flag = node%is_int()
+      print*,__FILE__,__LINE__
+      @assertTrue(flag)
+      print*,__FILE__,__LINE__
+
+      node = FloatNode(1._REAL32)
+      print*,__FILE__,__LINE__
+      @assertFalse(node%is_int())
+      print*,__FILE__,__LINE__
+   end subroutine test_is_int
+
+   @test
+   subroutine test_assignment()
+      type(IntNode) :: i_node
+      integer(kind=INT32) :: i32
+      integer(kind=INT64) :: i64
+      
+      i_node = IntNode(1_INT32)
+
+      i32 = i_node
+      @assert_that(i32, is(1_INT32))
+
+      i64 = i_node
+      @assert_that(i64, is(1_INT64))
+
+      i_node = IntNode(2_INT64)
+
+      i32 = i_node
+      @assert_that(i32, is(2_INT32))
+
+      i64 = i_node
+      @assert_that(i64, is(2_INT64))
+
+   end subroutine test_assignment
+
+   ! If internally stored integer is too large
+   ! for requested precision, the access fails and
+   ! -HUGE(1_INT32) is returned as an indicator.
+   @test
+   subroutine test_overflow()
+      type(IntNode) :: i_node
+      integer(kind=INT32) :: i32
+      
+      i_node = IntNode(int(huge(1_INT32),INT64) + 1)
+      i32 = i_node
+      @assert_that(i32, is(-huge(1_INT32)))
+
+   end subroutine test_overflow
+
+   @test
+   subroutine test_casting_succeed()
+      class(AbstractNode), allocatable :: node
+      integer(kind=INT64), pointer :: i_ptr
+
+      character(:), allocatable :: err_msg
+      character(:), allocatable :: expected
+      integer :: rc
+
+      node = IntNode(7_INT32)
+      err_msg = 'foo'
+      i_ptr => to_int(node, err_msg=err_msg, rc=rc)
+
+      @assert_that(i_ptr, is(7_INT64))
+      @assert_that(rc, is(YAFYAML_SUCCESS))
+      ! err_msg not changed if no error
+      @assert_that(err_msg, is('foo'))
+   end subroutine test_casting_succeed
+
+   @test
+   subroutine test_casting_fail()
+      type(FloatNode) :: x_node
+      integer(kind=INT64), pointer :: i_ptr
+      integer, parameter :: MAXLEN=128
+
+      character(MAXLEN) :: err_msg
+      character(:), allocatable :: expected
+      integer :: rc
+
+      x_node = FloatNode(1._REAL32)
+      i_ptr => to_int(x_node, err_msg=err_msg, rc=rc)
+      @assertExceptionRaised('Type of request does not match type in config.')
+      @assert_that(i_ptr, is(-huge(1_INT64)))
+      @assert_that(rc, is(YAFYAML_TYPE_MISMATCH))
+      expected = error_message(YAFYAML_TYPE_MISMATCH)
+      @assertEqual(expected, err_msg)
+
+   end subroutine test_casting_fail
+      
+   
+   @test
+   ! Empty sequences are ==, so not <
+   subroutine test_less_than_trivial()
+      type(IntNode) :: a, b 
+
+      @assertFalse(a < b)
+
+   end subroutine test_less_than_trivial
+   
+   @test
+   subroutine test_less_than_same_type
+      type(IntNode) :: a, b 
+
+      a = IntNode(1)
+      b = IntNode(2)
+      
+      @assertTrue(a < b)
+      @assertFalse(b < a)
+
+   end subroutine test_less_than_same_type
+   
+
+   @test
+   subroutine test_less_than_diff_type
+      type(IntNode) :: i
+      type(FloatNode) :: x
+      type(BoolNode) :: flag
+
+      i = IntNode(1)
+      x = Floatnode(1.)
+      flag = BoolNode(.false.)
+      
+
+      @assertTrue(i < x)
+      @assertFalse(i < flag)
+
+   end subroutine test_less_than_diff_type
+   
+end module Test_IntNode

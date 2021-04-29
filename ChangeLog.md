@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### CHANGED
 
+## Added
+
+- Mappings with non-string keys (including complex keys) now supported.
+
+## Changed
+
+- Introduced new interfaces, thought very similar to before.  Most routines now also
+  can provide an optional error message.
 - Adopted CMake namespaces for package integration/management
 
 ## [0.4.2] - 2020-12-07

@@ -222,7 +222,7 @@ contains
       call cfg%get(s,"key1", default="ABCDEFG")
 
       @assert_that(s, is(equal_to("2004")))
-      print*,"hi"
+
    end subroutine test_quoted_integer
 
 

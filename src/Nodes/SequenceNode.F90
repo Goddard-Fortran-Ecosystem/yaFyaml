@@ -18,6 +18,7 @@ module fy_SequenceNode
       type(NodeVector) :: value
    contains
       procedure, pass(this) :: assign_to_sequence
+      procedure, nopass :: is_sequence
       procedure :: less_than
       procedure :: sequence
    end type SequenceNode
@@ -32,7 +33,18 @@ module fy_SequenceNode
          class(AbstractNode), intent(in) :: b
       end function less_than
    end interface
+
+   interface SequenceNode
+      module procedure new_SequenceNode
+   end interface SequenceNode
+
 contains
+
+
+   function new_SequenceNode() result(node)
+      type(SequenceNode) :: node
+      node%value = NodeVector()
+   end function new_SequenceNode
 
    subroutine assign_to_sequence(sequence, this)
       type(NodeVector), intent(out) :: sequence
@@ -66,5 +78,9 @@ contains
       class(SequenceNode), target, intent(in) :: this
       sequence => this%value
    end function sequence
+
+   pure logical function is_sequence()
+      is_sequence = .true.
+   end function is_sequence
 
 end module fy_SequenceNode

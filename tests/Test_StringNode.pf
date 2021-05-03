@@ -1,8 +1,7 @@
-module Test_SequenceNode
+module Test_StringNode
    use funit
    use fy_Nodes
    use fy_ErrorCodes
-   use fy_NodeVector
    use, intrinsic :: iso_fortran_env, only: INT32, INT64
    use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
@@ -10,39 +9,54 @@ module Test_SequenceNode
 contains
 
    @test
-   subroutine test_is_sequence()
-      class(AbstractNode), target, allocatable :: node
-      type(NodeVector), pointer :: sequence
-      type(SequenceNode), target :: s_node
+   subroutine test_is_string()
+      class(AbstractNode), allocatable :: node
+      type(StringNode), target :: b_node
       logical :: flag
 
-      s_node = SequenceNode()
-      @assertTrue(s_node%is_sequence())
+      b_node = StringNode('cat')
+      @assertTrue(b_node%is_string())
 
-      allocate(node,source=SequenceNode())
-      flag = node%is_sequence()
+      allocate(node,source=StringNode('dog'))
+      flag = node%is_string()
       @assertTrue(flag)
 
       node = IntNode(1_INT32)
-      @assertFalse(node%is_sequence())
+      @assertFalse(node%is_string())
 
-   end subroutine test_is_sequence
+   end subroutine test_is_string
+
+   @test
+   subroutine test_assignment()
+      type(StringNode) :: s_node
+      logical :: flag
+      
+      s_node = StringNode('cat')
+
+      flag= s_node
+      @assert_that(flag, is('cat'))
+
+      s_node = StringNode('dog')
+
+      flag = s_node
+      @assert_that(flag, is('dog'))
+
+
+   end subroutine test_assignment
 
    @test
    subroutine test_casting_succeed()
-      class(AbstractNode), target, allocatable :: node
-      
-      type(NodeVector), pointer :: s_ptr
+      class(AbstractNode), allocatable :: node
+      character(:), pointer :: s_ptr
+
       character(:), allocatable :: err_msg
       integer :: rc
 
-      allocate(node, source=SequenceNode())
+      node = StringNode('cat')
       err_msg = 'foo'
-      s_ptr => to_sequence(node, err_msg=err_msg, rc=rc) ! emtpy
-      call s_ptr%push_back(IntNode(7_INT32))
-      s_ptr => to_sequence(node, err_msg=err_msg, rc=rc) ! emtpy
-      
-      @assert_that(int(s_ptr%size()), is(1))
+      s_ptr => to_string(node, err_msg=err_msg, rc=rc)
+
+      @assert_that(s_ptr, is('cat'))
       @assert_that(rc, is(YAFYAML_SUCCESS))
       ! err_msg not changed if no error
       @assert_that(err_msg, is('foo'))
@@ -51,7 +65,7 @@ contains
    @test
    subroutine test_casting_fail()
       type(IntNode) :: i_node
-      type(NodeVector), pointer :: s_ptr
+      character(:), pointer :: s_ptr
       integer, parameter :: MAXLEN=128
 
       character(MAXLEN) :: err_msg
@@ -59,9 +73,9 @@ contains
       integer :: rc
 
       i_node = IntNode(1_INT32)
-      s_ptr => to_sequence(i_node, err_msg=err_msg, rc=rc)
+      s_ptr => to_string(i_node, err_msg=err_msg, rc=rc)
       @assertExceptionRaised('Type of request does not match type in config.')
-      @assert_that(int(s_ptr%size()), is(0))
+      @assert_that(s_ptr, is(''))
       @assert_that(rc, is(YAFYAML_TYPE_MISMATCH))
       expected = error_message(YAFYAML_TYPE_MISMATCH)
       @assertEqual(expected, err_msg)
@@ -72,13 +86,9 @@ contains
    @test
    ! Empty sequences are ==, so not <
    subroutine test_less_than_trivial()
-      type(SequenceNode), target :: s
-      type(NodeVector), pointer :: sequence
+      type(StringNode) :: s
 
-      s = SequenceNode()
-      sequence => s%sequence()
-      call sequence%push_back(IntNode(1_INT32))
-      call sequence%push_back(BoolNode(.false.))
+      s = StringNode('cat')
 
       @assertFalse(s < s)
 
@@ -86,13 +96,13 @@ contains
    
    @test
    subroutine test_less_than_same_type
-      type(SequenceNode) :: a, b 
+      type(StringNode) :: a, b 
 
-!!$      a = SequenceNode('cat')
-!!$      b = SequenceNode('dog')
-!!$
-!!$      @assertTrue(a < b)
-!!$      @assertFalse(b < a)
+      a = StringNode('cat')
+      b = StringNode('dog')
+
+      @assertTrue(a < b)
+      @assertFalse(b < a)
 
    end subroutine test_less_than_same_type
    
@@ -111,12 +121,12 @@ contains
       x = FloatNode(1.)
       str = StringNode('cat')
 
-      @assertFalse(seq < flag)
-      @assertFalse(seq < i)
-      @assertFalse(seq < str)
-      @assertFalse(seq < x)
-      @assertTrue(seq < m)
+      @assertFalse(str < flag)
+      @assertFalse(str < i)
+      @assertTrue(str < x)
+      @assertTrue(str < seq)
+      @assertTrue(str < m)
 
    end subroutine test_less_than_diff_type
    
-end module Test_SequenceNode
+end module Test_StringNode

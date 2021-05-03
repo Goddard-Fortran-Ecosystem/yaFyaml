@@ -13,6 +13,7 @@ set (pf_tests
 
   Test_BoolNode.pf
   Test_IntNode.pf
+  Test_StringNode.pf
   Test_FloatNode.pf
   Test_SequenceNode.pf
   )

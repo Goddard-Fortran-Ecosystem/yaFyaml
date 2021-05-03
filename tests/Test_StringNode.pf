@@ -29,17 +29,15 @@ contains
    @test
    subroutine test_assignment()
       type(StringNode) :: s_node
-      logical :: flag
+      character(:), allocatable :: str
       
       s_node = StringNode('cat')
-
-      flag= s_node
-      @assert_that(flag, is('cat'))
+      str = s_node
+      @assert_that(str, is('cat'))
 
       s_node = StringNode('dog')
-
-      flag = s_node
-      @assert_that(flag, is('dog'))
+      str = s_node
+      @assert_that(str, is('dog'))
 
 
    end subroutine test_assignment

@@ -26,6 +26,7 @@ contains
          do i = 1, min(na, nb)
             if (a%value%of(i) < b%value%of(i)) then
                less_than = .true.
+               return
             else if (b%value%of(i) < a%value%of(i)) then
                less_than = .false.
                return

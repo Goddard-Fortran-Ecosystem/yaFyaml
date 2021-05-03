@@ -85,18 +85,66 @@ contains
    end subroutine test_less_than_trivial
    
    @test
-   subroutine test_less_than_same_type
-      type(SequenceNode) :: a, b 
+   subroutine test_less_than_first_differs
+      type(SequenceNode), target :: s1, s2
+      type(NodeVector), pointer :: seq1, seq2
 
-!!$      a = SequenceNode('cat')
-!!$      b = SequenceNode('dog')
-!!$
-!!$      @assertTrue(a < b)
-!!$      @assertFalse(b < a)
+      seq1 => to_sequence(s1)
+      seq2 => to_sequence(s2)
 
-   end subroutine test_less_than_same_type
+      call seq1%push_back(IntNode(1_INT32))
+      call seq2%push_back(IntNode(2_INT32))
+
+      print*,__FILE__,__LINE__
+      @assertTrue(s1 < s2)
+      print*,__FILE__,__LINE__
+      @assertFalse(s2 < s1)
+
+   end subroutine test_less_than_first_differs
    
+   @test
+   subroutine test_less_than_second_differs
+      type(SequenceNode), target :: s1, s2
+      type(NodeVector), pointer :: seq1, seq2
 
+      seq1 => to_sequence(s1)
+      seq2 => to_sequence(s2)
+
+      call seq1%push_back(IntNode(1_INT32))
+      call seq1%push_back(FloatNode(1._REAL32))
+
+      call seq2%push_back(IntNode(1_INT32))
+      call seq2%push_back(FloatNode(2._REAL32))
+
+      @assertTrue(s1 < s2)
+      @assertFalse(s2 < s1)
+
+      call seq2%pop_back()
+      call seq2%push_back(IntNode(2_INT32))  ! int < float
+
+      @assertFalse(s1 < s2)
+      @assertTrue(s2 < s1)
+      
+   end subroutine test_less_than_second_differs
+   
+   @test
+   subroutine test_less_than_second_longer
+      type(SequenceNode), target :: s1, s2
+      type(NodeVector), pointer :: seq1, seq2
+
+      seq1 => to_sequence(s1)
+      seq2 => to_sequence(s2)
+
+      call seq1%push_back(IntNode(1_INT32))
+      call seq1%push_back(FloatNode(2._REAL32))
+
+      call seq2%push_back(IntNode(1_INT32))
+      call seq2%push_back(FloatNode(2._REAL32))
+      call seq2%push_back(FloatNode(3._REAL32)) 
+
+      @assertTrue(s1 < s2)
+      @assertFalse(s2 < s1)
+   end subroutine test_less_than_second_longer
    @test
    subroutine test_less_than_diff_type
       type(BoolNode) :: flag

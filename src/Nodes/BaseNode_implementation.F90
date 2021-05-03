@@ -22,13 +22,13 @@ contains
 
 #define SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
 #define OPT_SELECTORS s2, s3, s4, s5, s6, s7, s8, s9
-   module function at_multi_selector(this, SELECTORS, unusable, is_present, err_msg, rc) result(ptr)
+   module function at_multi_selector(this, SELECTORS, unusable, found, err_msg, rc) result(ptr)
       class(AbstractNode), pointer :: ptr
       class(BaseNode), target, intent(in) :: this
       class(*), intent(in) :: s1
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: is_present
+      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
@@ -39,6 +39,7 @@ contains
       integer :: status
       type(UnlimitedVector), target :: v
       type(UnlimitedVectorIterator) :: iter
+      logical :: found_
 
       __UNUSED_DUMMY__(unusable)
       
@@ -46,20 +47,43 @@ contains
 
       config => this
       rc = YAFYAML_SUCCESS ! unless
+      if (present(found)) found=.true. ! unless proven otherwise
       
       associate(b => v%begin(), e => v%end())
         iter = b 
         do while (iter /= e)
 
+           found_ = .false. ! unless
+           
            select type (config)
            type is (SequenceNode)
-              call get_sequence_item(to_sequence(config), iter%of())
-              __VERIFY2__(rc)
+              call get_sequence_item(to_sequence(config), iter%of(), found_, rc=status)
+              if (status /= YAFYAML_SUCCESS) then
+                 if (present(found)) then
+                    found = found_
+                    __RETURN__(YAFYAML_SUCCESS)
+                 else
+                    __FAIL2__(status)
+                 end if
+              endif
            type is (MappingNode)
-              call get_mapping_item(to_mapping(config), iter%of())
-              __VERIFY2__(rc)
+              call get_mapping_item(to_mapping(config), iter%of(), found_, rc=status)
+              if (status /= YAFYAML_SUCCESS) then
+                 if (present(found)) then
+                    found = found_
+                    __RETURN__(YAFYAML_SUCCESS)
+                 else
+                    __FAIL2__(status)
+                 end if
+              endif
            class default
-              __FAIL2__(YAFYAML_NOT_A_COLLECTION)
+                 if (present(found)) then
+                    found = found_
+                    __RETURN__(YAFYAML_SUCCESS)
+                 else
+                    __FAIL2__(YAFYAML_NOT_A_COLLECTION)
+                 end if
+
            end select
 
            config => next_config
@@ -104,34 +128,54 @@ contains
     
 
       ! selector for sequence must be some kind of integer
-      subroutine get_sequence_item(sequence, selector)
+      subroutine get_sequence_item(sequence, selector, found, rc)
          type(NodeVector), target, intent(in) :: sequence
          class(*), intent(in) :: selector
+         logical, intent(out) :: found
+         integer, intent(out) :: rc
 
          select type (i => selector)
          type is (integer(kind=INT32))
-            if (i < 0 .or. i > sequence%size()) then
-               __FAIL2__(YAFYAML_SEQUENCE_INDEX_OUT_OF_BOUNDS)
+            if (i <= 0 .or. i > sequence%size()) then
+               found = .false.
+               next_config => null()
+               rc = YAFYAML_SEQUENCE_INDEX_OUT_OF_BOUNDS
+               return
             else
+               found = .true.
                next_config => sequence%of(i)
+               rc = YAFYAML_SUCCESS
+               return
             end if
          type is (integer(kind=INT64))
-            if (i < 0 .or. i > sequence%size()) then
-               __FAIL2__(YAFYAML_SEQUENCE_INDEX_OUT_OF_BOUNDS)
+            if (i <= 0 .or. i > sequence%size()) then
+               found = .false.
+               next_config => null()
+               rc = YAFYAML_SEQUENCE_INDEX_OUT_OF_BOUNDS
+               return
+            else
+               found = .true.
                next_config => sequence%of(i)
+               rc = YAFYAML_SUCCESS
+               return
             end if
          class default
-            __FAIL2__(YAFYAML_INVALID_SEQUENCE_INDEX)
+            found = .false.
+            next_config => null()
+            rc = YAFYAML_INVALID_SEQUENCE_INDEX
          end select
       end subroutine get_sequence_item
       
       ! While a mapping may have keys that are any subclass of AbstractNode.
-      subroutine get_mapping_item(mapping, selector)
+      subroutine get_mapping_item(mapping, selector, found, rc)
          type(NodeNodeOrderedMap), target, intent(in) :: mapping
          class(*), intent(in) :: selector
+         logical, intent(out) :: found
+         integer, intent(out) :: rc
 
          class(AbstractNode), allocatable :: node
-
+         integer :: status
+         
          select type (s => selector)
          type is (logical)
             allocate(node, source=BoolNode(s))
@@ -148,68 +192,98 @@ contains
          type is (String)
             allocate(node, source=StringNode(s%s))
          class default
-            __FAIL2__(YAFYAML_INVALID_MAPPING_KEY)
+            found = .false.
+            rc = YAFYAML_INVALID_MAPPING_KEY
+            next_config => null()
          end select
-         
-         if (mapping%count(node) == 0) then
-            __FAIL2__(YAFYAML_MAPPING_KEY_NOT_FOUND)
-         end if
-         next_config => mapping%at(node,rc=status)
 
+         if (mapping%count(node) == 0) then
+            found = .false.
+            rc = YAFYAML_SELECTOR_NOT_FOUND
+            next_config => null()
+            return
+         end if
+
+         next_config => mapping%at(node,rc=status)
+         if (status == 0) then
+            found = .true.
+            rc = YAFYAML_SUCCESS
+         else  ! should not be possible
+            found = .false.
+            rc = YAFYAML_SELECTOR_NOT_FOUND
+         end if
             
       end subroutine get_mapping_item
 
    end function at_multi_selector
 
+   ! Error conditions
+   ! 1. Selected item is not found _and_ no default value is provided _and_ found is not used
+   ! 2. Selected item does exist but is of the wrong type
 
-   module subroutine get_logical(this, value, SELECTORS, unusable, is_present, err_msg, rc)
+   module subroutine get_logical(this, value, SELECTORS, unusable, found, default, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       logical, intent(out) :: value
       class(*), intent(in) :: s1
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: is_present
+      logical, optional, intent(out) :: found
+      logical, optional, intent(in) :: default
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       class(AbstractNode), pointer :: ptr
       integer :: status
+      logical :: found_
 
-      ptr => this%at(SELECTORS, is_present=is_present, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=found_, err_msg=err_msg, __RC__)
+      if (present(found)) found=found_
+         
 
-      ! Not an error if selector not found when 'is_present' is used.   Code returns
-      ! and value remains undefined.
-      if (present(is_present)) then
-         if (.not. is_present) return
-      else
+      if (.not. found_) then
+         if (.not. present(found)) then
+            if (.not. present(default)) then
+               __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)
+            else
+               value = default
+            end if
+         else
+            if (present(default)) then
+               value = default
+            end if
+         end if
+      else ! found but possible type-mismatch
          value = to_bool(ptr, err_msg=err_msg, __RC__)
+         __VERIFY2__(err_msg,rc)
       end if
 
+      __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end subroutine get_logical
 
 
-   module subroutine get_string(this, value, SELECTORS, unusable, is_present, err_msg, rc)
+   module subroutine get_string(this, value, SELECTORS, unusable, found, default, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       character(:), allocatable, intent(out) :: value
       class(*), intent(in) :: s1
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: is_present
+      logical, optional, intent(out) :: found
+      character(*), optional, intent(in) :: default
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       class(AbstractNode), pointer :: ptr
       integer :: status
 
-      ptr => this%at(SELECTORS, is_present=is_present, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
-      ! Not an error if selector not found when 'is_present' is used.   Code returns
+      ! Not an error if selector not found when 'found' is used.   Code returns
       ! and value remains undefined.
-      if (present(is_present)) then
-         if (.not. is_present) return
+      if (present(found)) then
+         if (.not. found) return
       else
          value = to_string(ptr, err_msg=err_msg, __RC__)
       end if
@@ -218,26 +292,27 @@ contains
    end subroutine get_string
 
 
-   module subroutine get_integer32(this, value, SELECTORS, unusable, is_present, err_msg, rc)
+   module subroutine get_integer32(this, value, SELECTORS, unusable, found, default, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       integer(kind=INT32), intent(out) :: value
       class(*), intent(in) :: s1
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: is_present
+      logical, optional, intent(out) :: found
+      integer(kind=INT32), optional, intent(in) :: default
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       class(AbstractNode), pointer :: ptr
       integer :: status
 
-      ptr => this%at(SELECTORS, is_present=is_present, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
-      ! Not an error if selector not found when 'is_present' is used.   Code returns
+      ! Not an error if selector not found when 'found' is used.   Code returns
       ! and value remains undefined.
-      if (present(is_present)) then
-         if (.not. is_present) return
+      if (present(found)) then
+         if (.not. found) return
       else
          value = to_int(ptr, err_msg=err_msg, __RC__)
       end if
@@ -246,26 +321,27 @@ contains
    end subroutine get_integer32
 
 
-   module subroutine get_integer64(this, value, SELECTORS, unusable, is_present, err_msg, rc)
+   module subroutine get_integer64(this, value, SELECTORS, unusable, found, default, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       integer(kind=INT64), intent(out) :: value
       class(*), intent(in) :: s1
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: is_present
+      logical, optional, intent(out) :: found
+      integer(kind=INT64), optional, intent(in) :: default
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       class(AbstractNode), pointer :: ptr
       integer :: status
 
-      ptr => this%at(SELECTORS, is_present=is_present, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
-      ! Not an error if selector not found when 'is_present' is used.   Code returns
+      ! Not an error if selector not found when 'found' is used.   Code returns
       ! and value remains undefined.
-      if (present(is_present)) then
-         if (.not. is_present) return
+      if (present(found)) then
+         if (.not. found) return
       else
          value = to_int(ptr, err_msg=err_msg, __RC__)
       end if
@@ -274,26 +350,27 @@ contains
    end subroutine get_integer64
 
 
-   module subroutine get_real32(this, value, SELECTORS, unusable, is_present, err_msg, rc)
+   module subroutine get_real32(this, value, SELECTORS, unusable, found, default, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       real(kind=REAL32), intent(out) :: value
       class(*), intent(in) :: s1
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: is_present
+      logical, optional, intent(out) :: found
+      real(kind=REAL32), optional, intent(in) :: default
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       class(AbstractNode), pointer :: ptr
       integer :: status
 
-      ptr => this%at(SELECTORS, is_present=is_present, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
-      ! Not an error if selector not found when 'is_present' is used.   Code returns
+      ! Not an error if selector not found when 'found' is used.   Code returns
       ! and value remains undefined.
-      if (present(is_present)) then
-         if (.not. is_present) return
+      if (present(found)) then
+         if (.not. found) return
       else
          value = to_float(ptr, err_msg=err_msg, __RC__)
       end if
@@ -302,26 +379,27 @@ contains
    end subroutine get_real32
 
 
-   module subroutine get_real64(this, value, SELECTORS, unusable, is_present, err_msg, rc)
+   module subroutine get_real64(this, value, SELECTORS, unusable, found, default, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       real(kind=REAL64), intent(out) :: value
       class(*), intent(in) :: s1
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: is_present
+      logical, optional, intent(out) :: found
+      real(kind=REAL64), optional, intent(in) :: default
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       class(AbstractNode), pointer :: ptr
       integer :: status
 
-      ptr => this%at(SELECTORS, is_present=is_present, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
-      ! Not an error if selector not found when 'is_present' is used.   Code returns
+      ! Not an error if selector not found when 'found' is used.   Code returns
       ! and value remains undefined.
-      if (present(is_present)) then
-         if (.not. is_present) return
+      if (present(found)) then
+         if (.not. found) return
       else
          value = to_float(ptr, err_msg=err_msg, __RC__)
       end if

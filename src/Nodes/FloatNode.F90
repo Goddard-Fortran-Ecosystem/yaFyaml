@@ -17,13 +17,14 @@ module fy_FloatNode
       private
       real(kind=REAL64) :: value = -huge(1._REAL64)
    contains
+      procedure, nopass :: is_float
       procedure, pass(this) :: assign_to_real32
       procedure, pass(this) :: assign_to_real64
       procedure :: less_than
    end type FloatNode
 
    ! Better woud be NaN but cannot do that as an initialiations expr
-   real(kind=REAL64), target :: DEFAULT_REAL = -HUGE(1._REAL64)
+   real(kind=REAL64), target :: DEFAULT_REAL = nearest(-huge(1._REAL64),1._REAL64)
 
    interface
       module function less_than(a,b)
@@ -41,6 +42,10 @@ module fy_FloatNode
 
 contains
 
+   pure logical function is_float() result(is)
+      is = .true.
+   end function is_float
+
    function new_FloatNode_r32(r32) result(node)
       type(FloatNode) :: node
       real(kind=REAL32), intent(in) :: r32
@@ -56,18 +61,18 @@ contains
 
    subroutine assign_to_real32(r32, this)
       use, intrinsic :: ieee_arithmetic, only: ieee_value, &
-           & ieee_positive_inf, ieee_negative_inf, ieee_quiet_nan
+           & IEEE_POSITIVE_INF, IEEE_NEGATIVE_INF, IEEE_QUIET_NAN
       real(kind=REAL32), intent(out) :: r32
       class(FloatNode), intent(in) :: this
 
       if (abs(this%value) <= huge(1._REAL32)) then
          r32 = this%value
       elseif (this%value > huge(1._REAL32)) then
-         r32 = ieee_value(r32,  ieee_positive_inf)
+         r32 = ieee_value(r32,  IEEE_POSITIVE_INF)
       elseif (this%value < -huge(1._REAL32)) then
-         r32 = ieee_value(r32,  ieee_negative_inf)
+         r32 = ieee_value(r32,  IEEE_NEGATIVE_INF)
       else ! must be IEEE 64bit NaN
-         r32 = ieee_value(r32,  ieee_quiet_nan)
+         r32 = ieee_value(r32,  IEEE_QUIET_NAN)
       end if
 
    end subroutine assign_to_real32

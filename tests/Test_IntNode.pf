@@ -2,6 +2,8 @@ module Test_IntNode
    use funit
    use fy_Nodes
    use fy_ErrorCodes
+   use fy_NodeNodeOrderedMap
+   use fy_NodeVector
    use, intrinsic :: iso_fortran_env, only: INT32, INT64
    use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
@@ -15,23 +17,16 @@ contains
       type(IntNode), target :: iNode
       logical :: flag
 
-      print*,__FILE__,__LINE__
       allocate(node,source=IntNode(1_INT32))
       iNode = IntNode(1_INT32)
-      print*,__FILE__,__LINE__
       pNode => iNode
-      print*,__FILE__,__LINE__
       @assertTrue(pNode%is_int())
-      print*,__FILE__,__LINE__
       flag = node%is_int()
-      print*,__FILE__,__LINE__
       @assertTrue(flag)
-      print*,__FILE__,__LINE__
 
       node = FloatNode(1._REAL32)
-      print*,__FILE__,__LINE__
       @assertFalse(node%is_int())
-      print*,__FILE__,__LINE__
+
    end subroutine test_is_int
 
    @test
@@ -78,7 +73,6 @@ contains
       integer(kind=INT64), pointer :: i_ptr
 
       character(:), allocatable :: err_msg
-      character(:), allocatable :: expected
       integer :: rc
 
       node = IntNode(7_INT32)
@@ -110,6 +104,160 @@ contains
       @assertEqual(expected, err_msg)
 
    end subroutine test_casting_fail
+
+
+   ! This really tests functionality of Base Node, but we need
+   ! a concrete class ...
+   @test
+   subroutine test_at_simple_mapping()
+      class(AbstractNode), pointer :: top
+      class(AbstractNode), pointer :: sub_node
+      type(MappingNode), target :: mapping_node
+      type(NodeNodeOrderedMap), pointer :: mapping
+      integer(kind=INT32) :: i32
+      character(100) :: err_msg
+      integer :: status
+      logical :: was_found
+      
+      mapping => mapping_node%mapping()
+      call mapping%insert(StringNode('A'),IntNode(1_INT32))
+      call mapping%insert(StringNode('B'),FloatNode(2._REAL32))
+      top => mapping_node
+
+      err_msg = 'empty'
+      sub_node => top%at('A', found=was_found, err_msg=err_msg, rc=status)
+      @assertEqual('empty', err_msg)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(was_found, is(true()))
+
+      @assert_that(sub_node%is_int(), is (true()))
+      i32 = sub_node
+      @assert_that(i32, is(1))
+   end subroutine test_at_simple_mapping
+      
+   @test
+   subroutine test_at_simple_mapping_B()
+      class(AbstractNode), pointer :: top
+      class(AbstractNode), pointer :: sub_node
+      type(MappingNode), target :: mapping_node
+      type(NodeNodeOrderedMap), pointer :: mapping
+      real(kind=REAL32) :: x32
+      character(100) :: err_msg
+      integer :: status
+      logical :: was_found
+
+      mapping => mapping_node%mapping()
+      call mapping%insert(StringNode('A'),IntNode(1_INT32))
+      call mapping%insert(StringNode('B'),FloatNode(2._REAL32))
+      top => mapping_node
+
+      err_msg = 'empty'
+      sub_node => top%at('B', found=was_found, err_msg=err_msg, rc=status)
+      @assertEqual('empty', err_msg)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(was_found, is(true()))
+
+      @assert_that(sub_node%is_float(), is(true()))
+      x32 = sub_node
+      @assert_that(x32, is(2.))
+   end subroutine test_at_simple_mapping_B
+      
+   @test
+   subroutine test_at_simple_mapping_not_was_found()
+      class(AbstractNode), pointer :: top
+      class(AbstractNode), pointer :: sub_node
+      type(MappingNode), target :: mapping_node
+      type(NodeNodeOrderedMap), pointer :: mapping
+      character(100) :: err_msg
+      integer :: status
+      logical :: was_found
+      
+      mapping => mapping_node%mapping()
+      call mapping%insert(StringNode('A'),IntNode(1_INT32))
+      call mapping%insert(StringNode('B'),FloatNode(2._REAL32))
+      top => mapping_node
+
+      err_msg = 'empty'
+      ! Once with found arg
+      sub_node => top%at('C', found=was_found, err_msg=err_msg, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assertEqual('empty', err_msg)
+      @assert_that(was_found, is(false()))
+
+      ! and now without found arg
+      sub_node => top%at('C', err_msg=err_msg, rc=status)
+      @assertExceptionRaised('Selected item does not exist and no default value is provided.')
+      @assert_that(status, is(YAFYAML_SELECTOR_NOT_FOUND))
+      @assertEqual('Selected item does not exist and no default value is provided.', err_msg)
+      @assert_that(was_found, is(false()))
+      
+   end subroutine test_at_simple_mapping_not_was_found
+      
+   @test
+   subroutine test_at_simple_sequence()
+      class(AbstractNode), pointer :: top
+      class(AbstractNode), pointer :: sub_node
+      type(SequenceNode), target :: sequence_node
+      type(NodeVector), pointer :: sequence
+      integer(kind=INT32) :: i32
+      character(100) :: err_msg
+      integer :: status
+      logical :: was_found
+      
+      sequence => sequence_node%sequence()
+      call sequence%push_back(IntNode(1_INT32))
+      call sequence%push_back(FloatNode(2._REAL32))
+      call sequence%push_back(StringNode('cat'))
+      top => sequence_node
+
+      err_msg = 'empty'
+      sub_node => top%at(1, found=was_found, err_msg=err_msg, rc=status)
+      @assertEqual('empty', err_msg)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(was_found, is(true()))
+
+      @assert_that(sub_node%is_int(), is (true()))
+      i32 = sub_node
+      @assert_that(i32, is(1))
+   end subroutine test_at_simple_sequence
+      
+   
+   @test
+   subroutine test_at_sequence_fail_out_of_bounds()
+      class(AbstractNode), pointer :: top
+      class(AbstractNode), pointer :: sub_node
+      type(SequenceNode), target :: sequence_node
+      type(NodeVector), pointer :: sequence
+      integer(kind=INT32) :: i32
+      character(100) :: err_msg
+      integer :: status
+      logical :: was_found
+      
+      sequence => sequence_node%sequence()
+      call sequence%push_back(IntNode(1_INT32))
+      call sequence%push_back(FloatNode(2._REAL32))
+      call sequence%push_back(StringNode('cat'))
+      top => sequence_node
+
+      err_msg = 'empty'
+      ! with found
+      sub_node => top%at(0, found=was_found, err_msg=err_msg, rc=status)
+      @assertEqual('empty', err_msg)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(was_found, is(false()))
+
+      ! Index too large
+      sub_node => top%at(5, found=was_found, err_msg=err_msg, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(was_found, is(false()))
+
+      ! without found
+      sub_node => top%at(0, err_msg=err_msg, rc=status)
+      @assertExceptionRaised('Sequence index is out of bounds.')
+      @assertEqual('Sequence index is out of bounds.', err_msg)
+      @assert_that(status, is(YAFYAML_SEQUENCE_INDEX_OUT_OF_BOUNDS))
+
+   end subroutine test_at_sequence_fail_out_of_bounds
       
    
    @test
@@ -136,17 +284,23 @@ contains
 
    @test
    subroutine test_less_than_diff_type
-      type(IntNode) :: i
-      type(FloatNode) :: x
       type(BoolNode) :: flag
+      type(IntNode) :: i
+      type(StringNode) :: str
+      type(FloatNode) :: x
+      type(SequenceNode) :: seq
+      type(MappingNode) :: m
 
-      i = IntNode(1)
-      x = Floatnode(1.)
       flag = BoolNode(.false.)
-      
+      i = IntNode(1)
+      x = FloatNode(1.)
+      str = StringNode('cat')
 
-      @assertTrue(i < x)
       @assertFalse(i < flag)
+      @assertTrue(i < str)
+      @assertTrue(i < x)
+      @assertTrue(i < seq)
+      @assertTrue(i < m)
 
    end subroutine test_less_than_diff_type
    

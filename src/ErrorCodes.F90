@@ -19,6 +19,7 @@ module fy_ErrorCodes
      enumerator :: YAFYAML_PARSER_ERROR
      enumerator :: YAFYAML_NON_ALPHANUMERIC_CHARACTER
      ! Configuration usage errors
+     enumerator :: YAFYAML_SELECTOR_NOT_FOUND
      enumerator :: YAFYAML_TYPE_MISMATCH
      enumerator :: YAFYAML_INVALID_SEQUENCE_INDEX
      enumerator :: YAFYAML_SEQUENCE_INDEX_OUT_OF_BOUNDS
@@ -65,6 +66,8 @@ contains
       case (YAFYAML_NON_ALPHANUMERIC_CHARACTER)
          message = "Found nonalphanumeric character in anchor."
 
+      case (YAFYAML_SELECTOR_NOT_FOUND)
+         message = 'Selected item does not exist and no default value is provided.'
       case (YAFYAML_TYPE_MISMATCH)
          message = 'Type of request does not match type in config.'
       case (YAFYAML_INVALID_SEQUENCE_INDEX)

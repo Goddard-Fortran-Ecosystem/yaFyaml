@@ -19,6 +19,7 @@ module fy_SequenceNode
    contains
       procedure, pass(this) :: assign_to_sequence
       procedure :: less_than
+      procedure :: sequence
    end type SequenceNode
 
    type(NodeVector), target :: DEFAULT_SEQUENCE
@@ -59,6 +60,11 @@ contains
 
       __RETURN__(YAFYAML_SUCCESS)
    end function to_sequence
-   
+
+   function sequence(this)
+      type(NodeVector), pointer :: sequence
+      class(SequenceNode), target, intent(in) :: this
+      sequence => this%value
+   end function sequence
 
 end module fy_SequenceNode

@@ -16,9 +16,9 @@ module fy_MappingNode
    type, extends(BaseNode) :: MappingNode
       private
       type(NodeNodeOrderedMap) :: value
-      integer :: placeholder
    contains
       procedure, pass(this) :: assign_to_mapping
+      procedure :: mapping
       procedure :: less_than
    end type MappingNode
 
@@ -34,8 +34,18 @@ module fy_MappingNode
 
    type(NodeNodeOrderedMap), target :: DEFAULT_MAPPING
 
+   interface MappingNode
+      module procedure new_MappingNode
+   end interface MappingNode
    
 contains
+
+   function new_MappingNode() result(node)
+      type(MappingNode) :: node
+
+      node%value = NodeNodeOrderedMap()
+
+   end function new_MappingNode
 
    subroutine assign_to_mapping(mapping, this)
       type(NodeNodeOrderedMap), intent(out) :: mapping
@@ -65,5 +75,12 @@ contains
    end function to_mapping
    
 
+   function mapping(this)
+      type(NodeNodeOrderedMap), pointer :: mapping
+      class(MappingNode), target :: this
+
+      mapping => this%value
+
+   end function mapping
    
 end module fy_MappingNode

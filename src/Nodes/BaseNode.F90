@@ -44,7 +44,7 @@ module fy_BaseNode
 #define OPT_SELECTORS s2, s3, s4, s5, s6, s7, s8, s9
    interface
       module function at_multi_selector(this, SELECTORS, &
-           & unusable, is_present, err_msg, rc) result(node_ptr)
+           & unusable, found, err_msg, rc) result(node_ptr)
          use fy_KeywordEnforcer
          implicit none
          class(AbstractNode), pointer :: node_ptr
@@ -52,83 +52,90 @@ module fy_BaseNode
          class(*), intent(in) :: s1
          class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
          class(KeywordEnforcer), optional, intent(in) :: unusable
-         logical, optional, intent(out) :: is_present
+         logical, optional, intent(out) :: found
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end function at_multi_selector
 
-      module subroutine get_logical(this, value, SELECTORS, unusable, is_present, err_msg, rc)
+
+      module subroutine get_logical(this, value, SELECTORS, unusable, found, default, err_msg, rc)
          use fy_KeywordEnforcer
          class(BaseNode), target, intent(in) :: this
          logical, intent(out) :: value
          class(*), intent(in) :: s1
          class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
          class(KeywordEnforcer), optional, intent(in) :: unusable
-         logical, optional, intent(out) :: is_present
+         logical, optional, intent(out) :: found
+         logical, optional, intent(in) :: default
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end subroutine get_logical
 
 
-      module subroutine get_string(this, value, SELECTORS, unusable, is_present, err_msg, rc)
+      module subroutine get_string(this, value, SELECTORS, unusable, found, default, err_msg, rc)
          use fy_KeywordEnforcer
          class(BaseNode), target, intent(in) :: this
          character(:), allocatable, intent(out) :: value
          class(*), intent(in) :: s1
          class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
          class(KeywordEnforcer), optional, intent(in) :: unusable
-         logical, optional, intent(out) :: is_present
+         logical, optional, intent(out) :: found
+         character(*), optional, intent(in) :: default
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end subroutine get_string
 
 
-      module subroutine get_integer32(this, value, SELECTORS, unusable, is_present, err_msg, rc)
+      module subroutine get_integer32(this, value, SELECTORS, unusable, found, default, err_msg, rc)
          use fy_KeywordEnforcer
          class(BaseNode), target, intent(in) :: this
          integer(kind=INT32), intent(out) :: value
          class(*), intent(in) :: s1
          class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
          class(KeywordEnforcer), optional, intent(in) :: unusable
-         logical, optional, intent(out) :: is_present
+         logical, optional, intent(out) :: found
+         integer(kind=INT32), optional, intent(in) :: default
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end subroutine get_integer32
 
 
-      module subroutine get_integer64(this, value, SELECTORS, unusable, is_present, err_msg, rc)
+      module subroutine get_integer64(this, value, SELECTORS, unusable, found, default, err_msg, rc)
          use fy_KeywordEnforcer
          class(BaseNode), target, intent(in) :: this
          integer(kind=INT64), intent(out) :: value
          class(*), intent(in) :: s1
          class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
          class(KeywordEnforcer), optional, intent(in) :: unusable
-         logical, optional, intent(out) :: is_present
+         logical, optional, intent(out) :: found
+         integer(kind=INT64), optional, intent(in) :: default
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end subroutine get_integer64
 
 
-      module subroutine get_real32(this, value, SELECTORS, unusable, is_present, err_msg, rc)
+      module subroutine get_real32(this, value, SELECTORS, unusable, found, default, err_msg, rc)
          use fy_KeywordEnforcer
          class(BaseNode), target, intent(in) :: this
          real(kind=REAL32), intent(out) :: value
          class(*), intent(in) :: s1
          class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
          class(KeywordEnforcer), optional, intent(in) :: unusable
-         logical, optional, intent(out) :: is_present
+         logical, optional, intent(out) :: found
+         real(kind=REAL32), optional, intent(in) :: default
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end subroutine get_real32
 
-      module subroutine get_real64(this, value, SELECTORS, unusable, is_present, err_msg, rc)
+      module subroutine get_real64(this, value, SELECTORS, unusable, found, default, err_msg, rc)
          use fy_KeywordEnforcer
          class(BaseNode), target, intent(in) :: this
          real(kind=REAL64), intent(out) :: value
          class(*), intent(in) :: s1
          class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
          class(KeywordEnforcer), optional, intent(in) :: unusable
-         logical, optional, intent(out) :: is_present
+         logical, optional, intent(out) :: found
+         real(kind=REAL64), optional, intent(in) :: default
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end subroutine get_real64

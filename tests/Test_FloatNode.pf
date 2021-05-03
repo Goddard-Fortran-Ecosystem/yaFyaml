@@ -1,0 +1,156 @@
+module Test_FloatNode
+   use funit
+   use fy_Nodes
+   use fy_ErrorCodes
+   use, intrinsic :: iso_fortran_env, only: INT32, INT64
+   use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
+   implicit none
+
+contains
+
+   @test
+   subroutine test_is_float()
+      class(AbstractNode), allocatable :: node
+      type(FloatNode), target :: f_node
+      logical :: flag
+
+      allocate(node,source=FloatNode(1._REAL32))
+      f_node = FloatNode(1._REAL32)
+      @assertTrue(f_node%is_float())
+      flag = node%is_float()
+      @assertTrue(flag)
+
+      node = IntNode(1_INT32)
+      @assertFalse(node%is_float())
+
+   end subroutine test_is_float
+
+   @test
+   subroutine test_assignment()
+      type(FloatNode) :: f_node
+      real(kind=REAL32) :: r32
+      real(kind=REAL64) :: r64
+      
+      f_node = FloatNode(1._REAL32)
+
+      r32 = f_node
+      @assert_that(r32, is(1._REAL32))
+
+      r64 = f_node
+      @assert_that(r64, is(1._REAL64))
+
+      f_node = FloatNode(2._REAL64)
+
+      r32 = f_node
+      @assert_that(r32, is(2._REAL32))
+
+      r64 = f_node
+      @assert_that(r64, is(2._REAL64))
+
+   end subroutine test_assignment
+
+   ! If internally stored float is too large
+   ! for requested precision, the access fails and
+   ! +/- Inf is returned as an indicator.
+   @test
+   subroutine test_overflow()
+      use, intrinsic :: ieee_arithmetic, only: ieee_value
+      use, intrinsic :: ieee_arithmetic, only: IEEE_POSITIVE_INF
+      use, intrinsic :: ieee_arithmetic, only: IEEE_NEGATIVE_INF
+      type(FloatNode) :: f_node
+      real(kind=REAL32) :: r32
+      
+      f_node = FloatNode(huge(1._REAL64))
+      r32 = f_node
+      @assert_that(r32, is(ieee_value(r32, IEEE_POSITIVE_INF)))
+
+      f_node = FloatNode(-huge(1._REAL64))
+      r32 = f_node
+      @assert_that(r32, is(ieee_value(r32, IEEE_NEGATIVE_INF)))
+
+   end subroutine test_overflow
+
+   @test
+   subroutine test_casting_succeed()
+      class(AbstractNode), allocatable :: node
+      real(kind=REAL64), pointer :: x_ptr
+
+      character(:), allocatable :: err_msg
+      integer :: rc
+
+      node = FloatNode(7._REAL32)
+      err_msg = 'foo'
+      x_ptr => to_float(node, err_msg=err_msg, rc=rc)
+
+      @assert_that(x_ptr, is(7._REAL64))
+      @assert_that(rc, is(YAFYAML_SUCCESS))
+      ! err_msg not changed if no error
+      @assert_that(err_msg, is('foo'))
+   end subroutine test_casting_succeed
+
+   @test
+   subroutine test_casting_fail()
+      type(IntNode) :: i_node
+      real(kind=REAL64), pointer :: x_ptr
+      integer, parameter :: MAXLEN=128
+
+      character(MAXLEN) :: err_msg
+      character(:), allocatable :: expected
+      integer :: rc
+
+      i_node = IntNode(1_INT32)
+      x_ptr => to_float(i_node, err_msg=err_msg, rc=rc)
+      @assertExceptionRaised('Type of request does not match type in config.')
+      @assert_that(x_ptr, is(nearest(-huge(1._REAL64),1._REAL64)))
+      @assert_that(rc, is(YAFYAML_TYPE_MISMATCH))
+      expected = error_message(YAFYAML_TYPE_MISMATCH)
+      @assertEqual(expected, err_msg)
+
+   end subroutine test_casting_fail
+
+
+   @test
+   ! Empty sequences are ==, so not <
+   subroutine test_less_than_trivial()
+      type(FloatNode) :: a, b 
+
+      @assertFalse(a < b)
+
+   end subroutine test_less_than_trivial
+   
+   @test
+   subroutine test_less_than_same_type
+      type(FloatNode) :: a, b 
+
+      a = FloatNode(1.)
+      b = FloatNode(2.)
+      
+      @assertTrue(a < b)
+      @assertFalse(b < a)
+
+   end subroutine test_less_than_same_type
+   
+
+   @test
+   subroutine test_less_than_diff_type
+      type(BoolNode) :: flag
+      type(IntNode) :: i
+      type(StringNode) :: str
+      type(FloatNode) :: x
+      type(SequenceNode) :: seq
+      type(MappingNode) :: m
+
+      flag = BoolNode(.false.)
+      i = IntNode(1)
+      x = FloatNode(1.)
+      str = StringNode('cat')
+
+      @assertFalse(x < flag)
+      @assertFalse(x < i)
+      @assertFalse(x < str)
+      @assertTrue(x < seq)
+      @assertTrue(x < m)
+
+   end subroutine test_less_than_diff_type
+   
+end module Test_FloatNode

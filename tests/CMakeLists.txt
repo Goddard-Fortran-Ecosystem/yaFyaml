@@ -11,7 +11,9 @@ set (pf_tests
   Test_JSONSchema.pf
   Test_CoreSchema.pf
 
+  Test_BoolNode.pf
   Test_IntNode.pf
+  Test_FloatNode.pf
   Test_SequenceNode.pf
   )
 

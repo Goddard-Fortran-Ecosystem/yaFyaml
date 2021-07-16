@@ -3,7 +3,7 @@
 module fy_MappingNode
    use fy_AbstractNode
    use fy_BaseNode
-   use fy_NodeNodeOrderedMap
+   use fy_Mapping
    use fy_ErrorCodes
    use fy_ErrorHandling
    use fy_keywordEnforcer
@@ -12,15 +12,17 @@ module fy_MappingNode
 
    public :: MappingNode
    public :: to_mapping
-   
+
    type, extends(BaseNode) :: MappingNode
       private
-      type(NodeNodeOrderedMap) :: value
+      type(Mapping) :: value
    contains
+      procedure, nopass :: is_mapping
       procedure, pass(this) :: assign_to_mapping
-      procedure :: mapping
       procedure :: less_than
    end type MappingNode
+
+   type(MappingNode) :: mmm
 
    interface
       module function less_than(a,b)
@@ -32,32 +34,36 @@ module fy_MappingNode
    end interface
 
 
-   type(NodeNodeOrderedMap), target :: DEFAULT_MAPPING
+   type(Mapping), target :: DEFAULT_MAPPING
 
    interface MappingNode
       module procedure new_MappingNode
    end interface MappingNode
-   
+
 contains
+
+   pure logical function is_mapping() result(is)
+      is = .true.
+   end function is_mapping
 
    function new_MappingNode() result(node)
       type(MappingNode) :: node
 
-      node%value = NodeNodeOrderedMap()
+      node%value = Mapping()
 
    end function new_MappingNode
 
-   subroutine assign_to_mapping(mapping, this)
-      type(NodeNodeOrderedMap), intent(out) :: mapping
+   subroutine assign_to_mapping(m, this)
+      type(Mapping), intent(out) :: m
       class(MappingNode), intent(in) :: this
       
-!!$      mapping = this%value
+      m = this%value
       
    end subroutine assign_to_mapping
    
 
    function to_mapping(this, unusable, err_msg, rc) result(ptr)
-      type(NodeNodeOrderedMap), pointer :: ptr
+      type(Mapping), pointer :: ptr
       class(AbstractNode), target, intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
@@ -75,12 +81,4 @@ contains
    end function to_mapping
    
 
-   function mapping(this)
-      type(NodeNodeOrderedMap), pointer :: mapping
-      class(MappingNode), target :: this
-
-      mapping => this%value
-
-   end function mapping
-   
 end module fy_MappingNode

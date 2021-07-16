@@ -13,8 +13,8 @@ module fy_BaseNode
       private
    contains
 
-      procedure, NON_OVERRIDABLE :: at_multi_selector
-      procedure, NON_OVERRIDABLE :: of_multi_selector
+      procedure :: at_multi_selector
+      procedure :: of_multi_selector
       procedure :: get_logical
       procedure :: get_string
       procedure :: get_integer32

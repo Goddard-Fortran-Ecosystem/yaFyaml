@@ -44,8 +44,8 @@ add_library (yafyaml
   Nodes/FloatNode_implementation.F90
   Nodes/StringNode.F90
   Nodes/StringNode_implementation.F90
-  Nodes/NodeVector.F90
-  Nodes/NodeNodeOrderedMap.F90
+  Nodes/Sequence.F90
+  Nodes/Mapping.F90
   Nodes/Nodes.F90
   # package
   yafyaml.F90

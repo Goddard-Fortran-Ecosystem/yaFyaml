@@ -57,7 +57,6 @@ module fy_AbstractNode
       ! Necessary to support map container with *Node keys.
       procedure(I_less_than), deferred :: less_than
       generic :: operator(<) => less_than
-
    end type AbstractNode
 
 #define SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9

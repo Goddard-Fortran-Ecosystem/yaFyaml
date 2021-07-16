@@ -11,4 +11,7 @@ module fy_Nodes
    use fy_SequenceNode
    use fy_MappingNode
 
+   use fy_Sequence
+   use fy_Mapping
+
 end module fy_Nodes

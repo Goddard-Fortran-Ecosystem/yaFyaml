@@ -1,4 +1,4 @@
-module fy_NodeNodeOrderedMap
+module fy_Mapping
    use fy_AbstractNode
 
 #define Key AbstractNode
@@ -8,9 +8,9 @@ module fy_NodeNodeOrderedMap
 #define T AbstractNode
 #define T_polymorphic
 
-#define OrderedMap NodeNodeOrderedMap
-#define OrderedMapIterator NodeNodeOrderedOrderedMapIterator
-#define Pair NodeNodePair
+#define OrderedMap Mapping
+#define OrderedMapIterator MappingIterator
+#define Pair MappingPair
 
 #include "ordered_map/template.inc"
 
@@ -24,4 +24,4 @@ module fy_NodeNodeOrderedMap
 #undef Key_polymorphic
 #undef Key
 
-end module fy_NodeNodeOrderedMap
+end module fy_Mapping

@@ -2,8 +2,6 @@ module Test_IntNode
    use funit
    use fy_Nodes
    use fy_ErrorCodes
-   use fy_NodeNodeOrderedMap
-   use fy_NodeVector
    use, intrinsic :: iso_fortran_env, only: INT32, INT64
    use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
@@ -113,15 +111,15 @@ contains
       class(AbstractNode), pointer :: top
       class(AbstractNode), pointer :: sub_node
       type(MappingNode), target :: mapping_node
-      type(NodeNodeOrderedMap), pointer :: mapping
+      type(Mapping), pointer :: m
       integer(kind=INT32) :: i32
       character(100) :: err_msg
       integer :: status
       logical :: was_found
       
-      mapping => mapping_node%mapping()
-      call mapping%insert(StringNode('A'),IntNode(1_INT32))
-      call mapping%insert(StringNode('B'),FloatNode(2._REAL32))
+      m => to_mapping(mapping_node)
+      call m%insert(StringNode('A'),IntNode(1_INT32))
+      call m%insert(StringNode('B'),FloatNode(2._REAL32))
       top => mapping_node
 
       err_msg = 'empty'
@@ -140,15 +138,15 @@ contains
       class(AbstractNode), pointer :: top
       class(AbstractNode), pointer :: sub_node
       type(MappingNode), target :: mapping_node
-      type(NodeNodeOrderedMap), pointer :: mapping
+      type(Mapping), pointer :: m
       real(kind=REAL32) :: x32
       character(100) :: err_msg
       integer :: status
       logical :: was_found
 
-      mapping => mapping_node%mapping()
-      call mapping%insert(StringNode('A'),IntNode(1_INT32))
-      call mapping%insert(StringNode('B'),FloatNode(2._REAL32))
+      m => to_mapping(mapping_node)
+      call m%insert(StringNode('A'),IntNode(1_INT32))
+      call m%insert(StringNode('B'),FloatNode(2._REAL32))
       top => mapping_node
 
       err_msg = 'empty'
@@ -167,14 +165,14 @@ contains
       class(AbstractNode), pointer :: top
       class(AbstractNode), pointer :: sub_node
       type(MappingNode), target :: mapping_node
-      type(NodeNodeOrderedMap), pointer :: mapping
+      type(Mapping), pointer :: m
       character(100) :: err_msg
       integer :: status
       logical :: was_found
       
-      mapping => mapping_node%mapping()
-      call mapping%insert(StringNode('A'),IntNode(1_INT32))
-      call mapping%insert(StringNode('B'),FloatNode(2._REAL32))
+      m => to_mapping(mapping_node)
+      call m%insert(StringNode('A'),IntNode(1_INT32))
+      call m%insert(StringNode('B'),FloatNode(2._REAL32))
       top => mapping_node
 
       err_msg = 'empty'
@@ -198,16 +196,16 @@ contains
       class(AbstractNode), pointer :: top
       class(AbstractNode), pointer :: sub_node
       type(SequenceNode), target :: sequence_node
-      type(NodeVector), pointer :: sequence
+      type(Sequence), pointer :: s
       integer(kind=INT32) :: i32
       character(100) :: err_msg
       integer :: status
       logical :: was_found
       
-      sequence => sequence_node%sequence()
-      call sequence%push_back(IntNode(1_INT32))
-      call sequence%push_back(FloatNode(2._REAL32))
-      call sequence%push_back(StringNode('cat'))
+      s => to_sequence(sequence_node)
+      call s%push_back(IntNode(1_INT32))
+      call s%push_back(FloatNode(2._REAL32))
+      call s%push_back(StringNode('cat'))
       top => sequence_node
 
       err_msg = 'empty'
@@ -227,16 +225,16 @@ contains
       class(AbstractNode), pointer :: top
       class(AbstractNode), pointer :: sub_node
       type(SequenceNode), target :: sequence_node
-      type(NodeVector), pointer :: sequence
+      type(Sequence), pointer :: s
       integer(kind=INT32) :: i32
       character(100) :: err_msg
       integer :: status
       logical :: was_found
       
-      sequence => sequence_node%sequence()
-      call sequence%push_back(IntNode(1_INT32))
-      call sequence%push_back(FloatNode(2._REAL32))
-      call sequence%push_back(StringNode('cat'))
+      s => to_sequence(sequence_node)
+      call s%push_back(IntNode(1_INT32))
+      call s%push_back(FloatNode(2._REAL32))
+      call s%push_back(StringNode('cat'))
       top => sequence_node
 
       err_msg = 'empty'

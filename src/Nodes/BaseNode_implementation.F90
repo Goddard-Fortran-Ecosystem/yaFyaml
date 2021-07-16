@@ -8,8 +8,8 @@ submodule (fy_BaseNode) BaseNode_implementation
    use fy_StringNode
    use fy_FloatNode
    use fy_BoolNode
-   use fy_NodeVector
-   use fy_NodeNodeOrderedMap
+   use fy_Sequence
+   use fy_Mapping
    use gFTL2_UnlimitedVector
 
    use fy_String
@@ -46,7 +46,7 @@ contains
       call selectors_to_vector(v)
 
       config => this
-      rc = YAFYAML_SUCCESS ! unless
+      if (present(rc)) rc = YAFYAML_SUCCESS ! unless ...
       if (present(found)) found=.true. ! unless proven otherwise
       
       associate(b => v%begin(), e => v%end())
@@ -128,34 +128,34 @@ contains
     
 
       ! selector for sequence must be some kind of integer
-      subroutine get_sequence_item(sequence, selector, found, rc)
-         type(NodeVector), target, intent(in) :: sequence
+      subroutine get_sequence_item(s, selector, found, rc)
+         type(Sequence), target, intent(in) :: s
          class(*), intent(in) :: selector
          logical, intent(out) :: found
          integer, intent(out) :: rc
 
          select type (i => selector)
          type is (integer(kind=INT32))
-            if (i <= 0 .or. i > sequence%size()) then
+            if (i <= 0 .or. i > s%size()) then
                found = .false.
                next_config => null()
                rc = YAFYAML_SEQUENCE_INDEX_OUT_OF_BOUNDS
                return
             else
                found = .true.
-               next_config => sequence%of(i)
+               next_config => s%of(i)
                rc = YAFYAML_SUCCESS
                return
             end if
          type is (integer(kind=INT64))
-            if (i <= 0 .or. i > sequence%size()) then
+            if (i <= 0 .or. i > s%size()) then
                found = .false.
                next_config => null()
                rc = YAFYAML_SEQUENCE_INDEX_OUT_OF_BOUNDS
                return
             else
                found = .true.
-               next_config => sequence%of(i)
+               next_config => s%of(i)
                rc = YAFYAML_SUCCESS
                return
             end if
@@ -167,8 +167,8 @@ contains
       end subroutine get_sequence_item
       
       ! While a mapping may have keys that are any subclass of AbstractNode.
-      subroutine get_mapping_item(mapping, selector, found, rc)
-         type(NodeNodeOrderedMap), target, intent(in) :: mapping
+      subroutine get_mapping_item(m, selector, found, rc)
+         type(Mapping), target, intent(in) :: m
          class(*), intent(in) :: selector
          logical, intent(out) :: found
          integer, intent(out) :: rc
@@ -197,14 +197,14 @@ contains
             next_config => null()
          end select
 
-         if (mapping%count(node) == 0) then
+         if (m%count(node) == 0) then
             found = .false.
             rc = YAFYAML_SELECTOR_NOT_FOUND
             next_config => null()
             return
          end if
 
-         next_config => mapping%at(node,rc=status)
+         next_config => m%at(node,rc=status)
          if (status == 0) then
             found = .true.
             rc = YAFYAML_SUCCESS

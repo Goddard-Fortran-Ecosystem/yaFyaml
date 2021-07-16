@@ -3,7 +3,7 @@
 module fy_SequenceNode
    use fy_AbstractNode
    use fy_BaseNode
-   use fy_NodeVector
+   use fy_Sequence
    use fy_ErrorCodes
    use fy_ErrorHandling
    use fy_keywordEnforcer
@@ -15,15 +15,14 @@ module fy_SequenceNode
    
    type, extends(BaseNode) :: SequenceNode
       private
-      type(NodeVector) :: value
+      type(Sequence) :: value
    contains
       procedure, pass(this) :: assign_to_sequence
       procedure, nopass :: is_sequence
       procedure :: less_than
-      procedure :: sequence
    end type SequenceNode
 
-   type(NodeVector), target :: DEFAULT_SEQUENCE
+   type(Sequence), target :: DEFAULT_SEQUENCE
 
    interface
       module function less_than(a,b)
@@ -43,20 +42,20 @@ contains
 
    function new_SequenceNode() result(node)
       type(SequenceNode) :: node
-      node%value = NodeVector()
+      node%value = Sequence()
    end function new_SequenceNode
 
-   subroutine assign_to_sequence(sequence, this)
-      type(NodeVector), intent(out) :: sequence
+   subroutine assign_to_sequence(s, this)
+      type(Sequence), intent(out) :: s
       class(SequenceNode), intent(in) :: this
       
-      sequence = this%value
+      s = this%value
       
    end subroutine assign_to_sequence
 
 
    function to_sequence(this, unusable, err_msg, rc) result(ptr)
-      type(NodeVector), pointer :: ptr
+      type(Sequence), pointer :: ptr
       class(AbstractNode), target, intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
@@ -73,14 +72,8 @@ contains
       __RETURN__(YAFYAML_SUCCESS)
    end function to_sequence
 
-   function sequence(this)
-      type(NodeVector), pointer :: sequence
-      class(SequenceNode), target, intent(in) :: this
-      sequence => this%value
-   end function sequence
-
-   pure logical function is_sequence()
-      is_sequence = .true.
+   pure logical function is_sequence() result(is)
+      is = .true.
    end function is_sequence
 
 end module fy_SequenceNode

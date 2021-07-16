@@ -16,6 +16,7 @@ module fy_BoolNode
       private
       logical :: value = .false.
    contains
+      procedure, nopass :: is_bool
       procedure, pass(this) :: assign_to_logical
       procedure :: less_than
    end type BoolNode
@@ -38,6 +39,11 @@ module fy_BoolNode
 
    
 contains
+
+
+   pure logical function is_bool() result(is)
+      is = .true.
+   end function is_bool
 
 
    function new_BoolNode(flag) result(node)

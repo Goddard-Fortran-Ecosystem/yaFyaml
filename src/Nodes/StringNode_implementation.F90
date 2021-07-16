@@ -24,6 +24,8 @@ contains
          less_than = .false.
       type is (StringNode)
          less_than = a%value < b%value
+      class default
+         less_than = .true.
       end select
 
    end function less_than

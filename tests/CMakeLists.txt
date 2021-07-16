@@ -16,9 +16,8 @@ set (pf_tests
   Test_StringNode.pf
   Test_FloatNode.pf
   Test_SequenceNode.pf
+  Test_MappingNode.pf
   )
-
-
 
 
 add_pfunit_ctest (yafyaml_tests.x
@@ -36,4 +35,7 @@ add_dependencies (build-tests yafyaml_tests.x)
 
 add_executable(demo demo.F90)
 target_link_libraries(demo PRIVATE yafyaml)
+
+add_executable(is_int.x is_int.F90)
+target_link_libraries(is_int.x yafyaml)
 

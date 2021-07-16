@@ -17,6 +17,7 @@ module fy_StringNode
       private
       character(:), allocatable :: value
    contains
+      procedure, nopass :: is_string
       procedure, pass(this) :: assign_to_string
       procedure :: less_than
    end type StringNode
@@ -37,6 +38,11 @@ module fy_StringNode
    end interface StringNode
 
 contains
+
+
+   pure logical function is_string() result(is)
+      is = .true.
+   end function is_string
 
 
    function new_StringNode(str) result(node)

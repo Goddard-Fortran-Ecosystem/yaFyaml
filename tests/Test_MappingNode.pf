@@ -1,0 +1,245 @@
+module Test_MappingNode
+   use funit
+   use fy_Nodes
+   use fy_ErrorCodes
+   use, intrinsic :: iso_fortran_env, only: INT32, INT64
+   use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
+   implicit none
+
+contains
+
+   @test
+   subroutine test_is_mapping()
+      class(AbstractNode), target, allocatable :: node
+      logical :: flag
+
+      allocate(node,source=MappingNode())
+      flag = node%is_mapping()
+      @assertTrue(flag)
+
+      node = IntNode(1_INT32)
+      @assertFalse(node%is_mapping())
+
+   end subroutine test_is_mapping
+
+   @test
+   subroutine test_casting_succeed()
+      class(AbstractNode), target, allocatable :: node
+      
+      type(Mapping), pointer :: m_ptr
+      character(:), allocatable :: err_msg
+      integer :: rc
+
+      allocate(node, source=MappingNode())
+      err_msg = 'foo'
+      m_ptr => to_mapping(node, err_msg=err_msg, rc=rc) ! emtpy
+      call m_ptr%insert(IntNode(0_INT32), IntNode(0_INT32))
+      m_ptr => to_mapping(node, err_msg=err_msg, rc=rc) ! emtpy
+      
+      @assert_that(int(m_ptr%size()), is(1))
+      @assert_that(rc, is(YAFYAML_SUCCESS))
+      ! err_msg not changed if no error
+      @assert_that(err_msg, is('foo'))
+   end subroutine test_casting_succeed
+
+   @test
+   subroutine test_casting_fail()
+      type(IntNode) :: i_node
+      type(Mapping), pointer :: m_ptr
+      integer, parameter :: MAXLEN=128
+
+      character(MAXLEN) :: err_msg
+      character(:), allocatable :: expected
+      integer :: rc
+
+      i_node = IntNode(1_INT32)
+      m_ptr => to_mapping(i_node, err_msg=err_msg, rc=rc)
+      @assertExceptionRaised('Type of request does not match type in config.')
+      @assert_that(int(m_ptr%size()), is(0))
+      @assert_that(rc, is(YAFYAML_TYPE_MISMATCH))
+      expected = error_message(YAFYAML_TYPE_MISMATCH)
+      @assertEqual(expected, err_msg)
+
+   end subroutine test_casting_fail
+
+
+   @test
+   ! map is not less to itself
+   subroutine test_less_than_trivial()
+      class(AbstractNode), allocatable, target :: m_node
+      type(Mapping), pointer :: m
+
+      m_node = MappingNode()
+      m => to_mapping(m_node)
+      call m%insert(IntNode(1_INT32), BoolNode(.true.))
+      call m%insert(StringNode('cat'), FloatNode(1.32))
+
+      @assertFalse(m_node < m_node)
+
+   end subroutine test_less_than_trivial
+
+   ! If maps are identical except a missing item, the smaller map
+   ! is less.   We ignore ordering.
+   @test
+   subroutine test_missing_item()
+      type(MappingNode), target :: m1, m2
+      type(Mapping), pointer :: map1, map2
+
+      map1 => to_mapping(m1)
+      map2 => to_mapping(m2)
+
+      call map1%insert(IntNode(1_INT32), BoolNode(.true.))
+      @assertTrue(m2 < m1)
+      @assertFalse(m1 < m2)
+
+      ! map 2 has more elements
+      call map2%insert(IntNode(2_INT32), FloatNode(5.))
+      call map2%insert(IntNode(1_INT32), BoolNode(.true.))
+      @assertTrue(m1 < m2)
+      @assertFalse(m2 < m1)
+      
+   end subroutine test_missing_item
+
+   ! If the first key is less for m1, then ironically m2 is less than
+   ! m1 as it is "missing" the element.
+
+   @test
+   subroutine test_less_than_first_val_differs
+      type(MappingNode), target :: m1, m2
+      type(Mapping), pointer :: map1, map2
+
+      map1 => to_mapping(m1)
+      map2 => to_mapping(m2)
+
+      ! Keys equal; bool < float
+      call map1%insert(IntNode(1_INT32), BoolNode(.true.))
+      call map2%insert(IntNode(1_INT32), FloatNode(1.32))
+
+      @assertTrue(m1 < m2)
+      @assertFalse(m2 < m1)
+
+   end subroutine test_less_than_first_val_differs
+   
+   @test
+   subroutine test_less_than_second_differs
+      type(MappingNode), target :: m1, m2
+      type(Mapping), pointer :: map1, map2
+
+      map1 => to_mapping(m1)
+      map2 => to_mapping(m2)
+
+      ! 1st entry same
+      call map1%insert(IntNode(1_INT32), BoolNode(.true.))
+      call map2%insert(IntNode(1_INT32), BoolNode(.true.))
+
+      ! 2nd entry different; string < float
+      call map1%insert(StringNode('cat'), StringNode('cat'))
+      call map2%insert(StringNode('cat'), FloatNode(1.32))
+
+      @assertTrue(m1 < m2)
+      @assertFalse(m2 < m1)
+
+   end subroutine test_less_than_second_differs
+   
+   @test
+   subroutine test_less_than_second_longer
+      type(MappingNode), target :: m1, m2
+      type(Mapping), pointer :: map1, map2
+
+      map1 => to_mapping(m1)
+      map2 => to_mapping(m2)
+
+      call map1%insert(IntNode(1_INT32), BoolNode(.true.))
+      call map2%insert(IntNode(1_INT32), BoolNode(.true.))
+
+      call map1%insert(IntNode(2_INT32), BoolNode(.true.))
+      call map2%insert(IntNode(2_INT32), BoolNode(.true.))
+
+      call map2%insert(IntNode(3_INT32), BoolNode(.true.))
+
+      @assertTrue(m1 < m2)
+      @assertFalse(m2 < m1)
+   end subroutine test_less_than_second_longer
+
+   @test
+   subroutine test_less_than_diff_type
+      type(BoolNode) :: flag
+      type(IntNode) :: i
+      type(StringNode) :: str
+      type(FloatNode) :: x
+      type(SequenceNode) :: seq
+      type(MappingNode) :: m
+
+      flag = BoolNode(.false.)
+      i = IntNode(1)
+      x = FloatNode(1.)
+      str = StringNode('cat')
+
+      @assertFalse(m < flag)
+      @assertFalse(m < i)
+      @assertFalse(m < str)
+      @assertFalse(m < x)
+      @assertFalse(m < seq)
+
+   end subroutine test_less_than_diff_type
+
+
+   ! We do not consider the order of an ordered map
+   ! to be significant.
+   ! To test we create a mapping where the keys are
+   ! out of order but the values are consistently less.
+   @test
+   subroutine test_different_order()
+      class(AbstractNode), allocatable :: n1, n2
+      type(Mapping), pointer :: m1, m2
+
+      allocate(MappingNode :: n1)
+      allocate(MappingNode :: n2)
+
+      m1 => to_mapping(n1)
+      m2 => to_mapping(n2)
+
+      call m1%insert(StringNode('A'), IntNode(2))
+      call m1%insert(StringNode('B'), IntNode(2))
+
+      call m2%insert(StringNode('B'), IntNode(1))
+      call m2%insert(StringNode('A'), IntNode(1))
+
+      @assert_that(n2 < n1, is(true()))
+
+   end subroutine test_different_order
+
+   ! One must be careful in comparing 2 ordered mappings
+   ! E.g., suppose mapping A is  {'A': 1, 'B':2}, and
+   !               mapping B is  {'B': 1, 'A':2}
+   ! Then A will conclude that is it less based upon the
+   ! first element ('A'), but B will conclude it is less
+   ! based upon the first element ('B')
+   ! i.e.,    A < B    and   B < A    will both be true.
+   ! To get around that we choose the dictionary
+   ! whose first key is least and then follow
+   ! the obvious rule.
+   ! This test verifies this logic.
+   @test
+   subroutine test_less_than_paradox()
+      class(AbstractNode), allocatable :: n1, n2
+      type(Mapping), pointer :: m1, m2
+
+      allocate(MappingNode :: n1)
+      allocate(MappingNode :: n2)
+
+      m1 => to_mapping(n1)
+      m2 => to_mapping(n2)
+
+      call m1%insert(StringNode('A'), IntNode(1))
+      call m1%insert(StringNode('B'), IntNode(2))
+
+      call m2%insert(StringNode('B'), IntNode(1))
+      call m2%insert(StringNode('A'), IntNode(2))
+
+      @assert_that(n1 < n2, is(true()))
+      @assert_that(n2 < n1, is(false()))
+
+   end subroutine test_less_than_paradox
+   
+end module Test_MappingNode

@@ -2,7 +2,6 @@ module Test_SequenceNode
    use funit
    use fy_Nodes
    use fy_ErrorCodes
-   use fy_NodeVector
    use, intrinsic :: iso_fortran_env, only: INT32, INT64
    use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
@@ -12,7 +11,6 @@ contains
    @test
    subroutine test_is_sequence()
       class(AbstractNode), target, allocatable :: node
-      type(NodeVector), pointer :: sequence
       type(SequenceNode), target :: s_node
       logical :: flag
 
@@ -32,7 +30,7 @@ contains
    subroutine test_casting_succeed()
       class(AbstractNode), target, allocatable :: node
       
-      type(NodeVector), pointer :: s_ptr
+      type(Sequence), pointer :: s_ptr
       character(:), allocatable :: err_msg
       integer :: rc
 
@@ -51,7 +49,7 @@ contains
    @test
    subroutine test_casting_fail()
       type(IntNode) :: i_node
-      type(NodeVector), pointer :: s_ptr
+      type(Sequence), pointer :: s_ptr
       integer, parameter :: MAXLEN=128
 
       character(MAXLEN) :: err_msg
@@ -70,24 +68,25 @@ contains
 
 
    @test
-   ! Empty sequences are ==, so not <
+   ! Sequence is not < itself
    subroutine test_less_than_trivial()
-      type(SequenceNode), target :: s
-      type(NodeVector), pointer :: sequence
+      type(SequenceNode), target :: s_node
+      type(Sequence), pointer :: s
 
-      s = SequenceNode()
-      sequence => s%sequence()
-      call sequence%push_back(IntNode(1_INT32))
-      call sequence%push_back(BoolNode(.false.))
+      s_node = SequenceNode()
+      s => to_sequence(s_node)
+      call s%push_back(IntNode(1_INT32))
+      call s%push_back(BoolNode(.false.))
 
-      @assertFalse(s < s)
+      @assertFalse(s_node < s_node)
 
    end subroutine test_less_than_trivial
+
    
    @test
    subroutine test_less_than_first_differs
       type(SequenceNode), target :: s1, s2
-      type(NodeVector), pointer :: seq1, seq2
+      type(Sequence), pointer :: seq1, seq2
 
       seq1 => to_sequence(s1)
       seq2 => to_sequence(s2)
@@ -95,9 +94,7 @@ contains
       call seq1%push_back(IntNode(1_INT32))
       call seq2%push_back(IntNode(2_INT32))
 
-      print*,__FILE__,__LINE__
       @assertTrue(s1 < s2)
-      print*,__FILE__,__LINE__
       @assertFalse(s2 < s1)
 
    end subroutine test_less_than_first_differs
@@ -105,7 +102,7 @@ contains
    @test
    subroutine test_less_than_second_differs
       type(SequenceNode), target :: s1, s2
-      type(NodeVector), pointer :: seq1, seq2
+      type(Sequence), pointer :: seq1, seq2
 
       seq1 => to_sequence(s1)
       seq2 => to_sequence(s2)
@@ -130,7 +127,7 @@ contains
    @test
    subroutine test_less_than_second_longer
       type(SequenceNode), target :: s1, s2
-      type(NodeVector), pointer :: seq1, seq2
+      type(Sequence), pointer :: seq1, seq2
 
       seq1 => to_sequence(s1)
       seq2 => to_sequence(s2)

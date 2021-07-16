@@ -123,11 +123,11 @@ contains
       x = FloatNode(1.)
       str = StringNode('cat')
 
-      @assertTrue(x < i)
-      @assertTrue(x < str)
-      @assertTrue(x < x)
-      @assertTrue(x < seq)
-      @assertTrue(x < m)
+      @assertTrue(flag < i)
+      @assertTrue(flag < str)
+      @assertTrue(flag < x)
+      @assertTrue(flag < seq)
+      @assertTrue(flag < m)
 
    end subroutine test_less_than_diff_type
    

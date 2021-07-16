@@ -1,10 +1,10 @@
-module fy_NodeVector
+module fy_Sequence
   use fy_AbstractNode
 
 #define T AbstractNode
 #define T_polymorphic
-#define Vector NodeVector
-#define VectorIterator NodeVectorIterator
+#define Vector Sequence
+#define VectorIterator SequenceIterator
 
 #include "vector/template.inc"
 
@@ -12,4 +12,4 @@ module fy_NodeVector
 #undef VectorIterator
 #undef T_polymorphic
 #undef T
-end module fy_NodeVector
+end module fy_Sequence

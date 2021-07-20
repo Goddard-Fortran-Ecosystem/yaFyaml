@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Ability to embed yaFyaml alongside the other GFE libraries in a superproject.
 
+### Added
+
+- Allow `get()` to have 0 selectors.
+
 ## [0.5.0] - 2021-03-15
 
 ### CHANGED

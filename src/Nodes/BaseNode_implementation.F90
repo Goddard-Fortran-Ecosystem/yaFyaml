@@ -21,11 +21,12 @@ submodule (fy_BaseNode) BaseNode_implementation
 contains
 
 #define SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
-#define OPT_SELECTORS s2, s3, s4, s5, s6, s7, s8, s9
+   !#define OPT_SELECTORS s2, s3, s4, s5, s6, s7, s8, s9
+#define OPT_SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
+
    module function at_multi_selector(this, SELECTORS, unusable, found, err_msg, rc) result(ptr)
       class(AbstractNode), pointer :: ptr
       class(BaseNode), target, intent(in) :: this
-      class(*), intent(in) :: s1
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
@@ -103,8 +104,7 @@ contains
       subroutine selectors_to_vector(v)
          type (UnlimitedVector), intent(out) :: v
 
-         
-         call save_one(v, s1) ! 1st selector is mandatory
+         if (present(s1)) call save_one(v, s1)
          if (present(s2)) call save_one(v, s2)
          if (present(s3)) call save_one(v, s3)
          if (present(s4)) call save_one(v, s4)
@@ -225,7 +225,6 @@ contains
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       logical, intent(out) :: value
-      class(*), intent(in) :: s1
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
@@ -255,7 +254,7 @@ contains
          end if
       else ! found but possible type-mismatch
          value = to_bool(ptr, err_msg=err_msg, __RC__)
-         __VERIFY2__(err_msg,rc)
+         __VERIFY2__(err_msg,status)
       end if
 
       __RETURN__(YAFYAML_SUCCESS)
@@ -267,7 +266,6 @@ contains
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       character(:), allocatable, intent(out) :: value
-      class(*), intent(in) :: s1
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
@@ -288,6 +286,7 @@ contains
          value = to_string(ptr, err_msg=err_msg, __RC__)
       end if
 
+      __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end subroutine get_string
 
@@ -296,7 +295,6 @@ contains
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       integer(kind=INT32), intent(out) :: value
-      class(*), intent(in) :: s1
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
@@ -317,6 +315,7 @@ contains
          value = to_int(ptr, err_msg=err_msg, __RC__)
       end if
 
+      __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end subroutine get_integer32
 
@@ -325,7 +324,6 @@ contains
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       integer(kind=INT64), intent(out) :: value
-      class(*), intent(in) :: s1
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
@@ -346,15 +344,16 @@ contains
          value = to_int(ptr, err_msg=err_msg, __RC__)
       end if
 
+      __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end subroutine get_integer64
 
 
    module subroutine get_real32(this, value, SELECTORS, unusable, found, default, err_msg, rc)
+      use, intrinsic :: ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       real(kind=REAL32), intent(out) :: value
-      class(*), intent(in) :: s1
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
@@ -364,6 +363,7 @@ contains
 
       class(AbstractNode), pointer :: ptr
       integer :: status
+      real(kind=REAL64) :: safe_value
 
       ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
@@ -372,9 +372,15 @@ contains
       if (present(found)) then
          if (.not. found) return
       else
-         value = to_float(ptr, err_msg=err_msg, __RC__)
+         value = ieee_value(value,  IEEE_QUIET_NAN)
+         ! unless it is a float in the acceptable range ...
+         safe_value = to_float(ptr, err_msg=err_msg, __RC__)
+         ! if we have not returned yet, then conversion
+         ! is possible
+         value = ptr
       end if
 
+      __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end subroutine get_real32
 
@@ -383,7 +389,6 @@ contains
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       real(kind=REAL64), intent(out) :: value
-      class(*), intent(in) :: s1
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
@@ -404,6 +409,7 @@ contains
          value = to_float(ptr, err_msg=err_msg, __RC__)
       end if
 
+      __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end subroutine get_real64
 

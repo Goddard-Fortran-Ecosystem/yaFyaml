@@ -97,7 +97,7 @@ contains
    end subroutine test_less_than_trivial
    
    @test
-   subroutine test_less_than_same_type
+   subroutine test_less_than_same_type()
       type(BoolNode) :: a, b 
 
       a = BoolNode(.false.)
@@ -110,7 +110,7 @@ contains
    
 
    @test
-   subroutine test_less_than_diff_type
+   subroutine test_less_than_diff_type()
       type(BoolNode) :: flag
       type(IntNode) :: i
       type(StringNode) :: str
@@ -130,5 +130,44 @@ contains
       @assertTrue(flag < m)
 
    end subroutine test_less_than_diff_type
-   
+
+   ! Modifying interface to allow get() with no
+   ! selectors  
+   @test
+   subroutine test_get_logical()
+
+      type(BoolNode) :: node
+      logical :: flag
+      integer :: status
+      
+      node = BoolNode(.true.)
+      call node%get(flag, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(flag, is(true()))
+      
+      node = BoolNode(.false.)
+      call node%get(flag, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(flag, is(false()))
+   end subroutine test_get_logical
+
+   ! Check that error is detected when getting real from BoolNode.
+   ! Throws multiple exceptions, so much check by hand ..
+   @test
+   subroutine test_get_real()
+      use, intrinsic :: ieee_arithmetic, only: IEEE_NEGATIVE_INF, ieee_value
+      type(BoolNode) :: node
+      real :: x
+      integer :: status
+      logical :: expected
+
+      node = BoolNode(.true.)
+      call node%get(x, rc=status)
+      print*,__FILE__,__LINE__,x
+
+      expected = catch("status=15") .and. catch("Type of request does not match type in config.")
+      @assert_that(expected, is(true()))
+      @assertIsNaN(x)
+   end subroutine test_get_real
+
 end module Test_BoolNode

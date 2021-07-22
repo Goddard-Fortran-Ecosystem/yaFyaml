@@ -16,6 +16,7 @@ add_library (yafyaml
   Reader.F90
   Lexer.F90
   Parser.F90
+  NewParser.F90
   AbstractSchema.F90
   FailsafeSchema.F90
   JSONSchema.F90
@@ -23,6 +24,7 @@ add_library (yafyaml
   None.F90
 
   Configuration.F90
+  NewConfiguration.F90
   KeywordEnforcer.F90
   ErrorCodes.F90
   SimpleKey.F90

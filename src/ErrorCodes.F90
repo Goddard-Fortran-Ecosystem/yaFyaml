@@ -26,6 +26,7 @@ module fy_ErrorCodes
      enumerator :: YAFYAML_INVALID_MAPPING_KEY
      enumerator :: YAFYAML_MAPPING_KEY_NOT_FOUND
      enumerator :: YAFYAML_NOT_A_COLLECTION
+     enumerator :: YAFYAML_NOT_A_MAPPING
 
   end enum
 
@@ -80,6 +81,8 @@ contains
          message = 'Selector applied to a mapping node did not match any key.'
       case (YAFYAML_NOT_A_COLLECTION)
          message = 'Selector applied to a non-collection.'
+      case (YAFYAML_NOT_A_MAPPING)
+         message = 'Can only construct iterator for mappings.'
       case default
          message = 'Unkown error code'
       end select

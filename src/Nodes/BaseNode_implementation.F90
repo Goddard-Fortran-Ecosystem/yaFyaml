@@ -21,13 +21,12 @@ submodule (fy_BaseNode) BaseNode_implementation
 contains
 
 #define SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
-   !#define OPT_SELECTORS s2, s3, s4, s5, s6, s7, s8, s9
 #define OPT_SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
 
    module function at_multi_selector(this, SELECTORS, unusable, found, err_msg, rc) result(ptr)
       class(AbstractNode), pointer :: ptr
       class(BaseNode), target, intent(in) :: this
-      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      class(*), optional, intent(in) :: OPT_SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
@@ -42,8 +41,6 @@ contains
       type(UnlimitedVectorIterator) :: iter
       logical :: found_
 
-      __UNUSED_DUMMY__(unusable)
-      
       call selectors_to_vector(v)
 
       config => this
@@ -98,7 +95,8 @@ contains
       ptr => config
 
       __RETURN__(YAFYAML_SUCCESS)
-
+      __UNUSED_DUMMY__(unusable)
+      
    contains
 
       subroutine selectors_to_vector(v)

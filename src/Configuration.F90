@@ -258,7 +258,7 @@ contains
 #define ARG_LIST arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9
 
 
-  subroutine get_node_at_selector(this, q, ARG_LIST, unused, is_present, rc)
+  subroutine get_node_at_selector(this, q, ARG_LIST, unusable, is_present, rc)
     class(Configuration), target, intent(in) :: this
     class(*), pointer :: q
     class(*), optional, intent(in) :: arg1
@@ -270,7 +270,7 @@ contains
     class(*), optional, intent(in) :: arg7
     class(*), optional, intent(in) :: arg8
     class(*), optional, intent(in) :: arg9
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     logical, optional, intent(out) :: is_present
     integer, optional, intent(out) :: rc
 
@@ -356,7 +356,7 @@ contains
     
   end subroutine get_node_at_selector
     
-  subroutine get_config_at_selector(this, config, ARG_LIST, unused, default, rc)
+  subroutine get_config_at_selector(this, config, ARG_LIST, unusable, default, rc)
     class(Configuration), target, intent(in) :: this
     type(Configuration), intent(out) :: config
     class(*), intent(in) :: arg1
@@ -368,7 +368,7 @@ contains
     class(*), optional, intent(in) :: arg7
     class(*), optional, intent(in) :: arg8
     class(*), optional, intent(in) :: arg9
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     class(*), optional, intent(in) :: default
     integer, optional, intent(out) :: rc
 
@@ -405,7 +405,7 @@ contains
 
 
   ! i = cfg%at(key1, index1, key2, default=default, rc=status)
-  function at(this, ARG_LIST, unused, default, rc) result(q)
+  function at(this, ARG_LIST, unusable, default, rc) result(q)
     type(Configuration) :: q
     class(Configuration), target, intent(in) :: this
     class(*), intent(in) :: arg1
@@ -417,7 +417,7 @@ contains
     class(*), optional, intent(in) :: arg7
     class(*), optional, intent(in) :: arg8
     class(*), optional, intent(in) :: arg9
-    class(KeywordEnforcer), optional, intent(in) :: unused
+    class(KeywordEnforcer), optional, intent(in) :: unusable
     class(*), optional, intent(in) :: default
     integer, optional, intent(out) :: rc
 

@@ -7,6 +7,7 @@ set (pf_tests
   Test_Reader.pf
   Test_Lexer.pf
   Test_Parser.pf
+  Test_NewParser.pf
   Test_UnlimitedUtilities.pf
   Test_JSONSchema.pf
   Test_CoreSchema.pf
@@ -39,3 +40,5 @@ target_link_libraries(demo PRIVATE yafyaml)
 add_executable(is_int.x is_int.F90)
 target_link_libraries(is_int.x yafyaml)
 
+add_executable(standalone.x standalone.F90)
+target_link_libraries(standalone.x yafyaml PFUNIT::funit)

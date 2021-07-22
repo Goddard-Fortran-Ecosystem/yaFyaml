@@ -4,6 +4,7 @@
 ! set_throw_method() with a procedure of their own.
 !---------
 
+#include "error_handling.h"
 #include "string_handling.h"
 module fy_ErrorHandling
    use fy_KeywordEnforcer
@@ -89,6 +90,8 @@ contains
          if (present(rc)) rc = code
       end if
 
+      __UNUSED_DUMMY__(UNUSABLE)
+
    end function assert_code
 
 
@@ -115,6 +118,7 @@ contains
          if (present(rc)) rc = status
       end if
 
+      __UNUSED_DUMMY__(unusable)
    end function verify
 
 

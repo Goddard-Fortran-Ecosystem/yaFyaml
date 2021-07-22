@@ -60,7 +60,6 @@ module fy_AbstractNode
    end type AbstractNode
 
 #define SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
-   !#define OPT_SELECTORS s2, s3, s4, s5, s6, s7, s8, s9
 #define OPT_SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
    abstract interface
 
@@ -81,7 +80,7 @@ module fy_AbstractNode
          implicit none
          class(AbstractNode), pointer :: node_ptr
          class(AbstractNode), target, intent(in) :: this
-         class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+         class(*), optional, intent(in) :: OPT_SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          logical, optional, intent(out) :: found
          STRING_DUMMY, optional, intent(inout) :: err_msg

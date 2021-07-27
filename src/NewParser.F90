@@ -32,12 +32,7 @@ module fy_newParser
    type :: Parser
       private
       class(AbstractSchema), allocatable :: schema
-      type (StringNodeMap), allocatable :: anchors
-!!$#ifdef __GFORTRAN__
-!!$      type(Mapping), allocatable :: anchors
-!!$#else
-!!$      type(Mapping) :: anchors
-!!$#endif
+      type (StringNodeMap) :: anchors
       
    contains
       procedure :: load
@@ -69,12 +64,8 @@ contains
       type(Parser) :: p
       class(AbstractSchema), intent(in) :: schema
 
-#ifdef __GFORTRAN__
-      allocate(p%schema, source=schema)
-#else
       p%schema = schema
-#endif
-      allocate(p%anchors, source=StringNodeMap())
+      p%anchors = StringNodeMap()
 
    end function new_Parser_schema
 
@@ -299,21 +290,8 @@ contains
                      deallocate(anchor)
                      cycle
                   else
-                     block
-                       class(AbstractNode), pointer :: a_node
-                       type(Mapping), pointer :: my_mapping
-                       class(AbstractNode), pointer :: another_node
-                       type(MappingIterator) :: iter
-                       a_node => this%anchors%of(anchor)
-                       select type (a_node)
-                       type is (MappingNode)
-                          my_mapping => to_mapping(a_node)
-                          iter = my_mapping%begin()
-                          another_node => iter%first()
-                          call map%insert(key, a_node)
-                       end select
+                     call map%insert(key, this%anchors%of(anchor))
                      deallocate(anchor)
-                     end block
                      cycle
                   end if
                else
@@ -329,13 +307,7 @@ contains
                subsequence => to_sequence(map%of(key))
                call this%process_sequence(subsequence, lexr)
             type is (FlowMappingStartToken)
-               block
-                 class(AbstractNode), allocatable :: nd
-                 allocate(nd, source=MappingNode())
-                 nd%ID = 7
-!!$                 call map%insert(key,MappingNode())
-                 call map%insert(key,nd)
-               end block
+                 call map%insert(key,MappingNode())
                submapping => to_mapping(map%of(key))
                call this%process_mapping(submapping, lexr)
             type is (BlockSequenceStartToken)
@@ -343,13 +315,7 @@ contains
                subsequence => to_sequence(map%of(key))
                call this%process_sequence(subsequence, lexr)
             type is (BlockMappingStartToken)
-               block
-                 type(MappingNode), allocatable :: nd
-                 allocate(nd, source=MappingNode())
-                 nd%ID = 3
-                 call map%insert(key,nd)
-               end block
-!!$                 call map%insert(key,MappingNode())
+                 call map%insert(key,MappingNode())
                submapping => to_mapping(map%of(key))
                call this%process_mapping(submapping, lexr)
             class default
@@ -357,35 +323,7 @@ contains
             end select
 
             if (allocated(anchor)) then
-               block
-                 class(AbstractNode), pointer :: a_node, k_node, v_node
-                 type(Mapping), pointer :: mm
-                 type(Mappingiterator) :: iter
-                 a_node => map%of(key)
-                 select type (qqq => a_node)
-                 type is (MappingNode)
-                    mm => to_mapping(qqq)
-                    iter = mm%begin()
-                    k_node => iter%first()
-                    v_node => iter%second()
-                 end select
-               end block
-
-               block
-                 class(AbstractNode) , pointer :: v
-                 class(StringNodeMap), pointer :: ptr
-                 class(AbstractNode), pointer :: p_node
-                 v => map%of(key)
-                 ptr => this%anchors
-                 call ptr%insert(anchor,v)
-                 p_node => ptr%of(anchor)
-               end block
-
-               block
-                 class(AbstractNode), pointer :: a_node
-               a_node => this%anchors%of(anchor)
-               end block
-
+               call this%anchors%insert(anchor, map%of(key))
                deallocate(anchor)
             end if
 

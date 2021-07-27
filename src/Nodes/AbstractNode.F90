@@ -7,6 +7,7 @@ module fy_AbstractNode
    public :: AbstractNode
 
    type, abstract :: AbstractNode
+      integer :: ID = 0
    contains
 
       ! accessors to sub-nodes
@@ -57,6 +58,8 @@ module fy_AbstractNode
       ! Necessary to support map container with *Node keys.
       procedure(I_less_than), deferred :: less_than
       generic :: operator(<) => less_than
+
+      procedure :: analysis
    end type AbstractNode
 
 #define SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
@@ -241,4 +244,16 @@ module fy_AbstractNode
       end function I_less_than
    end interface
 
+
+contains
+
+   function analysis(this, prefix)result(str)
+      character(:), allocatable :: str
+      class(AbstractNode), target, intent(in) :: this
+      character(*), intent(in) :: prefix
+
+      str = "I am an AbstractNode - I don't know anything more"
+   end function analysis
+
+   
 end module fy_AbstractNode

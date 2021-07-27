@@ -23,6 +23,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 if (NOT TARGET GFTL::gftl)
   find_package (GFTL REQUIRED)
 endif ()
+
 if (NOT TARGET GFTL_SHARED::gftl-shared)
   find_package (GFTL_SHARED REQUIRED VERSION 1.0.4)
 endif ()

@@ -40,7 +40,6 @@ module Test_Configuration_casting
   use funit
   use yafyaml
   use fy_String
-  use gFTL_UnlimitedVector
   use fy_OrderedStringUnlimitedMap
   use, intrinsic :: iso_fortran_env, only: INT32
   use, intrinsic :: iso_fortran_env, only: REAL32
@@ -117,6 +116,7 @@ contains
 
   @test
   subroutine test_assign_to_logical_array_from_unlimited_vector()
+     use gFTL_UnlimitedVector
     logical, allocatable :: found(:)
     type (UnlimitedVector) :: v
 
@@ -141,6 +141,7 @@ contains
 
   @test
   subroutine test_assign_to_logical_array_fail()
+     use gFTL_UnlimitedVector
     logical, allocatable :: found(:)
     type (UnlimitedVector) :: v
     class(*), pointer :: node
@@ -179,6 +180,7 @@ contains
   
   @test
   subroutine test_assign_to_integer_array()
+     use gFTL_UnlimitedVector
     integer, allocatable :: found(:)
     type (UnlimitedVector) :: v
     class(*), pointer :: node
@@ -199,6 +201,7 @@ contains
 
   @test
   subroutine test_assign_to_integer_array_from_unlimited_vector()
+     use gFTL_UnlimitedVector
     integer, allocatable :: found(:)
     type (UnlimitedVector) :: v
 
@@ -221,6 +224,7 @@ contains
 
   @test
   subroutine test_assign_to_integer_array_fail()
+     use gFTL_UnlimitedVector
     integer, allocatable :: found(:)
     type (UnlimitedVector) :: v
 
@@ -270,6 +274,7 @@ contains
 
   @test
   subroutine test_assign_to_real_array_from_unlimited_vector()
+     use gFTL_UnlimitedVector
     real, allocatable :: found(:)
     type (UnlimitedVector) :: v
 
@@ -321,6 +326,7 @@ contains
 #ifndef __GFORTRAN__
   @test(ifndef=__GFORTRAN__)
   subroutine test_assign_to_string_vector()
+     use gFTL_UnlimitedVector
     use gFTL_StringVector
     type (StringVector) :: found
     type (UnlimitedVector) :: expected
@@ -346,6 +352,7 @@ contains
 
   @test
   subroutine test_assign_to_string_array_from_unlimited_vector()
+     use gFTL_UnlimitedVector
     character(:), allocatable :: found(:)
     type (UnlimitedVector) :: v
 
@@ -373,6 +380,7 @@ contains
 
   @test
   subroutine test_assign_to_string_array_fail()
+     use gFTL_UnlimitedVector
     character(:), allocatable :: found(:)
     type (UnlimitedVector) :: v
     class(*), pointer :: node
@@ -513,6 +521,7 @@ contains
   
   @test
   subroutine test_at_index_out_of_range()
+     use gFTL_UnlimitedVector
     type(Configuration), target :: c
     type(Configuration) :: sub
     type(UnlimitedVector) :: v
@@ -535,6 +544,7 @@ contains
   
   @test
   subroutine test_at_index()
+     use gFTL_UnlimitedVector
     type(Configuration), target :: c
     type(UnlimitedVector) :: vector
     logical :: found_logical
@@ -573,6 +583,7 @@ contains
 
   @test
   subroutine test_at_index_map()
+     use gFTL_UnlimitedVector
     type(Configuration), target :: c
     type(OrderedStringUnlimitedMap) :: found_map
 
@@ -608,6 +619,7 @@ contains
 
   @test
   subroutine test_simple_example()
+     use gFTL_UnlimitedVector
     type(Configuration), target :: c
     type(OrderedStringUnlimitedMap) :: found_map
 

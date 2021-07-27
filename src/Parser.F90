@@ -158,12 +158,11 @@ contains
     type(Lexer), intent(inout) :: lexr 
 
     class(AbstractToken), allocatable :: token
-    logical :: expect_another
-    type(Configuration) :: sub
+!!$    logical :: expect_another
     character(:), allocatable :: anchor
 
 
-    expect_another = .false.
+!!$    expect_another = .false.
     select type (q => node)
     type is (UnlimitedVector)
        do
@@ -188,9 +187,9 @@ contains
              call q%push_back(UnlimitedVector())
              call this%process_sequence(q%back(), lexr)
           type is (FlowNextEntryToken)
-             expect_another = .true.
+!!$             expect_another = .true.
           type is (BlockNextEntryToken)
-             expect_another = .true.
+!!$             expect_another = .true.
           type is (FlowSequenceEndToken)
              ! TODO must match block/flow 
 !!$             if (expect_another) then
@@ -246,13 +245,13 @@ contains
     type(Lexer), intent(inout) :: lexr
 
     class(AbstractToken), allocatable :: token
-    logical :: expect_another
+!!$    logical :: expect_another
     character(:), allocatable :: key
     class(AbstractToken), allocatable :: next_token
     character(:), allocatable :: anchor
     character(:), allocatable :: alias
 
-    expect_another = .false.
+!!$    expect_another = .false.
     select type (q => node)
     type is (OrderedStringUnlimitedMap)
        do
@@ -261,15 +260,11 @@ contains
 
           select type (token)
           type is (ScalarToken)
+             print*,'what'
           type is (KeyToken)
              if (allocated(next_token)) deallocate(next_token)
              next_token = lexr%get_token()
-             select type(next_token)
-             type is (ScalarToken)
-                key = next_token%value ! always a string
-             class default
-                error stop
-             end select
+             call get_key(next_token, key)
              if (allocated(next_token)) deallocate(next_token)
              next_token = lexr%get_token()
              select type(next_token)
@@ -305,24 +300,7 @@ contains
                 end if
              end select
 
-             select type(next_token)
-             type is (ScalarToken)
-                call q%insert(key, this%interpret(next_token))
-             type is (FlowSequenceStartToken)
-                call q%insert(key,UnlimitedVector())
-                call this%process_sequence(q%at(key), lexr)
-             type is (FlowMappingStartToken)
-                call q%insert(key,OrderedStringUnlimitedMap())
-                call this%process_mapping(q%at(key), lexr)
-             type is (BlockSequenceStartToken)
-                call q%insert(key,UnlimitedVector())
-                call this%process_sequence(q%at(key), lexr)
-             type is (BlockMappingStartToken)
-                call q%insert(key,OrderedStringUnlimitedMap())
-                call this%process_mapping(q%at(key), lexr)
-             class default
-                error stop 'illegal token encountered C'
-             end select
+             call process_next(next_token, this, q)
              if (allocated(anchor)) then
                 block
                   class(*), pointer :: ptr
@@ -333,7 +311,7 @@ contains
              end if
 
           type is (FlowNextEntryToken)
-             expect_another = .true.
+!!$             expect_another = .true.
 
           type is (FlowMappingEndToken)
              exit
@@ -399,6 +377,40 @@ contains
 
     end subroutine merge
     
+    subroutine get_key(next_token, key)
+       class(AbstractToken), intent(in) :: next_token
+       character(:), allocatable, intent(out) :: key
+       select type(next_token)
+       type is (ScalarToken)
+          key = next_token%value ! always a string
+       class default
+          error stop
+       end select
+    end subroutine get_key
+
+    recursive subroutine process_next(next_token, p, map)
+       class(AbstractToken), intent(in) :: next_token
+       class(Parser), intent(inout) :: p
+       type(OrderedStringUnlimitedMap), intent(inout) :: map
+       select type(next_token)
+       type is (ScalarToken)
+          call map%insert(key, p%interpret(next_token))
+       type is (FlowSequenceStartToken)
+          call map%insert(key,UnlimitedVector())
+          call p%process_sequence(map%at(key), lexr)
+       type is (FlowMappingStartToken)
+          call map%insert(key,OrderedStringUnlimitedMap())
+          call p%process_mapping(map%at(key), lexr)
+       type is (BlockSequenceStartToken)
+          call map%insert(key,UnlimitedVector())
+          call p%process_sequence(map%at(key), lexr)
+       type is (BlockMappingStartToken)
+          call map%insert(key,OrderedStringUnlimitedMap())
+          call p%process_mapping(map%at(key), lexr)
+       class default
+          error stop 'illegal token encountered C'
+       end select
+    end subroutine process_next
  end subroutine process_mapping
 
      

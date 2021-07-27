@@ -18,6 +18,8 @@ set (pf_tests
   Test_FloatNode.pf
   Test_SequenceNode.pf
   Test_MappingNode.pf
+
+  Test_ComplexNode.pf
   )
 
 

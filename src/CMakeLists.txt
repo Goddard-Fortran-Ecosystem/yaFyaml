@@ -1,9 +1,12 @@
 add_library (yafyaml
+  analyze.F90
+  
   OrderedStringUnlimitedMap.F90
   ArrayWrapper.F90
   AbstractFile.F90
   File.F90
   StringUnlimitedPointerMap.F90
+  StringNodeMap.F90
 
   String.F90
   UnlimitedUtilities.F90

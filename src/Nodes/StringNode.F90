@@ -20,6 +20,8 @@ module fy_StringNode
       procedure, nopass :: is_string
       procedure, pass(this) :: assign_to_string
       procedure :: less_than
+      procedure :: analysis
+
    end type StringNode
 
    character(len=0), target :: DEFAULT_STRING = ''
@@ -77,5 +79,14 @@ contains
 
       __RETURN__(YAFYAML_SUCCESS)
    end function to_string
+
+   function analysis(this, prefix)result(str)
+      character(:), allocatable :: str
+      class(StringNode), target, intent(in) :: this
+      character(*), intent(in) :: prefix
+
+      str = prefix // 'StringNode: "' // this%value // '"'
+
+   end function analysis
 
 end module fy_StringNode

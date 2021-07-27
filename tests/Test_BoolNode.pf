@@ -163,7 +163,6 @@ contains
 
       node = BoolNode(.true.)
       call node%get(x, rc=status)
-      print*,__FILE__,__LINE__,x
 
       expected = catch("status=15") .and. catch("Type of request does not match type in config.")
       @assert_that(expected, is(true()))

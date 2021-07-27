@@ -14,12 +14,13 @@ module fy_MappingNode
    public :: to_mapping
 
    type, extends(BaseNode) :: MappingNode
-      private
+!!$      private
       type(Mapping) :: value
    contains
       procedure, nopass :: is_mapping
       procedure, pass(this) :: assign_to_mapping
       procedure :: less_than
+      procedure :: analysis
    end type MappingNode
 
    type(MappingNode) :: mmm
@@ -80,5 +81,30 @@ contains
       __RETURN__(YAFYAML_SUCCESS)
    end function to_mapping
    
+
+   function analysis(this, prefix)result(str)
+      character(:), allocatable :: str
+      class(MappingNode), target, intent(in) :: this
+      character(*), intent(in) :: prefix
+
+      integer :: i
+      character(100) :: buffer
+      type(MappingIterator) :: iter
+      class(AbstractNode), pointer :: p_node
+      type(Mapping), pointer :: m
+
+      write(buffer,'(i0)') this%value%size()
+      str = new_line('a') // prefix // "MappingNode: size " // trim(buffer)
+      m => to_mapping(this)
+      iter = m%begin()
+      do i = 1, this%value%size()
+         str = str // new_line('a')
+         p_node => iter%first()
+         str = str // p_node%analysis(prefix // '       key:     ') // new_line('a')
+         p_node => iter%second()
+         str = str // p_node%analysis(prefix // '       value:   ') // new_line('a')
+         call iter%next()
+      end do
+   end function analysis
 
 end module fy_MappingNode

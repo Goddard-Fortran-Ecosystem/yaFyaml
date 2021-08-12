@@ -21,8 +21,6 @@ module fy_BoolNode
       procedure :: less_than
    end type BoolNode
 
-   logical, target :: DEFAULT_LOGICAL = .false.
-
    interface
       module function less_than(a,b)
          implicit none

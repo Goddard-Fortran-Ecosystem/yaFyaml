@@ -224,7 +224,7 @@ contains
       p = Parser()
       cfg = p%load(EscapedTextStream(' key1: "2004" \n'))
 
-      call cfg%get(s,"key1", default="ABCDEFG")
+      call cfg%get(s,"key1")
 
 #ifdef __GFORTRAN__
       @assertEqual("2004", s)

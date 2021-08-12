@@ -23,12 +23,6 @@ module fy_FloatNode
       procedure :: less_than
    end type FloatNode
 
-   ! Better woud be NaN but cannot do that as an initialiations expr
-   ! This also must be something that can be assigned to a defaut real
-   ! without causing a floating exception.
-   real(kind=REAL32), target :: DEFAULT_REAL32 = nearest(-huge(1._REAL32),1._REAL32)
-   real(kind=REAL64), target :: DEFAULT_REAL64 = nearest(-huge(1._REAL64),1._REAL64)
-
    interface
       module function less_than(a,b)
          implicit none

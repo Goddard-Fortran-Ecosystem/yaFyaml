@@ -91,7 +91,7 @@ module fy_AbstractNode
       end function I_at_multi_selector
 
 
-      subroutine I_get_logical(this, value, SELECTORS, unusable, found, default, err_msg, rc)
+      subroutine I_get_logical(this, value, SELECTORS, unusable, found, err_msg, rc)
          use fy_KeywordEnforcer
          import AbstractNode
          implicit none
@@ -100,13 +100,12 @@ module fy_AbstractNode
          class(*), optional, intent(in) :: OPT_SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          logical, optional, intent(out) :: found
-         logical, optional, intent(in) :: default
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end subroutine I_get_logical
 
 
-      subroutine I_get_string(this, value, SELECTORS, unusable, found, default, err_msg, rc)
+      subroutine I_get_string(this, value, SELECTORS, unusable, found, err_msg, rc)
          use fy_KeywordEnforcer
          import AbstractNode
          implicit none
@@ -115,13 +114,12 @@ module fy_AbstractNode
          class(*), optional, intent(in) :: OPT_SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          logical, optional, intent(out) :: found
-         character(*), optional, intent(in) :: default
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end subroutine I_get_string
 
 
-      subroutine I_get_integer32(this, value, SELECTORS, unusable, found, default, err_msg, rc)
+      subroutine I_get_integer32(this, value, SELECTORS, unusable, found, err_msg, rc)
          use fy_KeywordEnforcer
          use, intrinsic :: iso_fortran_env, only: INT32
          import AbstractNode
@@ -131,13 +129,12 @@ module fy_AbstractNode
          class(*), optional, intent(in) :: OPT_SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          logical, optional, intent(out) :: found
-         integer(kind=INT32), optional, intent(in) :: default
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end subroutine I_get_integer32
 
 
-      subroutine I_get_integer64(this, value, SELECTORS, unusable, found, default, err_msg, rc)
+      subroutine I_get_integer64(this, value, SELECTORS, unusable, found, err_msg, rc)
          use fy_KeywordEnforcer
          use, intrinsic :: iso_fortran_env, only: INT64
          import AbstractNode
@@ -147,13 +144,12 @@ module fy_AbstractNode
          class(*), optional, intent(in) :: OPT_SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          logical, optional, intent(out) :: found
-         integer(kind=INT64), optional, intent(in) :: default
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end subroutine I_get_integer64
 
 
-      subroutine I_get_real32(this, value, SELECTORS, unusable, found, default, err_msg, rc)
+      subroutine I_get_real32(this, value, SELECTORS, unusable, found, err_msg, rc)
          use fy_KeywordEnforcer
          use, intrinsic :: iso_fortran_env, only: REAL32
          import AbstractNode
@@ -163,13 +159,12 @@ module fy_AbstractNode
          class(*), optional, intent(in) :: OPT_SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          logical, optional, intent(out) :: found
-         real(kind=REAL32), optional, intent(in) :: default
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end subroutine I_get_real32
 
 
-      subroutine I_get_real64(this, value, SELECTORS, unusable, found, default, err_msg, rc)
+      subroutine I_get_real64(this, value, SELECTORS, unusable, found, err_msg, rc)
          use fy_KeywordEnforcer
          use, intrinsic :: iso_fortran_env, only: REAL64
          import AbstractNode
@@ -179,7 +174,6 @@ module fy_AbstractNode
          class(*), optional, intent(in) :: OPT_SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          logical, optional, intent(out) :: found
-         real(kind=REAL64), optional, intent(in) :: default
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end subroutine I_get_real64

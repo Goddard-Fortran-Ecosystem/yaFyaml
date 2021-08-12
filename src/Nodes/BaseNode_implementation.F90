@@ -17,7 +17,6 @@ submodule (fy_BaseNode) BaseNode_implementation
    use fy_ErrorHandling
    implicit none
 
-
 contains
 
 #define SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
@@ -219,14 +218,13 @@ contains
    ! 1. Selected item is not found _and_ no default value is provided _and_ found is not used
    ! 2. Selected item does exist but is of the wrong type
 
-   module subroutine get_logical(this, value, SELECTORS, unusable, found, default, err_msg, rc)
+   module subroutine get_logical(this, value, SELECTORS, unusable, found, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       logical, intent(out) :: value
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
-      logical, optional, intent(in) :: default
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
@@ -239,16 +237,9 @@ contains
          
 
       if (.not. found_) then
+         value = DEFAULT_LOGICAL
          if (.not. present(found)) then
-            if (.not. present(default)) then
-               __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)
-            else
-               value = default
-            end if
-         else
-            if (present(default)) then
-               value = default
-            end if
+            __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)
          end if
       else ! found but possible type-mismatch
          value = to_bool(ptr, err_msg=err_msg, __RC__)
@@ -260,20 +251,20 @@ contains
    end subroutine get_logical
 
 
-   module subroutine get_string(this, value, SELECTORS, unusable, found, default, err_msg, rc)
+   module subroutine get_string(this, value, SELECTORS, unusable, found, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       character(:), allocatable, intent(out) :: value
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
-      character(*), optional, intent(in) :: default
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       class(AbstractNode), pointer :: ptr
       integer :: status
 
+      value = DEFAULT_STRING
       ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
       ! Not an error if selector not found when 'found' is used.   Code returns
@@ -289,20 +280,20 @@ contains
    end subroutine get_string
 
 
-   module subroutine get_integer32(this, value, SELECTORS, unusable, found, default, err_msg, rc)
+   module subroutine get_integer32(this, value, SELECTORS, unusable, found, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       integer(kind=INT32), intent(out) :: value
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
-      integer(kind=INT32), optional, intent(in) :: default
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       class(AbstractNode), pointer :: ptr
       integer :: status
 
+      value = DEFAULT_INT32
       ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
       ! Not an error if selector not found when 'found' is used.   Code returns
@@ -318,20 +309,20 @@ contains
    end subroutine get_integer32
 
 
-   module subroutine get_integer64(this, value, SELECTORS, unusable, found, default, err_msg, rc)
+   module subroutine get_integer64(this, value, SELECTORS, unusable, found, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       integer(kind=INT64), intent(out) :: value
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
-      integer(kind=INT64), optional, intent(in) :: default
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       class(AbstractNode), pointer :: ptr
       integer :: status
 
+      value = DEFAULT_INT64
       ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
       ! Not an error if selector not found when 'found' is used.   Code returns
@@ -347,7 +338,7 @@ contains
    end subroutine get_integer64
 
 
-   module subroutine get_real32(this, value, SELECTORS, unusable, found, default, err_msg, rc)
+   module subroutine get_real32(this, value, SELECTORS, unusable, found, err_msg, rc)
       use, intrinsic :: ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
@@ -355,7 +346,6 @@ contains
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
-      real(kind=REAL32), optional, intent(in) :: default
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
@@ -363,6 +353,7 @@ contains
       integer :: status
       real(kind=REAL64) :: safe_value
 
+      value = DEFAULT_REAL32
       ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
       ! Not an error if selector not found when 'found' is used.   Code returns
@@ -383,20 +374,20 @@ contains
    end subroutine get_real32
 
 
-   module subroutine get_real64(this, value, SELECTORS, unusable, found, default, err_msg, rc)
+   module subroutine get_real64(this, value, SELECTORS, unusable, found, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       real(kind=REAL64), intent(out) :: value
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
-      real(kind=REAL64), optional, intent(in) :: default
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       class(AbstractNode), pointer :: ptr
       integer :: status
 
+      value = DEFAULT_REAL64
       ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
       ! Not an error if selector not found when 'found' is used.   Code returns

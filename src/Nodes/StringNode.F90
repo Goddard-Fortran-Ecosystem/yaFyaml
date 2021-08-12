@@ -24,8 +24,6 @@ module fy_StringNode
 
    end type StringNode
 
-   character(len=0), target :: DEFAULT_STRING = ''
-
    interface
       module function less_than(a,b)
          implicit none

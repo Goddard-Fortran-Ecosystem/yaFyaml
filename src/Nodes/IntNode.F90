@@ -24,8 +24,6 @@ module fy_IntNode
       procedure :: analysis
    end type IntNode
 
-   integer(kind=INT64), target :: DEFAULT_INTEGER = -HUGE(1_INT64)
-
    interface
       module function less_than(a,b)
          implicit none
@@ -90,7 +88,7 @@ contains
       type is (IntNode)
          ptr => this%value
       class default
-         ptr => DEFAULT_INTEGER
+         ptr => DEFAULT_INT64
          __FAIL2__(YAFYAML_TYPE_MISMATCH)
       end select
 

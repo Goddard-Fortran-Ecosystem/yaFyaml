@@ -21,7 +21,7 @@ module fy_StringNode
       procedure, pass(this) :: assign_to_string
       procedure :: less_than
       procedure :: analysis
-
+      procedure :: write_node_formatted
    end type StringNode
 
    interface
@@ -86,5 +86,18 @@ contains
       str = prefix // 'StringNode: "' // this%value // '"'
 
    end function analysis
+
+   subroutine write_node_formatted(this, unit, iotype, v_list, iostat, iomsg)
+      class(StringNode), intent(in) :: this
+      integer, intent(in) :: unit
+      character(*), intent(in) :: iotype
+      integer, intent(in) :: v_list(:)
+      integer, intent(out) :: iostat
+      character(*), intent(inout) :: iomsg
+      
+      write(unit,'(a1,a,a1)',iostat=iostat) "'",this%value,"'"
+      
+   end subroutine write_node_formatted
+
 
 end module fy_StringNode

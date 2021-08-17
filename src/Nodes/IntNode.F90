@@ -22,6 +22,7 @@ module fy_IntNode
       procedure, pass(this) :: assign_to_integer64
       procedure :: less_than
       procedure :: analysis
+      procedure :: write_node_formatted
    end type IntNode
 
    interface
@@ -105,5 +106,17 @@ contains
       str = prefix//  'IntNode: ' // trim(buffer)
 
    end function analysis
+
+   subroutine write_node_formatted(this, unit, iotype, v_list, iostat, iomsg)
+      class(IntNode), intent(in) :: this
+      integer, intent(in) :: unit
+      character(*), intent(in) :: iotype
+      integer, intent(in) :: v_list(:)
+      integer, intent(out) :: iostat
+      character(*), intent(inout) :: iomsg
+      
+      write(unit,'(i0)',iostat=iostat) this%value
+      
+   end subroutine write_node_formatted
 
 end module fy_IntNode

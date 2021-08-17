@@ -19,6 +19,7 @@ module fy_BoolNode
       procedure, nopass :: is_bool
       procedure, pass(this) :: assign_to_logical
       procedure :: less_than
+      procedure :: write_node_formatted
    end type BoolNode
 
    interface
@@ -76,5 +77,23 @@ contains
 
       __RETURN__(YAFYAML_SUCCESS)
    end function to_bool
+
+
+   subroutine write_node_formatted(this, unit, iotype, v_list, iostat, iomsg)
+      class(BoolNode), intent(in) :: this
+      integer, intent(in) :: unit
+      character(*), intent(in) :: iotype
+      integer, intent(in) :: v_list(:)
+      integer, intent(out) :: iostat
+      character(*), intent(inout) :: iomsg
+      
+
+      if (this%value) then
+         write(unit,'(a4)',iostat=iostat) 'true'
+      else
+         write(unit,'(a5)',iostat=iostat) 'false'
+      end if
+      
+   end subroutine write_node_formatted
 
 end module fy_BoolNode

@@ -170,6 +170,7 @@ contains
       type(sequence), pointer :: subsequence
       type(Mapping), pointer :: submapping
 
+      print*,__FILE__,__LINE__
       expect_another = .false.
       do
          if (allocated(token)) deallocate(token)
@@ -232,6 +233,9 @@ contains
          deallocate(token)
 
       end do
+      print*,__FILE__,__LINE__
+
+      if (allocated(anchor)) deallocate(anchor)
 
    end subroutine process_sequence
 
@@ -263,8 +267,11 @@ contains
             if (allocated(next_token)) deallocate(next_token)
             next_token = lexr%get_token()
             call get_key(next_token, key, key_str)
+            print*,__FILE__,__LINE__, key_str, allocated(next_token)
             if (allocated(next_token)) deallocate(next_token)
+            print*,__FILE__,__LINE__, key_str, allocated(next_token)
             next_token = lexr%get_token()
+!!$            allocate(next_token, source=lexr%get_token())
             select type(next_token)
             type is (ValueToken)
                ! mandatory before value
@@ -340,6 +347,11 @@ contains
 
       end do
 
+      ! Odd workaround for gfortran 10.3
+      if (allocated(anchor)) deallocate(anchor)
+      if (allocated(key)) deallocate(key)
+
+
    contains
 
       subroutine merge(m1, m2)
@@ -401,7 +413,9 @@ contains
       elseif (this%schema%matches_logical(text)) then
          value = BoolNode(this%schema%to_logical(text))
       elseif (this%schema%matches_integer(text)) then
+            print*,__FILE__,__LINE__
          value = IntNode(this%schema%to_integer(text))
+            print*,__FILE__,__LINE__
       elseif(this%schema%matches_real(text)) then
          value = FloatNode(this%schema%to_real(text))
       else

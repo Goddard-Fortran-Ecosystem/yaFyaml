@@ -31,6 +31,7 @@ module fy_BaseNode
       private
    contains
 
+      procedure :: size
       procedure :: at_multi_selector
       procedure :: of_multi_selector
       procedure :: get_logical
@@ -56,12 +57,14 @@ module fy_BaseNode
       procedure, nopass :: is_int
       procedure, nopass :: is_float
 
+      procedure :: write_formatted
    end type BaseNode
 
 #define SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
    !#define OPT_SELECTORS s2, s3, s4, s5, s6, s7, s8, s9
 #define OPT_SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
    interface
+
       module function at_multi_selector(this, SELECTORS, &
            & unusable, found, err_msg, rc) result(node_ptr)
          use fy_KeywordEnforcer
@@ -235,4 +238,22 @@ contains
       is = .false.
    end function is_mapping
 
+   integer function size(this)
+      class(BaseNode), intent(in) :: this
+      size = 1 ! overridden in SequenceNode and MappingNode
+   end function size
+
+
+   subroutine write_formatted(this, unit, iotype, v_list, iostat, iomsg)
+      class(BaseNode), intent(in) :: this
+      integer, intent(in) :: unit
+      character(*), intent(in) :: iotype
+      integer, intent(in) :: v_list(:)
+      integer, intent(out) :: iostat
+      character(*), intent(inout) :: iomsg
+
+      call this%write_node_formatted(unit, iotype, v_list, iostat, iomsg)
+      
+   end subroutine write_formatted
+   
 end module fy_BaseNode

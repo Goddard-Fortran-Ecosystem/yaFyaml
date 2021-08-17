@@ -17,9 +17,11 @@ module fy_SequenceNode
       private
       type(Sequence) :: value
    contains
+      procedure :: size
       procedure, pass(this) :: assign_to_sequence
       procedure, nopass :: is_sequence
       procedure :: less_than
+      procedure :: write_node_formatted
    end type SequenceNode
 
    type(Sequence), target :: DEFAULT_SEQUENCE
@@ -76,4 +78,39 @@ contains
       is = .true.
    end function is_sequence
 
+   recursive subroutine write_node_formatted(this, unit, iotype, v_list, iostat, iomsg)
+      class(SequenceNode), intent(in) :: this
+      integer, intent(in) :: unit
+      character(*), intent(in) :: iotype
+      integer, intent(in) :: v_list(:)
+      integer, intent(out) :: iostat
+      character(*), intent(inout) :: iomsg
+
+      integer :: i
+      class(AbstractNode), pointer :: element
+
+      write(unit,'("[ ")', iostat=iostat)
+      if (iostat /= 0) return
+      associate (s => this%value)
+        do i = 1, s%size()
+           element => s%of(i)
+           call element%write_node_formatted(unit, iotype, v_list, iostat, iomsg)
+           if (iostat /= 0) return
+           if (i < s%size()) then
+              write(unit,'(", ")', iostat=iostat)
+              if (iostat /= 0) return
+           end if
+        end do
+      end associate
+      write(unit,'(" ]")', iostat=iostat)
+      
+   end subroutine write_node_formatted
+
+
+   integer function size(this)
+      class(SequenceNode), intent(in) :: this
+      size = this%value%size()
+   end function size
+
 end module fy_SequenceNode
+

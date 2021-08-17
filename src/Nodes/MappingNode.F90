@@ -17,10 +17,12 @@ module fy_MappingNode
 !!$      private
       type(Mapping) :: value
    contains
+      procedure :: size
       procedure, nopass :: is_mapping
       procedure, pass(this) :: assign_to_mapping
       procedure :: less_than
       procedure :: analysis
+      procedure :: write_node_formatted
    end type MappingNode
 
    type(MappingNode) :: mmm
@@ -106,5 +108,54 @@ contains
          call iter%next()
       end do
    end function analysis
+
+   recursive subroutine write_node_formatted(this, unit, iotype, v_list, iostat, iomsg)
+      class(MappingNode), intent(in) :: this
+      integer, intent(in) :: unit
+      character(*), intent(in) :: iotype
+      integer, intent(in) :: v_list(:)
+      integer, intent(out) :: iostat
+      character(*), intent(inout) :: iomsg
+
+      type(MappingIterator) :: iter
+      integer :: depth
+      character(32) :: fmt
+      class(AbstractNode), pointer :: key, value
+
+      iostat = 0
+      print*,__FILE__,__LINE__, unit, this%size()
+      write(unit,'("{")', iostat=iostat)
+      if (iostat /= 0) return
+      
+      associate (m => this%value)
+        iter = m%begin()
+        do while (iter /= m%end())
+
+           key => iter%first()
+           call key%write_node_formatted(unit, iotype, v_list, iostat, iomsg)
+           if (iostat /= 0) return
+           write(unit,'(": ")', iostat=iostat)
+           if (iostat /= 0) return
+
+           value => iter%second()
+           call value%write_node_formatted(unit, iotype, v_list, iostat, iomsg)
+           if (iostat /= 0) return
+
+           call iter%next()
+           if (iter /= m%end()) then
+              write(unit,'(", ")', iostat=iostat)
+              if (iostat /= 0) return
+           end if
+        end do
+      end associate
+      write(unit,'(" }")', iostat=iostat)
+      if (iostat /= 0) return
+   end subroutine write_node_formatted
+
+
+   integer function size(this)
+      class(MappingNode), intent(in) :: this
+      size = this%value%size()
+   end function size
 
 end module fy_MappingNode

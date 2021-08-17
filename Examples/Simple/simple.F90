@@ -82,7 +82,7 @@ program main
 
    v1 = -1
    call config%get(v1, 'mapping_b', 'v1', is_present=is_present, rc=status)
-   if (v1 == 7 .and. is_present .and. status == SUCCESS) then
+   if (v1 == 7 .and. is_present .and. status == YAFYAML_SUCCESS) then
       print*,'success'
    else
       print*,'failure in handling flow mapping', v1, v2
@@ -90,7 +90,7 @@ program main
 
    ! Handle missing values
    call config%get(v3, 'mapping_b', 'v3', default=17, is_present=is_present, rc=status)
-   if (v3 == 17 .and. (.not. is_present) .and. status == SUCCESS) then
+   if (v3 == 17 .and. (.not. is_present) .and. status == YAFYAML_SUCCESS) then
       print*,'success'
    else
       print*,'failure in handling flow mapping'
@@ -98,7 +98,7 @@ program main
 
    ! error if wrong type:
    call config%get(flag, 'mapping_b', 'v2', is_present=is_present, rc=status)
-   if (is_present .and. status == INCONSISTENT_TYPE) then
+   if (is_present .and. status == YAFYAML_TYPE_MISMATCH) then
       print*,'expected failure'
    else
       print*,'should have failed, but did not'

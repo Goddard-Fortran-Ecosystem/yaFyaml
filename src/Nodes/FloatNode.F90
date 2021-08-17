@@ -21,6 +21,7 @@ module fy_FloatNode
       procedure, pass(this) :: assign_to_real32
       procedure, pass(this) :: assign_to_real64
       procedure :: less_than
+      procedure :: write_node_formatted
    end type FloatNode
 
    interface
@@ -101,5 +102,18 @@ contains
 
       __RETURN__(YAFYAML_SUCCESS)
    end function to_float
+
+   subroutine write_node_formatted(this, unit, iotype, v_list, iostat, iomsg)
+      class(FloatNode), intent(in) :: this
+      integer, intent(in) :: unit
+      character(*), intent(in) :: iotype
+      integer, intent(in) :: v_list(:)
+      integer, intent(out) :: iostat
+      character(*), intent(inout) :: iomsg
+      
+
+      write(unit,'(g0)',iostat=iostat) this%value
+      
+   end subroutine write_node_formatted
 
 end module fy_FloatNode

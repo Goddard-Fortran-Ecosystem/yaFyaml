@@ -9,6 +9,7 @@ module fy_AbstractNode
    type, abstract :: AbstractNode
       integer :: ID = 0
    contains
+      procedure(i_size), deferred :: size
 
       ! accessors to sub-nodes
       procedure(I_at_multi_selector), deferred :: at_multi_selector
@@ -51,8 +52,9 @@ module fy_AbstractNode
       procedure(I_is), deferred, nopass :: is_int
       procedure(I_is), deferred, nopass :: is_float
 
-!!$      procedure(I_write_formatted) :: write_formatted
-!!$      generic :: write(formatted) => write_formatted
+      procedure(I_write_formatted), deferred :: write_formatted
+      generic :: write(formatted) => write_formatted
+      procedure(I_write_node_formatted), deferred :: write_node_formatted
 
       ! "<"
       ! Necessary to support map container with *Node keys.
@@ -60,12 +62,17 @@ module fy_AbstractNode
       generic :: operator(<) => less_than
 
       procedure :: analysis
+
    end type AbstractNode
 
 #define SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
 #define OPT_SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
    abstract interface
 
+      integer function i_size(this)
+         import AbstractNode
+         class(AbstractNode), intent(in) :: this
+      end function i_size
       
       function I_of_multi_selector(this, SELECTORS) result(node_ptr)
          import AbstractNode
@@ -236,6 +243,27 @@ module fy_AbstractNode
          class(AbstractNode), intent(in) :: a
          class(AbstractNode), intent(in) :: b
       end function I_less_than
+
+      subroutine i_write_formatted(this, unit, iotype, v_list, iostat, iomsg)
+         import AbstractNode
+         class(AbstractNode), intent(in) :: this
+         integer, intent(in) :: unit
+         character(*), intent(in) :: iotype
+         integer, intent(in) :: v_list(:)
+         integer, intent(out) :: iostat
+         character(*), intent(inout) :: iomsg
+      end subroutine i_write_formatted
+
+      subroutine i_write_node_formatted(this, unit, iotype, v_list, iostat, iomsg)
+         import AbstractNode
+         class(AbstractNode), intent(in) :: this
+         integer, intent(in) :: unit
+         character(*), intent(in) :: iotype
+         integer, intent(in) :: v_list(:)
+         integer, intent(out) :: iostat
+         character(*), intent(inout) :: iomsg
+      end subroutine i_write_node_formatted
+
    end interface
 
 

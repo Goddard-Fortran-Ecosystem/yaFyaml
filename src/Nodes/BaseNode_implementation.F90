@@ -292,6 +292,8 @@ contains
 
       class(AbstractNode), pointer :: ptr
       integer :: status
+      integer(kind=INT64) :: value64
+      
 
       value = DEFAULT_INT32
       ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
@@ -301,7 +303,11 @@ contains
       if (present(found)) then
          if (.not. found) return
       else
-         value = to_int(ptr, err_msg=err_msg, __RC__)
+         ! Must assign to 64-bit first to protect against overflow
+         value64 = to_int(ptr, err_msg=err_msg, __RC__)
+         if (-huge(1_INT32) <= value64 .and. value64 <= huge(1_INT64)) then
+            value = value64  ! else keep default value
+         end if
       end if
 
       __RETURN__(YAFYAML_SUCCESS)

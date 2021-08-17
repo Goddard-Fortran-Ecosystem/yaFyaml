@@ -33,7 +33,7 @@ module fy_newConfiguration
    public :: Configuration
 
    type :: Configuration
-      private
+!!$      private
       class(AbstractNode), pointer :: node => null()
    contains
       procedure :: at_multi_selector
@@ -79,8 +79,8 @@ module fy_newConfiguration
       procedure :: size
       procedure :: clear
 
-!!$      procedure(I_write_formatted) :: write_formatted
-!!$      generic :: write(formatted) => write_formatted
+      procedure :: write_formatted
+      generic :: write(formatted) => write_formatted
 
       procedure :: begin => begin_cfg
       procedure :: end => end_cfg
@@ -374,5 +374,22 @@ contains
       deallocate(this%node)
       nullify(this%node)
    end subroutine clear
+
+
+  subroutine write_formatted(this, unit, iotype, v_list, iostat, iomsg)
+    class(Configuration), intent(in) :: this
+    integer, intent(in) :: unit
+    character(*), intent(in) :: iotype
+    integer, intent(in) :: v_list(:)
+    integer, intent(out) :: iostat
+    character(*), intent(inout) :: iomsg
+
+    class(AbstractNode), pointer :: node
+
+    node => this%node
+    call node%write_node_formatted(unit, iotype, v_list, iostat, iomsg)
+!!$    write(unit,'(DT)', iostat=iostat)this%node
+    
+  end subroutine write_formatted
 
 end module fy_newConfiguration

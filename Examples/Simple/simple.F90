@@ -17,7 +17,7 @@ program main
 
    integer :: v1, v2, v3
 
-   logical :: is_present
+   logical :: found
    integer :: status
    
 
@@ -42,7 +42,7 @@ program main
       print*,'failure;  expected .true.'
    end if
 
-   subconfig = config%get('sequence_a')
+   call config%get(sequence_a, 'sequence_a')
 
    if (all (sequence_a == [1,2,3,4])) then
       print*,'success'
@@ -50,7 +50,7 @@ program main
       print*,'failure in handling flow sequence;  expected .true.'
    end if
 
-   sequence_b = config%at('sequence_b')
+   call config%get(sequence_b, 'sequence_b')
 
    if (all (sequence_b == [1,2,3,4])) then
       print*,'success'
@@ -78,27 +78,28 @@ program main
       print*,'failure in handling block mapping', v1, v2
    end if
 
-   call config%get(subconfig, 'mapping_b')
-
    v1 = -1
-   call config%get(v1, 'mapping_b', 'v1', is_present=is_present, rc=status)
-   if (v1 == 7 .and. is_present .and. status == YAFYAML_SUCCESS) then
+   call config%get(v1, 'mapping_b', 'v1', found=found, rc=status)
+   v2 = -1
+   call config%get(v2, 'mapping_b', 'v2', found=found, rc=status)
+   if (v1 == 7 .and. v2 == 8 .and. found .and. status == YAFYAML_SUCCESS) then
       print*,'success'
    else
-      print*,'failure in handling flow mapping', v1, v2
+      print*,'failure in handling block mapping', v1, v2, found, status
    end if
 
    ! Handle missing values
-   call config%get(v3, 'mapping_b', 'v3', default=17, is_present=is_present, rc=status)
-   if (v3 == 17 .and. (.not. is_present) .and. status == YAFYAML_SUCCESS) then
+   v3 = -1
+   call config%get(v3, 'mapping_b', 'v3', found=found, rc=status)
+   if (v3 == -HUGE(1) .and. (.not. found) .and. status == YAFYAML_SUCCESS) then
       print*,'success'
    else
-      print*,'failure in handling flow mapping'
+      print*,'failure in handling block mapping', found, v3
    end if
 
    ! error if wrong type:
-   call config%get(flag, 'mapping_b', 'v2', is_present=is_present, rc=status)
-   if (is_present .and. status == YAFYAML_TYPE_MISMATCH) then
+   call config%get(flag, 'mapping_b', 'v2', found=found, rc=status)
+   if (found .and. status == YAFYAML_TYPE_MISMATCH) then
       print*,'expected failure'
    else
       print*,'should have failed, but did not'

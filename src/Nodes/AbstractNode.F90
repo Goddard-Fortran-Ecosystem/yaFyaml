@@ -20,10 +20,7 @@ module fy_AbstractNode
 
       procedure(I_get_logical),   deferred :: get_logical
       procedure(I_get_logical_1d),   deferred :: get_logical_1d
-
       procedure(I_get_string),    deferred :: get_string
-!!$      procedure(I_get_string_1d),    deferred :: get_string_1d
-
       procedure(I_get_integer32), deferred :: get_integer32
       procedure(I_get_integer32_1d), deferred :: get_integer32_1d
       procedure(I_get_integer64), deferred :: get_integer64
@@ -35,7 +32,7 @@ module fy_AbstractNode
       procedure(I_get_real64_1d),    deferred :: get_real64_1d
 
       generic :: get => get_logical, get_logical_1d
-      generic :: get => get_string!, get_string_1d
+      generic :: get => get_string
       generic :: get => get_integer32, get_integer32_1d
       generic :: get => get_integer64, get_integer64_1d
       generic :: get => get_real32, get_real32_1d

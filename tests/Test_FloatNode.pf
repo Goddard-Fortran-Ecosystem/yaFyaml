@@ -152,5 +152,6 @@ contains
       @assertTrue(x < m)
 
    end subroutine test_less_than_diff_type
-   
+
+
 end module Test_FloatNode

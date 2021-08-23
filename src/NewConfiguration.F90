@@ -47,12 +47,17 @@ module fy_newConfiguration
       procedure :: get_integer64
       procedure :: get_real32
       procedure :: get_real64
-      generic :: get => get_logical
+      procedure :: get_logical_1d
+      procedure :: get_integer32_1d
+      procedure :: get_integer64_1d
+      procedure :: get_real32_1d
+      procedure :: get_real64_1d
+      generic :: get => get_logical, get_logical_1d
       generic :: get => get_string
-      generic :: get => get_integer32
-      generic :: get => get_integer64
-      generic :: get => get_real32
-      generic :: get => get_real64
+      generic :: get => get_integer32, get_integer32_1d
+      generic :: get => get_integer64, get_integer64_1d
+      generic :: get => get_real32, get_real32_1d
+      generic :: get => get_real64, get_real64_1d
 
       procedure, pass(this) :: assign_to_logical
       procedure, pass(this) :: assign_to_string
@@ -161,6 +166,21 @@ contains
    end subroutine get_logical
 
 
+   subroutine get_logical_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+      class(Configuration), target, intent(in) :: this
+      logical, allocatable, intent(out) :: values(:)
+      class(*), optional, intent(in) :: SELECTORS
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      logical, optional, intent(out) :: found
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      call this%node%get(values, SELECTORS, found=found, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine get_logical_1d
+   
+
    subroutine get_string(this, value, SELECTORS, unusable, found, err_msg, rc)
       class(Configuration), target, intent(in) :: this
       character(:), allocatable, intent(out) :: value
@@ -190,6 +210,20 @@ contains
       __UNUSED_DUMMY__(unusable)
    end subroutine get_integer32
 
+   subroutine get_integer32_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+      class(Configuration), target, intent(in) :: this
+      integer(kind=INT32), allocatable, intent(out) :: values(:)
+      class(*), optional, intent(in) :: SELECTORS
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      logical, optional, intent(out) :: found
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      call this%node%get(values, SELECTORS, found=found, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine get_integer32_1d
+
    subroutine get_integer64(this, value, SELECTORS, unusable, found, err_msg, rc)
       class(Configuration), target, intent(in) :: this
       integer(kind=INT64), intent(out) :: value
@@ -203,6 +237,20 @@ contains
 
       __UNUSED_DUMMY__(unusable)
    end subroutine get_integer64
+
+   subroutine get_integer64_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+      class(Configuration), target, intent(in) :: this
+      integer(kind=INT64), allocatable, intent(out) :: values(:)
+      class(*), optional, intent(in) :: SELECTORS
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      logical, optional, intent(out) :: found
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      call this%node%get(values, SELECTORS, found=found, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine get_integer64_1d
 
 
    subroutine get_real32(this, value, SELECTORS, unusable, found, err_msg, rc)
@@ -219,6 +267,20 @@ contains
       __UNUSED_DUMMY__(unusable)
    end subroutine get_real32
 
+   subroutine get_real32_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+      class(Configuration), target, intent(in) :: this
+      real(kind=REAL32), allocatable, intent(out) :: values(:)
+      class(*), optional, intent(in) :: SELECTORS
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      logical, optional, intent(out) :: found
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      call this%node%get(values, SELECTORS, found=found, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine get_real32_1d
+
    subroutine get_real64(this, value, SELECTORS, unusable, found, err_msg, rc)
       class(Configuration), target, intent(in) :: this
       real(kind=REAL64), intent(out) :: value
@@ -232,6 +294,20 @@ contains
 
       __UNUSED_DUMMY__(unusable)
    end subroutine get_real64
+
+   subroutine get_real64_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+      class(Configuration), target, intent(in) :: this
+      real(kind=REAL64), allocatable, intent(out) :: values(:)
+      class(*), optional, intent(in) :: SELECTORS
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      logical, optional, intent(out) :: found
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      call this%node%get(values, SELECTORS, found=found, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine get_real64_1d
 
 
 

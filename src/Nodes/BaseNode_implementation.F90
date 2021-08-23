@@ -230,23 +230,18 @@ contains
 
       class(AbstractNode), pointer :: ptr
       integer :: status
-      logical :: found_
 
       value = DEFAULT_LOGICAL ! ensure that return value is defined
 
-      ptr => this%at(SELECTORS, found=found_, err_msg=err_msg, __RC__)
-      if (present(found)) found=found_
+      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
          
-
-      if (.not. found_) then
-         value = DEFAULT_LOGICAL
-         if (.not. present(found)) then
-            __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)
-         end if
-      else ! found but possible type-mismatch
-         value = to_bool(ptr, err_msg=err_msg, __RC__)
-         __VERIFY2__(err_msg,status)
+      ! Not an error if selector not found when 'found' is used.   Code returns
+      ! and value remains undefined.
+      if (present(found)) then
+         if (.not. found) return
       end if
+
+      value = to_bool(ptr, err_msg=err_msg, __RC__)
 
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
@@ -264,35 +259,32 @@ contains
 
       class(AbstractNode), pointer :: ptr
       integer :: status
-      logical :: found_
       logical :: tmp
       integer :: i
 
       allocate(values(0)) ! unsure that return value is defined
 
       ! Is the selector list valid?
-      ptr => this%at(SELECTORS, found=found_, err_msg=err_msg, __RC__)
-      if (present(found)) found=found_
+      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
-      if (.not. found_) then
-         if (.not. present(found)) then
-            __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)
-         end if
-      else ! found but possible type-mismatch
-         __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
-         ! check type of each entry ...
-         do i = 1, ptr%size()
-            call ptr%get(tmp, i, err_msg=err_msg, rc=status)
-            __VERIFY2__(err_msg, status)
-         end do
-
-         deallocate(values)
-         allocate(values(ptr%size()))
-         do i = 1, ptr%size()
-            call ptr%get(values(i), i)
-         end do
-
+      ! Not an error if selector not found when 'found' is used.   Code returns
+      ! and value remains undefined.
+      if (present(found)) then
+         if (.not. found) return
       end if
+
+      __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
+      ! check type of each entry ...
+      do i = 1, ptr%size()
+         call ptr%get(tmp, i, err_msg=err_msg, rc=status)
+         __VERIFY2__(err_msg, status)
+      end do
+      
+      deallocate(values)
+      allocate(values(ptr%size()))
+      do i = 1, ptr%size()
+         call ptr%get(values(i), i)
+      end do
 
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
@@ -319,9 +311,9 @@ contains
       ! and value remains undefined.
       if (present(found)) then
          if (.not. found) return
-      else
-         value = to_string(ptr, err_msg=err_msg, __RC__)
       end if
+
+      value = to_string(ptr, err_msg=err_msg, __RC__)
 
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
@@ -340,7 +332,7 @@ contains
 
       class(AbstractNode), pointer :: ptr
       integer :: status
-      integer(kind=INT64) :: value64
+      integer(kind=INT64) :: safe_value
       
 
       value = DEFAULT_INT32
@@ -350,14 +342,18 @@ contains
       ! and value remains undefined.
       if (present(found)) then
          if (.not. found) return
-      else
-         ! Must assign to 64-bit first to protect against overflow
-         value64 = to_int(ptr, err_msg=err_msg, __RC__)
-         if (-huge(1_INT32) <= value64 .and. value64 <= huge(1_INT64)) then
-            value = value64  ! else keep default value
-         end if
       end if
 
+      ! Must assign to 64-bit first to protect against overflow
+      safe_value = to_int(ptr, err_msg=err_msg, __RC__)
+      if (safe_value <= -huge(1_INT32)) then
+         value = -huge(1_INT32)
+      elseif (safe_value >= huge(1_INT32)) then
+         value = huge(1_INT32)
+      else
+         value = safe_value  ! else keep default value
+      end if
+   
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end subroutine get_integer32
@@ -374,35 +370,33 @@ contains
 
       class(AbstractNode), pointer :: ptr
       integer :: status
-      logical :: found_
       integer(kind=INT32) :: tmp
       integer :: i
 
       allocate(values(0)) ! unsure that return value is defined
 
       ! Is the selector list valid?
-      ptr => this%at(SELECTORS, found=found_, err_msg=err_msg, __RC__)
-      if (present(found)) found=found_
+      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
-      if (.not. found_) then
-         if (.not. present(found)) then
-            __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)
-         end if
-      else ! found but possible type-mismatch
-         __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
-         ! check type of each entry ...
-         do i = 1, ptr%size()
-            call ptr%get(tmp, i, err_msg=err_msg, rc=status)
-            __VERIFY2__(err_msg, status)
-         end do
-
-         deallocate(values)
-         allocate(values(ptr%size()))
-         do i = 1, ptr%size()
-            call ptr%get(values(i), i)
-         end do
-
+      ! Not an error if selector not found when 'found' is used.   Code returns
+      ! and value remains undefined.
+      if (present(found)) then
+         if (.not. found) return
       end if
+
+      __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
+      ! check type of each entry ...
+      do i = 1, ptr%size()
+         call ptr%get(tmp, i, err_msg=err_msg, rc=status)
+         __VERIFY2__(err_msg, status)
+      end do
+
+      deallocate(values)
+      allocate(values(ptr%size()))
+      do i = 1, ptr%size()
+         call ptr%get(values(i), i)
+      end do
+
 
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
@@ -429,10 +423,10 @@ contains
       ! and value remains undefined.
       if (present(found)) then
          if (.not. found) return
-      else
-         value = to_int(ptr, err_msg=err_msg, __RC__)
       end if
 
+      value = to_int(ptr, err_msg=err_msg, __RC__)
+      
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end subroutine get_integer64
@@ -450,36 +444,33 @@ contains
 
       class(AbstractNode), pointer :: ptr
       integer :: status
-      logical :: found_
       integer(kind=INT64) :: tmp
       integer :: i
 
       allocate(values(0)) ! unsure that return value is defined
 
       ! Is the selector list valid?
-      ptr => this%at(SELECTORS, found=found_, err_msg=err_msg, __RC__)
-      if (present(found)) found=found_
+      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
-      if (.not. found_) then
-         if (.not. present(found)) then
-            __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)
-         end if
-      else ! found but possible type-mismatch
-         __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
-         ! check type of each entry ...
-         do i = 1, ptr%size()
-            call ptr%get(tmp, i, err_msg=err_msg, rc=status)
-            __VERIFY2__(err_msg, status)
-         end do
-
-         deallocate(values)
-         allocate(values(ptr%size()))
-         do i = 1, ptr%size()
-            call ptr%get(values(i), i)
-         end do
-
+      ! Not an error if selector not found when 'found' is used.   Code returns
+      ! and value remains undefined.
+      if (present(found)) then
+         if (.not. found) return
       end if
 
+      __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
+      ! check type of each entry ...
+      do i = 1, ptr%size()
+         call ptr%get(tmp, i, err_msg=err_msg, rc=status)
+         __VERIFY2__(err_msg, status)
+      end do
+      
+      deallocate(values)
+      allocate(values(ptr%size()))
+      do i = 1, ptr%size()
+         call ptr%get(values(i), i)
+      end do
+         
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end subroutine get_integer64_1d
@@ -487,6 +478,7 @@ contains
 
    module subroutine get_real32(this, value, SELECTORS, unusable, found, err_msg, rc)
       use, intrinsic :: ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
+      use, intrinsic :: ieee_arithmetic, only: IEEE_POSITIVE_INF, IEEE_NEGATIVE_INF
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       real(kind=REAL32), intent(out) :: value
@@ -499,19 +491,33 @@ contains
       class(AbstractNode), pointer :: ptr
       integer :: status
       real(kind=REAL64) :: safe_value
+      real(kind=REAL32) :: pos_inf, neg_inf
 
-      value = DEFAULT_REAL32
+      value = ieee_value(value,  IEEE_QUIET_NAN)
       ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
+
       ! Not an error if selector not found when 'found' is used.   Code returns
       ! and value remains undefined.
       if (present(found)) then
          if (.not. found) return
+      end if
+
+      ! unless it is a float in the acceptable range ...
+      safe_value = to_float(ptr, err_msg=err_msg, __RC__)
+      ! if we have not returned yet, then conversion
+      ! is possible
+      if (safe_value /= safe_value) then ! nan
+         value = ieee_value(value, IEEE_QUIET_NAN)
       else
-         ! unless it is a float in the acceptable range ...
-         safe_value = to_float(ptr, err_msg=err_msg, __RC__)
-         ! if we have not returned yet, then conversion
-         ! is possible
-         value = ptr
+         neg_inf = ieee_value(value, IEEE_NEGATIVE_INF)
+         pos_inf = ieee_value(value, IEEE_POSITIVE_INF)
+         if (safe_value <= neg_inf) then
+            value = neg_inf
+         else if (safe_value >= pos_inf) then
+            value = pos_inf
+         else
+            value = safe_value
+         end if
       end if
 
       __RETURN__(YAFYAML_SUCCESS)
@@ -530,35 +536,32 @@ contains
 
       class(AbstractNode), pointer :: ptr
       integer :: status
-      logical :: found_
       real(kind=REAL32) :: tmp
       integer :: i
 
       allocate(values(0)) ! unsure that return value is defined
 
       ! Is the selector list valid?
-      ptr => this%at(SELECTORS, found=found_, err_msg=err_msg, __RC__)
-      if (present(found)) found=found_
+      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
-      if (.not. found_) then
-         if (.not. present(found)) then
-            __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)
-         end if
-      else ! found but possible type-mismatch
-         __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
-         ! check type of each entry ...
-         do i = 1, ptr%size()
-            call ptr%get(tmp, i, err_msg=err_msg, rc=status)
-            __VERIFY2__(err_msg, status)
-         end do
-
-         deallocate(values)
-         allocate(values(ptr%size()))
-         do i = 1, ptr%size()
-            call ptr%get(values(i), i)
-         end do
-
+      ! Not an error if selector not found when 'found' is used.   Code returns
+      ! and value remains undefined.
+      if (present(found)) then
+         if (.not. found) return
       end if
+
+      __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
+      ! check type of each entry ...
+      do i = 1, ptr%size()
+         call ptr%get(tmp, i, err_msg=err_msg, rc=status)
+         __VERIFY2__(err_msg, status)
+      end do
+
+      deallocate(values)
+      allocate(values(ptr%size()))
+      do i = 1, ptr%size()
+         call ptr%get(values(i), i)
+      end do
 
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
@@ -566,6 +569,7 @@ contains
 
 
    module subroutine get_real64(this, value, SELECTORS, unusable, found, err_msg, rc)
+      use, intrinsic :: ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       real(kind=REAL64), intent(out) :: value
@@ -578,16 +582,16 @@ contains
       class(AbstractNode), pointer :: ptr
       integer :: status
 
-      value = DEFAULT_REAL64
+      value = ieee_value(value,  IEEE_QUIET_NAN)
       ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
       ! Not an error if selector not found when 'found' is used.   Code returns
       ! and value remains undefined.
       if (present(found)) then
          if (.not. found) return
-      else
-         value = to_float(ptr, err_msg=err_msg, __RC__)
       end if
+
+      value = to_float(ptr, err_msg=err_msg, __RC__)
 
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
@@ -606,35 +610,32 @@ contains
 
       class(AbstractNode), pointer :: ptr
       integer :: status
-      logical :: found_
       real(kind=REAL64) :: tmp
       integer :: i
 
       allocate(values(0)) ! unsure that return value is defined
 
       ! Is the selector list valid?
-      ptr => this%at(SELECTORS, found=found_, err_msg=err_msg, __RC__)
-      if (present(found)) found=found_
+      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
-      if (.not. found_) then
-         if (.not. present(found)) then
-            __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)
-         end if
-      else ! found but possible type-mismatch
-         __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
-         ! check type of each entry ...
-         do i = 1, ptr%size()
-            call ptr%get(tmp, i, err_msg=err_msg, rc=status)
-            __VERIFY2__(err_msg, status)
-         end do
-
-         deallocate(values)
-         allocate(values(ptr%size()))
-         do i = 1, ptr%size()
-            call ptr%get(values(i), i)
-         end do
-
+      ! Not an error if selector not found when 'found' is used.   Code returns
+      ! and value remains undefined.
+      if (present(found)) then
+         if (.not. found) return
       end if
+
+      __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
+      ! check type of each entry ...
+      do i = 1, ptr%size()
+         call ptr%get(tmp, i, err_msg=err_msg, rc=status)
+         __VERIFY2__(err_msg, status)
+      end do
+      
+      deallocate(values)
+      allocate(values(ptr%size()))
+      do i = 1, ptr%size()
+         call ptr%get(values(i), i)
+      end do
 
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)

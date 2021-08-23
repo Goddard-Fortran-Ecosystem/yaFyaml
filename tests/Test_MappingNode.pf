@@ -246,5 +246,30 @@ contains
       @assert_that(less, is(false()))
 
    end subroutine test_less_than_paradox
-   
+
+   @test
+   subroutine test_get_float_not_found()
+      use, intrinsic :: ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
+      class(AbstractNode), allocatable :: n
+      type(Mapping), pointer :: m
+      real(kind=REAL32) :: x32
+      real(kind=REAL64) :: x64
+      logical :: found
+      
+      allocate(MappingNode :: n)
+
+      m => to_mapping(n)
+      call m%insert(StringNode('A'), IntNode(1))
+
+      call n%get(x32,'B', found=found)
+      @assert_that(found, is(false()))
+      ! cheap NaN test
+      @assert_that(x32 == x32, is(false()))
+
+      call n%get(x64,'B', found=found)
+      @assert_that(found, is(false()))
+      @assert_that(x64 == x64, is(false()))
+      
+   end subroutine test_get_float_not_found
+
 end module Test_MappingNode

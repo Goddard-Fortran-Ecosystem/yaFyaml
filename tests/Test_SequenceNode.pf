@@ -166,7 +166,7 @@ contains
 
 
    @test
-   subroutine test_get_logical_array()
+   subroutine test_get_logical_1d()
       type(SequenceNode), target :: node
       type(sequence), pointer :: s
       logical, allocatable :: flags(:)
@@ -196,10 +196,10 @@ contains
       @assert_that(expected, is(true()))
       @assert_that(size(flags), is(0))
       
-   end subroutine test_get_logical_array
+   end subroutine test_get_logical_1d
 
    @test
-   subroutine test_get_integer32_array()
+   subroutine test_get_integer32_1d()
       type(SequenceNode), target :: node
       type(sequence), pointer :: s
       integer(kind=INT32), allocatable :: values(:)
@@ -229,10 +229,10 @@ contains
       @assert_that(expected, is(true()))
       @assert_that(size(values), is(0))
       
-   end subroutine test_get_integer32_array
+   end subroutine test_get_integer32_1d
 
    @test
-   subroutine test_get_integer64_array()
+   subroutine test_get_integer64_1d()
       type(SequenceNode), target :: node
       type(sequence), pointer :: s
       integer(kind=INT64), allocatable :: values(:)
@@ -262,10 +262,10 @@ contains
       @assert_that(expected, is(true()))
       @assert_that(size(values), is(0))
 
-   end subroutine test_get_integer64_array
+   end subroutine test_get_integer64_1d
 
    @test
-   subroutine test_get_real32_array()
+   subroutine test_get_real32_1d()
       type(SequenceNode), target :: node
       type(sequence), pointer :: s
       real(kind=REAL32), allocatable :: values(:)
@@ -295,10 +295,10 @@ contains
       @assert_that(expected, is(true()))
       @assert_that(size(values), is(0))
       
-   end subroutine test_get_real32_array
+   end subroutine test_get_real32_1d
 
    @test
-   subroutine test_get_real64_array()
+   subroutine test_get_real64_1d()
       type(SequenceNode), target :: node
       type(sequence), pointer :: s
       real(kind=REAL64), allocatable :: values(:)
@@ -328,6 +328,6 @@ contains
       @assert_that(expected, is(true()))
       @assert_that(size(values), is(0))
 
-   end subroutine test_get_real64_array
+   end subroutine test_get_real64_1d
 
 end module Test_SequenceNode

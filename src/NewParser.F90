@@ -380,6 +380,7 @@ contains
          type is (ScalarToken)
             key_str = next_token%value
             call interpret2(this, next_token, key)
+!!$            allocate(key, source=this%interpret(next_token))
          class default
             error stop
          end select

@@ -2,7 +2,9 @@ module Test_Reader
   use, intrinsic :: iso_c_binding, only: NL => C_NEW_LINE
   use, intrinsic :: iso_c_binding, only: C_NULL_CHAR
   use funit
-  use yaFyaml
+  use fy_Reader
+  use fy_TextStream
+  use fy_EscapedTextStream
   implicit none
 
 contains

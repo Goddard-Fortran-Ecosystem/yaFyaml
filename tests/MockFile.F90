@@ -1,7 +1,8 @@
 module MockFile_mod
-  use yaFyaml, only: AbstractFile
+  use yaFyaml
   use fy_KeywordEnforcer
   use gFTL_StringVector
+  use fy_AbstractFile
   implicit none
   private
 

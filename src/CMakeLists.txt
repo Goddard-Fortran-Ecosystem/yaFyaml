@@ -1,11 +1,9 @@
 add_library (yafyaml
   analyze.F90
   
-  OrderedStringUnlimitedMap.F90
   ArrayWrapper.F90
   AbstractFile.F90
   File.F90
-  StringUnlimitedPointerMap.F90
   StringNodeMap.F90
 
   String.F90
@@ -18,15 +16,12 @@ add_library (yafyaml
   FileStream.F90
   Reader.F90
   Lexer.F90
-  Parser.F90
   NewParser.F90
   AbstractSchema.F90
   FailsafeSchema.F90
   JSONSchema.F90
   CoreSchema.F90
-  None.F90
 
-  Configuration.F90
   NewConfiguration.F90
   KeywordEnforcer.F90
   ErrorCodes.F90

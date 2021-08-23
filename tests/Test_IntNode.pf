@@ -116,6 +116,7 @@ contains
       character(100) :: err_msg
       integer :: status
       logical :: was_found
+      logical :: is_int
       
       m => to_mapping(mapping_node)
       call m%insert(StringNode('A'),IntNode(1_INT32))
@@ -128,7 +129,10 @@ contains
       @assert_that(status, is(YAFYAML_SUCCESS))
       @assert_that(was_found, is(true()))
 
-      @assert_that(sub_node%is_int(), is (true()))
+      ! Workaround for gfortran-11: needs temp variable
+      ! computed outside assertion.
+      is_int = sub_node%is_int()
+      @assert_that(is_int, is (true()))
       i32 = sub_node
       @assert_that(i32, is(1))
    end subroutine test_at_simple_mapping
@@ -143,6 +147,7 @@ contains
       character(100) :: err_msg
       integer :: status
       logical :: was_found
+      logical :: is_float
 
       m => to_mapping(mapping_node)
       call m%insert(StringNode('A'),IntNode(1_INT32))
@@ -155,7 +160,8 @@ contains
       @assert_that(status, is(YAFYAML_SUCCESS))
       @assert_that(was_found, is(true()))
 
-      @assert_that(sub_node%is_float(), is(true()))
+      is_float = sub_node%is_float()
+      @assert_that(is_float, is(true()))
       x32 = sub_node
       @assert_that(x32, is(2.))
    end subroutine test_at_simple_mapping_B
@@ -169,7 +175,7 @@ contains
       character(100) :: err_msg
       integer :: status
       logical :: was_found
-      
+
       m => to_mapping(mapping_node)
       call m%insert(StringNode('A'),IntNode(1_INT32))
       call m%insert(StringNode('B'),FloatNode(2._REAL32))
@@ -201,6 +207,7 @@ contains
       character(100) :: err_msg
       integer :: status
       logical :: was_found
+      logical :: is_int
       
       s => to_sequence(sequence_node)
       call s%push_back(IntNode(1_INT32))
@@ -214,7 +221,8 @@ contains
       @assert_that(status, is(YAFYAML_SUCCESS))
       @assert_that(was_found, is(true()))
 
-      @assert_that(sub_node%is_int(), is (true()))
+      is_int = sub_node%is_int()
+      @assert_that(is_int, is (true()))
       i32 = sub_node
       @assert_that(i32, is(1))
    end subroutine test_at_simple_sequence

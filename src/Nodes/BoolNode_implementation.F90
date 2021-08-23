@@ -14,8 +14,6 @@ contains
       class(BoolNode), intent(in) :: a
       class(AbstractNode), intent(in) :: b
 
-      integer :: i, na, nb
-
       select type (b)
       type is (BoolNode)
          less_than =  (.not. a%value) .and. b%value

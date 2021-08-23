@@ -192,6 +192,7 @@ contains
    subroutine test_different_order()
       class(AbstractNode), allocatable :: n1, n2
       type(Mapping), pointer :: m1, m2
+      logical :: less
 
       allocate(MappingNode :: n1)
       allocate(MappingNode :: n2)
@@ -205,7 +206,8 @@ contains
       call m2%insert(StringNode('B'), IntNode(1))
       call m2%insert(StringNode('A'), IntNode(1))
 
-      @assert_that(n2 < n1, is(true()))
+      less = n2 < n1
+      @assert_that(less, is(true()))
 
    end subroutine test_different_order
 
@@ -224,7 +226,8 @@ contains
    subroutine test_less_than_paradox()
       class(AbstractNode), allocatable :: n1, n2
       type(Mapping), pointer :: m1, m2
-
+      logical :: less
+      
       allocate(MappingNode :: n1)
       allocate(MappingNode :: n2)
 
@@ -237,8 +240,10 @@ contains
       call m2%insert(StringNode('B'), IntNode(1))
       call m2%insert(StringNode('A'), IntNode(2))
 
-      @assert_that(n1 < n2, is(true()))
-      @assert_that(n2 < n1, is(false()))
+      less = n1 < n2
+      @assert_that(less, is(true()))
+      less = n2 < n1
+      @assert_that(less, is(false()))
 
    end subroutine test_less_than_paradox
    

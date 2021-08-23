@@ -232,6 +232,8 @@ contains
       integer :: status
       logical :: found_
 
+      value = DEFAULT_LOGICAL ! ensure that return value is defined
+
       ptr => this%at(SELECTORS, found=found_, err_msg=err_msg, __RC__)
       if (present(found)) found=found_
          
@@ -249,6 +251,52 @@ contains
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end subroutine get_logical
+
+   module subroutine get_logical_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+      use fy_KeywordEnforcer
+      class(BaseNode), target, intent(in) :: this
+      logical, allocatable, intent(out) :: values(:)
+      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      logical, optional, intent(out) :: found
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      class(AbstractNode), pointer :: ptr
+      integer :: status
+      logical :: found_
+      logical :: tmp
+      integer :: i
+
+      allocate(values(0)) ! unsure that return value is defined
+
+      ! Is the selector list valid?
+      ptr => this%at(SELECTORS, found=found_, err_msg=err_msg, __RC__)
+      if (present(found)) found=found_
+
+      if (.not. found_) then
+         if (.not. present(found)) then
+            __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)
+         end if
+      else ! found but possible type-mismatch
+         __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
+         ! check type of each entry ...
+         do i = 1, ptr%size()
+            call ptr%get(tmp, i, err_msg=err_msg, rc=status)
+            __VERIFY2__(err_msg, status)
+         end do
+
+         deallocate(values)
+         allocate(values(ptr%size()))
+         do i = 1, ptr%size()
+            call ptr%get(values(i), i)
+         end do
+
+      end if
+
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end subroutine get_logical_1d
 
 
    module subroutine get_string(this, value, SELECTORS, unusable, found, err_msg, rc)
@@ -314,6 +362,52 @@ contains
       __UNUSED_DUMMY__(unusable)
    end subroutine get_integer32
 
+   module subroutine get_integer32_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+      use fy_KeywordEnforcer
+      class(BaseNode), target, intent(in) :: this
+      integer(kind=INT32), allocatable, intent(out) :: values(:)
+      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      logical, optional, intent(out) :: found
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      class(AbstractNode), pointer :: ptr
+      integer :: status
+      logical :: found_
+      integer(kind=INT32) :: tmp
+      integer :: i
+
+      allocate(values(0)) ! unsure that return value is defined
+
+      ! Is the selector list valid?
+      ptr => this%at(SELECTORS, found=found_, err_msg=err_msg, __RC__)
+      if (present(found)) found=found_
+
+      if (.not. found_) then
+         if (.not. present(found)) then
+            __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)
+         end if
+      else ! found but possible type-mismatch
+         __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
+         ! check type of each entry ...
+         do i = 1, ptr%size()
+            call ptr%get(tmp, i, err_msg=err_msg, rc=status)
+            __VERIFY2__(err_msg, status)
+         end do
+
+         deallocate(values)
+         allocate(values(ptr%size()))
+         do i = 1, ptr%size()
+            call ptr%get(values(i), i)
+         end do
+
+      end if
+
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end subroutine get_integer32_1d
+
 
    module subroutine get_integer64(this, value, SELECTORS, unusable, found, err_msg, rc)
       use fy_KeywordEnforcer
@@ -344,6 +438,53 @@ contains
    end subroutine get_integer64
 
 
+   module subroutine get_integer64_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+      use fy_KeywordEnforcer
+      class(BaseNode), target, intent(in) :: this
+      integer(kind=INT64), allocatable, intent(out) :: values(:)
+      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      logical, optional, intent(out) :: found
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      class(AbstractNode), pointer :: ptr
+      integer :: status
+      logical :: found_
+      integer(kind=INT64) :: tmp
+      integer :: i
+
+      allocate(values(0)) ! unsure that return value is defined
+
+      ! Is the selector list valid?
+      ptr => this%at(SELECTORS, found=found_, err_msg=err_msg, __RC__)
+      if (present(found)) found=found_
+
+      if (.not. found_) then
+         if (.not. present(found)) then
+            __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)
+         end if
+      else ! found but possible type-mismatch
+         __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
+         ! check type of each entry ...
+         do i = 1, ptr%size()
+            call ptr%get(tmp, i, err_msg=err_msg, rc=status)
+            __VERIFY2__(err_msg, status)
+         end do
+
+         deallocate(values)
+         allocate(values(ptr%size()))
+         do i = 1, ptr%size()
+            call ptr%get(values(i), i)
+         end do
+
+      end if
+
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end subroutine get_integer64_1d
+
+
    module subroutine get_real32(this, value, SELECTORS, unusable, found, err_msg, rc)
       use, intrinsic :: ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
       use fy_KeywordEnforcer
@@ -361,13 +502,11 @@ contains
 
       value = DEFAULT_REAL32
       ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
-
       ! Not an error if selector not found when 'found' is used.   Code returns
       ! and value remains undefined.
       if (present(found)) then
          if (.not. found) return
       else
-         value = ieee_value(value,  IEEE_QUIET_NAN)
          ! unless it is a float in the acceptable range ...
          safe_value = to_float(ptr, err_msg=err_msg, __RC__)
          ! if we have not returned yet, then conversion
@@ -378,6 +517,52 @@ contains
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end subroutine get_real32
+
+   module subroutine get_real32_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+      use fy_KeywordEnforcer
+      class(BaseNode), target, intent(in) :: this
+      real(kind=REAL32), allocatable, intent(out) :: values(:)
+      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      logical, optional, intent(out) :: found
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      class(AbstractNode), pointer :: ptr
+      integer :: status
+      logical :: found_
+      real(kind=REAL32) :: tmp
+      integer :: i
+
+      allocate(values(0)) ! unsure that return value is defined
+
+      ! Is the selector list valid?
+      ptr => this%at(SELECTORS, found=found_, err_msg=err_msg, __RC__)
+      if (present(found)) found=found_
+
+      if (.not. found_) then
+         if (.not. present(found)) then
+            __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)
+         end if
+      else ! found but possible type-mismatch
+         __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
+         ! check type of each entry ...
+         do i = 1, ptr%size()
+            call ptr%get(tmp, i, err_msg=err_msg, rc=status)
+            __VERIFY2__(err_msg, status)
+         end do
+
+         deallocate(values)
+         allocate(values(ptr%size()))
+         do i = 1, ptr%size()
+            call ptr%get(values(i), i)
+         end do
+
+      end if
+
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end subroutine get_real32_1d
 
 
    module subroutine get_real64(this, value, SELECTORS, unusable, found, err_msg, rc)
@@ -407,5 +592,53 @@ contains
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end subroutine get_real64
+
+
+   module subroutine get_real64_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+      use fy_KeywordEnforcer
+      class(BaseNode), target, intent(in) :: this
+      real(kind=REAL64), allocatable, intent(out) :: values(:)
+      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      logical, optional, intent(out) :: found
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      class(AbstractNode), pointer :: ptr
+      integer :: status
+      logical :: found_
+      real(kind=REAL64) :: tmp
+      integer :: i
+
+      allocate(values(0)) ! unsure that return value is defined
+
+      ! Is the selector list valid?
+      ptr => this%at(SELECTORS, found=found_, err_msg=err_msg, __RC__)
+      if (present(found)) found=found_
+
+      if (.not. found_) then
+         if (.not. present(found)) then
+            __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)
+         end if
+      else ! found but possible type-mismatch
+         __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
+         ! check type of each entry ...
+         do i = 1, ptr%size()
+            call ptr%get(tmp, i, err_msg=err_msg, rc=status)
+            __VERIFY2__(err_msg, status)
+         end do
+
+         deallocate(values)
+         allocate(values(ptr%size()))
+         do i = 1, ptr%size()
+            call ptr%get(values(i), i)
+         end do
+
+      end if
+
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end subroutine get_real64_1d
+
 
 end submodule BaseNode_implementation

@@ -38,7 +38,9 @@
 
 module Test_Configuration_casting
   use funit
-  use yafyaml
+  use fy_Configuration
+  use fy_Parser
+  use fy_ErrorCodes
   use fy_String
   use fy_OrderedStringUnlimitedMap
   use, intrinsic :: iso_fortran_env, only: INT32

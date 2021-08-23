@@ -123,7 +123,6 @@ contains
       class(AbstractNode), pointer :: key, value
 
       iostat = 0
-      print*,__FILE__,__LINE__, unit, this%size()
       write(unit,'("{")', iostat=iostat)
       if (iostat /= 0) return
       

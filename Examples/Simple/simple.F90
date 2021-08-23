@@ -41,8 +41,8 @@ program main
    else
       print*,'failure;  expected .true.'
    end if
-   
-   sequence_a = config%at('sequence_a')
+
+   subconfig = config%get('sequence_a')
 
    if (all (sequence_a == [1,2,3,4])) then
       print*,'success'

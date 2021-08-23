@@ -170,7 +170,6 @@ contains
       type(sequence), pointer :: subsequence
       type(Mapping), pointer :: submapping
 
-      print*,__FILE__,__LINE__
       expect_another = .false.
       do
          if (allocated(token)) deallocate(token)
@@ -233,7 +232,6 @@ contains
          deallocate(token)
 
       end do
-      print*,__FILE__,__LINE__
 
       if (allocated(anchor)) deallocate(anchor)
 
@@ -267,9 +265,7 @@ contains
             if (allocated(next_token)) deallocate(next_token)
             next_token = lexr%get_token()
             call get_key(next_token, key, key_str)
-            print*,__FILE__,__LINE__, key_str, allocated(next_token)
             if (allocated(next_token)) deallocate(next_token)
-            print*,__FILE__,__LINE__, key_str, allocated(next_token)
             next_token = lexr%get_token()
 !!$            allocate(next_token, source=lexr%get_token())
             select type(next_token)
@@ -383,7 +379,7 @@ contains
          select type(next_token)
          type is (ScalarToken)
             key_str = next_token%value
-            key = this%interpret(next_token)
+            call interpret2(this, next_token, key)
          class default
             error stop
          end select
@@ -413,9 +409,7 @@ contains
       elseif (this%schema%matches_logical(text)) then
          value = BoolNode(this%schema%to_logical(text))
       elseif (this%schema%matches_integer(text)) then
-            print*,__FILE__,__LINE__
          value = IntNode(this%schema%to_integer(text))
-            print*,__FILE__,__LINE__
       elseif(this%schema%matches_real(text)) then
          value = FloatNode(this%schema%to_real(text))
       else
@@ -424,5 +418,35 @@ contains
       end if
 
    end function interpret
+
+   subroutine  interpret2(this, scalar, value)
+      use fy_BoolNode
+      use fy_IntNode
+      use fy_FloatNode
+
+      class(Parser), intent(in) :: this
+      type(ScalarToken) :: scalar
+      class(AbstractNode), intent(out), allocatable :: value
+
+      character(:), allocatable :: text
+
+      text = scalar%value
+
+      if (any(scalar%style == ['"',"'"])) then
+         value = StringNode(text)
+ !   elseif (this%schema%matches_null(text)) then
+ !      value = NullNode()
+      elseif (this%schema%matches_logical(text)) then
+         value = BoolNode(this%schema%to_logical(text))
+      elseif (this%schema%matches_integer(text)) then
+         value = IntNode(this%schema%to_integer(text))
+      elseif(this%schema%matches_real(text)) then
+         value = FloatNode(this%schema%to_real(text))
+      else
+         ! anything else is a string (workaround for gFortran)
+         value = StringNode(text)
+      end if
+
+   end subroutine interpret2
 
 end module fy_newParser

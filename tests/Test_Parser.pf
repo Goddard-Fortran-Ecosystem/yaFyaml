@@ -1,6 +1,10 @@
 module Test_Parser
    use funit
-   use yafyaml
+   use fy_Configuration
+   use fy_Parser
+   use fy_ErrorCodes
+   use fy_EscapedTextStream
+   use fy_OrderedStringUnlimitedMap
    use fy_Parser
    implicit none
 

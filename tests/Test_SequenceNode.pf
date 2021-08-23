@@ -163,5 +163,171 @@ contains
       @assertTrue(seq < m)
 
    end subroutine test_less_than_diff_type
-   
+
+
+   @test
+   subroutine test_get_logical_array()
+      type(SequenceNode), target :: node
+      type(sequence), pointer :: s
+      logical, allocatable :: flags(:)
+      integer :: status
+      logical :: expected
+      
+      s => to_sequence(node)
+      call node%get(flags, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(size(flags), is(0))
+
+      call s%push_back(BoolNode(.true.))
+      call s%push_back(BoolNode(.false.))
+
+      call node%get(flags, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(size(flags), is(2))
+      @assert_that(all(flags .eqv. [.true.,.false.]), is(true()))
+
+      ! not all logical:
+      call s%push_back(IntNode(3))
+      call node%get(flags, rc=status)
+
+      ! exceptions raised at multiple points in the stack ...
+      expected = catch("status=15").and. catch("Type of request does not match type in config.")
+      expected = expected .and. catch("status=15")
+      @assert_that(expected, is(true()))
+      @assert_that(size(flags), is(0))
+      
+   end subroutine test_get_logical_array
+
+   @test
+   subroutine test_get_integer32_array()
+      type(SequenceNode), target :: node
+      type(sequence), pointer :: s
+      integer(kind=INT32), allocatable :: values(:)
+      integer :: status
+      logical :: expected
+      
+      s => to_sequence(node)
+      call node%get(values, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(size(values), is(0))
+
+      call s%push_back(IntNode(1))
+      call s%push_back(IntNode(5))
+
+      call node%get(values, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(size(values), is(2))
+      @assert_that(all(values == [1,5]), is(true()))
+
+      ! not all integer:
+      call s%push_back(StringNode("a"))
+      call node%get(values, rc=status)
+
+      ! exceptions raised at multiple points in the stack ...
+      expected = catch("status=15").and. catch("Type of request does not match type in config.")
+      expected = expected .and. catch("status=15")
+      @assert_that(expected, is(true()))
+      @assert_that(size(values), is(0))
+      
+   end subroutine test_get_integer32_array
+
+   @test
+   subroutine test_get_integer64_array()
+      type(SequenceNode), target :: node
+      type(sequence), pointer :: s
+      integer(kind=INT64), allocatable :: values(:)
+      integer :: status
+      logical :: expected
+      
+      s => to_sequence(node)
+      call node%get(values, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(size(values), is(0))
+
+      call s%push_back(IntNode(1))
+      call s%push_back(IntNode(5))
+
+      call node%get(values, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(size(values), is(2))
+      @assert_that(all(values == [1,5]), is(true()))
+
+      ! not all integer:
+      call s%push_back(StringNode("a"))
+      call node%get(values, rc=status)
+
+      ! exceptions raised at multiple points in the stack ...
+      expected = catch("status=15").and. catch("Type of request does not match type in config.")
+      expected = expected .and. catch("status=15")
+      @assert_that(expected, is(true()))
+      @assert_that(size(values), is(0))
+
+   end subroutine test_get_integer64_array
+
+   @test
+   subroutine test_get_real32_array()
+      type(SequenceNode), target :: node
+      type(sequence), pointer :: s
+      real(kind=REAL32), allocatable :: values(:)
+      integer :: status
+      logical :: expected
+      
+      s => to_sequence(node)
+      call node%get(values, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(size(values), is(0))
+
+      call s%push_back(FloatNode(1.))
+      call s%push_back(FloatNode(5.))
+
+      call node%get(values, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(size(values), is(2))
+      @assert_that(all(values == [1,5]), is(true()))
+
+      ! not all real:
+      call s%push_back(StringNode("a"))
+      call node%get(values, rc=status)
+
+      ! exceptions raised at multiple points in the stack ...
+      expected = catch("status=15").and. catch("Type of request does not match type in config.")
+      expected = expected .and. catch("status=15")
+      @assert_that(expected, is(true()))
+      @assert_that(size(values), is(0))
+      
+   end subroutine test_get_real32_array
+
+   @test
+   subroutine test_get_real64_array()
+      type(SequenceNode), target :: node
+      type(sequence), pointer :: s
+      real(kind=REAL64), allocatable :: values(:)
+      integer :: status
+      logical :: expected
+      
+      s => to_sequence(node)
+      call node%get(values, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(size(values), is(0))
+
+      call s%push_back(FloatNode(1.))
+      call s%push_back(FloatNode(5.))
+
+      call node%get(values, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(size(values), is(2))
+      @assert_that(all(values == [1.,5.]), is(true()))
+
+      ! not all real:
+      call s%push_back(StringNode("a"))
+      call node%get(values, rc=status)
+
+      ! exceptions raised at multiple points in the stack ...
+      expected = catch("status=15").and. catch("Type of request does not match type in config.")
+      expected = expected .and. catch("status=15")
+      @assert_that(expected, is(true()))
+      @assert_that(size(values), is(0))
+
+   end subroutine test_get_real64_array
+
 end module Test_SequenceNode

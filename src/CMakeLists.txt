@@ -16,13 +16,13 @@ add_library (yafyaml
   FileStream.F90
   Reader.F90
   Lexer.F90
-  NewParser.F90
+  Parser.F90
   AbstractSchema.F90
   FailsafeSchema.F90
   JSONSchema.F90
   CoreSchema.F90
 
-  NewConfiguration.F90
+  Configuration.F90
   KeywordEnforcer.F90
   ErrorCodes.F90
   SimpleKey.F90

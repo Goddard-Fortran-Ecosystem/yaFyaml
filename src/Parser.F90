@@ -374,13 +374,12 @@ contains
 
       subroutine get_key(token, key, key_str)
          class(AbstractToken), intent(in) :: token
-         class(AbstractNode), allocatable :: key
+         class(AbstractNode), intent(out), allocatable :: key
          character(:), allocatable, intent(out) :: key_str
          select type(next_token)
          type is (ScalarToken)
             key_str = next_token%value
-            call interpret2(this, next_token, key)
-!!$            allocate(key, source=this%interpret(next_token))
+            allocate(key, source=this%interpret(next_token))
          class default
             error stop
          end select
@@ -419,35 +418,5 @@ contains
       end if
 
    end function interpret
-
-   subroutine  interpret2(this, scalar, value)
-      use fy_BoolNode
-      use fy_IntNode
-      use fy_FloatNode
-
-      class(Parser), intent(in) :: this
-      type(ScalarToken) :: scalar
-      class(AbstractNode), intent(out), allocatable :: value
-
-      character(:), allocatable :: text
-
-      text = scalar%value
-
-      if (any(scalar%style == ['"',"'"])) then
-         value = StringNode(text)
- !   elseif (this%schema%matches_null(text)) then
- !      value = NullNode()
-      elseif (this%schema%matches_logical(text)) then
-         value = BoolNode(this%schema%to_logical(text))
-      elseif (this%schema%matches_integer(text)) then
-         value = IntNode(this%schema%to_integer(text))
-      elseif(this%schema%matches_real(text)) then
-         value = FloatNode(this%schema%to_real(text))
-      else
-         ! anything else is a string (workaround for gFortran)
-         value = StringNode(text)
-      end if
-
-   end subroutine interpret2
 
 end module fy_newParser

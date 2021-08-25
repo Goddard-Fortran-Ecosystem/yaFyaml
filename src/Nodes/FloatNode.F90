@@ -60,16 +60,16 @@ contains
    subroutine assign_to_real32(r32, this)
       use, intrinsic :: ieee_arithmetic, only: ieee_value, &
            & IEEE_POSITIVE_INF, IEEE_NEGATIVE_INF, IEEE_QUIET_NAN
-      real(kind=REAL32), intent(out) :: r32
+      real(kind=REAL32), intent(inout) :: r32
       class(FloatNode), intent(in) :: this
 
       if (abs(this%value) <= huge(1._REAL32)) then
          r32 = this%value
-      elseif (this%value > huge(1._REAL32)) then
-         r32 = ieee_value(r32,  IEEE_POSITIVE_INF)
       elseif (this%value < -huge(1._REAL32)) then
          r32 = ieee_value(r32,  IEEE_NEGATIVE_INF)
-      else ! must be IEEE 64bit NaN
+      elseif (this%value > huge(1._REAL32)) then
+         r32 = ieee_value(r32,  IEEE_POSITIVE_INF)
+      else ! must be NaN
          r32 = ieee_value(r32,  IEEE_QUIET_NAN)
       end if
 
@@ -77,7 +77,7 @@ contains
       
 
    subroutine assign_to_real64(r64, this)
-      real(kind=REAL64), intent(out) :: r64
+      real(kind=REAL64), intent(inout) :: r64
       class(FloatNode), intent(in) :: this
 
       r64 = this%value

@@ -53,7 +53,7 @@ contains
 
 
    subroutine assign_to_string(string, this)
-      character(:), allocatable, intent(out) :: string
+      character(:), allocatable, intent(inout) :: string
       class(StringNode), intent(in) :: this
 
       string = this%value

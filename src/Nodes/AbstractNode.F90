@@ -7,8 +7,6 @@ module fy_AbstractNode
    public :: AbstractNode
 
    type, abstract :: AbstractNode
-!!$      private
-!!$      integer :: ID = 0
    contains
       procedure(i_size), deferred :: size
 
@@ -279,7 +277,7 @@ module fy_AbstractNode
       subroutine I_assign_to_logical(flag, this)
          import AbstractNode
          implicit none
-         logical, intent(out) :: flag
+         logical, intent(inout) :: flag
          class(AbstractNode), intent(in) :: this
       end subroutine I_assign_to_logical
 
@@ -287,7 +285,7 @@ module fy_AbstractNode
       subroutine I_assign_to_string(string, this)
          import AbstractNode
          implicit none
-         character(:), allocatable, intent(out) :: string
+         character(:), allocatable, intent(inout) :: string
          class(AbstractNode), intent(in) :: this
       end subroutine I_assign_to_string
 
@@ -295,7 +293,7 @@ module fy_AbstractNode
          use, intrinsic :: iso_fortran_env, only: INT32
          import AbstractNode
          implicit none
-         integer(kind=INT32), intent(out) :: i32
+         integer(kind=INT32), intent(inout) :: i32
          class(AbstractNode), intent(in) :: this
       end subroutine I_assign_to_integer32
 
@@ -303,7 +301,7 @@ module fy_AbstractNode
          use, intrinsic :: iso_fortran_env, only: INT64
          import AbstractNode
          implicit none
-         integer(kind=INT64), intent(out) :: i64
+         integer(kind=INT64), intent(inout) :: i64
          class(AbstractNode), intent(in) :: this
       end subroutine I_assign_to_integer64
 
@@ -311,7 +309,7 @@ module fy_AbstractNode
          use, intrinsic :: iso_fortran_env, only: REAL32
          import AbstractNode
          implicit none
-         real(kind=REAL32), intent(out) :: r32
+         real(kind=REAL32), intent(inout) :: r32
          class(AbstractNode), intent(in) :: this
       end subroutine I_assign_to_real32
 
@@ -319,7 +317,7 @@ module fy_AbstractNode
          use, intrinsic :: iso_fortran_env, only: REAL64
          import AbstractNode
          implicit none
-         real(kind=REAL64), intent(out) :: r64
+         real(kind=REAL64), intent(inout) :: r64
          class(AbstractNode), intent(in) :: this
       end subroutine I_assign_to_real64
 

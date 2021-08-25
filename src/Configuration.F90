@@ -27,7 +27,7 @@ module fy_newConfiguration
    use fy_ErrorHandling
    use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    use, intrinsic :: iso_fortran_env, only: INT32, INT64
-   implicit none
+7   implicit none
    private
 
    public :: Configuration

@@ -218,51 +218,50 @@ contains
    end function of_multi_selector
 
    subroutine assign_to_logical(flag, this)
-      logical, intent(out) :: flag
+      logical, intent(inout) :: flag
       class(BaseNode), intent(in) :: this
-      flag = .false. ! a terrible default, but the best of the two options.
+      __UNUSED_DUMMY__(flag)
       __UNUSED_DUMMY__(this)
    end subroutine assign_to_logical
     
 
    subroutine assign_to_string(string, this)
-      character(:), allocatable, intent(out) :: string
+      character(:), allocatable, intent(inout) :: string
       class(BaseNode), intent(in) :: this
-      string = ''
-      __UNUSED_DUMMY__(this)
+      __UNUSED_DUMMY__(string)
    end subroutine assign_to_string
     
 
    subroutine assign_to_integer32(i32, this)
-      integer(kind=INT32), intent(out) :: i32
+      integer(kind=INT32), intent(inout) :: i32
       class(BaseNode), intent(in) :: this
-      i32 = -huge(1_INT32)
+      __UNUSED_DUMMY__(i32)
       __UNUSED_DUMMY__(this)
    end subroutine assign_to_integer32
     
    
    subroutine assign_to_integer64(i64, this)
-      integer(kind=INT64), intent(out) :: i64
+      integer(kind=INT64), intent(inout) :: i64
       class(BaseNode), intent(in) :: this
-      i64 = -huge(1_INT64)
+      __UNUSED_DUMMY__(i64)
       __UNUSED_DUMMY__(this)
    end subroutine assign_to_integer64
     
    
    subroutine assign_to_real32(r32, this)
       use, intrinsic :: ieee_arithmetic, only: IEEE_QUIET_NAN, ieee_value
-      real(kind=REAL32), intent(out) :: r32
+      real(kind=REAL32), intent(inout) :: r32
       class(BaseNode), intent(in) :: this
-      r32 = ieee_value(r32,  IEEE_QUIET_NAN)
+      __UNUSED_DUMMY__(r32)
       __UNUSED_DUMMY__(this)
    end subroutine assign_to_real32
     
    
    subroutine assign_to_real64(r64, this)
       use, intrinsic :: ieee_arithmetic, only: IEEE_QUIET_NAN, ieee_value
-      real(kind=REAL64), intent(out) :: r64
+      real(kind=REAL64), intent(inout) :: r64
       class(BaseNode), intent(in) :: this
-      r64 = ieee_value(r64,  IEEE_QUIET_NAN)
+      __UNUSED_DUMMY__(r64)
       __UNUSED_DUMMY__(this)
    end subroutine assign_to_real64
 

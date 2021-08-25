@@ -58,19 +58,20 @@ contains
    end function new_IntNode_i64
 
    subroutine assign_to_integer32(i32, this)
-      integer(kind=INT32), intent(out) :: i32
+      integer(kind=INT32), intent(inout) :: i32
       class(IntNode), intent(in) :: this
 
       if (abs(this%value) <= huge(1_INT32)) then
          i32 = this%value
       else
+         ! unchanged
          i32 = -huge(1_INT32)
       end if
    end subroutine assign_to_integer32
       
 
    subroutine assign_to_integer64(i64, this)
-      integer(kind=INT64), intent(out) :: i64
+      integer(kind=INT64), intent(inout) :: i64
       class(IntNode), intent(in) :: this
 
       i64 = this%value

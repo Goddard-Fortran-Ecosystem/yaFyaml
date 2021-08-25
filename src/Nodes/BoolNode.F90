@@ -52,9 +52,8 @@ contains
    end function new_BoolNode
 
    subroutine assign_to_logical(flag, this)
-      logical, intent(out) :: flag
+      logical, intent(inout) :: flag
       class(BoolNode), intent(in) :: this
-
       flag = this%value
    end subroutine assign_to_logical
       

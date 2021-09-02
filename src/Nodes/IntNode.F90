@@ -90,7 +90,7 @@ contains
       type is (IntNode)
          ptr => this%value
       class default
-         ptr => DEFAULT_INT64
+         ptr => null()
          __FAIL2__(YAFYAML_TYPE_MISMATCH)
       end select
 

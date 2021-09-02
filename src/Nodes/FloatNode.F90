@@ -96,7 +96,7 @@ contains
       type is (FloatNode)
          ptr => this%value
       class default
-         ptr => DEFAULT_REAL64
+         ptr => null()
          __FAIL2__(YAFYAML_TYPE_MISMATCH)
       end select
 

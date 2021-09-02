@@ -70,7 +70,7 @@ contains
       type is (BoolNode)
          ptr => this%value
       class default
-         ptr => DEFAULT_LOGICAL
+         ptr => null()
          __FAIL2__(YAFYAML_TYPE_MISMATCH)
       end select
 

@@ -73,7 +73,7 @@ contains
       i_node = IntNode(1_INT32)
       s_ptr => to_string(i_node, err_msg=err_msg, rc=rc)
       @assertExceptionRaised('Type of request does not match type in config.')
-      @assertEqual('', s_ptr)
+      @assert_that(associated(s_ptr), is(false()))
       @assert_that(rc, is(YAFYAML_TYPE_MISMATCH))
       expected = error_message(YAFYAML_TYPE_MISMATCH)
       @assertEqual(expected, err_msg)

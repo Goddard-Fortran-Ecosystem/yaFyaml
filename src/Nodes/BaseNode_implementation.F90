@@ -221,7 +221,7 @@ contains
    module subroutine get_logical(this, value, SELECTORS, unusable, found, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
-      logical, intent(out) :: value
+      logical, intent(inout) :: value
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
@@ -230,8 +230,7 @@ contains
 
       class(AbstractNode), pointer :: ptr
       integer :: status
-
-      value = DEFAULT_LOGICAL ! ensure that return value is defined
+      logical, pointer :: bool_ptr
 
       ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
          
@@ -241,7 +240,8 @@ contains
          if (.not. found) return
       end if
 
-      value = to_bool(ptr, err_msg=err_msg, __RC__)
+      bool_ptr => to_bool(ptr, err_msg=err_msg, __RC__)
+      value = bool_ptr
 
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
@@ -294,7 +294,7 @@ contains
    module subroutine get_string(this, value, SELECTORS, unusable, found, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
-      character(:), allocatable, intent(out) :: value
+      character(:), allocatable, intent(inout) :: value
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
@@ -304,7 +304,6 @@ contains
       class(AbstractNode), pointer :: ptr
       integer :: status
 
-      value = DEFAULT_STRING
       ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
       ! Not an error if selector not found when 'found' is used.   Code returns
@@ -323,7 +322,7 @@ contains
    module subroutine get_integer32(this, value, SELECTORS, unusable, found, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
-      integer(kind=INT32), intent(out) :: value
+      integer(kind=INT32), intent(inout) :: value
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
@@ -332,10 +331,9 @@ contains
 
       class(AbstractNode), pointer :: ptr
       integer :: status
-      integer(kind=INT64) :: safe_value
-      
+      integer(kind=INT64), pointer :: safe_value
 
-      value = DEFAULT_INT32
+      print*,__FILE__,__LINE__
       ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
       ! Not an error if selector not found when 'found' is used.   Code returns
@@ -345,7 +343,9 @@ contains
       end if
 
       ! Must assign to 64-bit first to protect against overflow
-      safe_value = to_int(ptr, err_msg=err_msg, __RC__)
+      print*,__FILE__,__LINE__
+      safe_value => to_int(ptr, err_msg=err_msg, __RC__)
+      print*,__FILE__,__LINE__
       if (safe_value <= -huge(1_INT32)) then
          value = -huge(1_INT32)
       elseif (safe_value >= huge(1_INT32)) then
@@ -353,6 +353,7 @@ contains
       else
          value = safe_value  ! else keep default value
       end if
+      print*,__FILE__,__LINE__
    
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
@@ -406,7 +407,7 @@ contains
    module subroutine get_integer64(this, value, SELECTORS, unusable, found, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
-      integer(kind=INT64), intent(out) :: value
+      integer(kind=INT64), intent(inout) :: value
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
@@ -415,8 +416,9 @@ contains
 
       class(AbstractNode), pointer :: ptr
       integer :: status
+      integer(kind=INT64), pointer :: safe_value
 
-      value = DEFAULT_INT64
+      print*,__FILE__,__LINE__
       ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
       ! Not an error if selector not found when 'found' is used.   Code returns
@@ -425,7 +427,9 @@ contains
          if (.not. found) return
       end if
 
-      value = to_int(ptr, err_msg=err_msg, __RC__)
+      print*,__FILE__,__LINE__
+      safe_value => to_int(ptr, err_msg=err_msg, __RC__)
+      if (associated(safe_value)) value = safe_value
       
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
@@ -461,8 +465,12 @@ contains
       __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
       ! check type of each entry ...
       do i = 1, ptr%size()
+         tmp = 0
+         print*,__LINE__,'tmp: ', i, tmp, ptr%size()
          call ptr%get(tmp, i, err_msg=err_msg, rc=status)
+         print*,__LINE__,'tmp: ', i, tmp, ptr%size()
          __VERIFY2__(err_msg, status)
+         print*,__LINE__,'tmp: ', i, tmp, ptr%size()
       end do
       
       deallocate(values)
@@ -481,7 +489,7 @@ contains
       use, intrinsic :: ieee_arithmetic, only: IEEE_POSITIVE_INF, IEEE_NEGATIVE_INF
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
-      real(kind=REAL32), intent(out) :: value
+      real(kind=REAL32), intent(inout) :: value
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
@@ -490,10 +498,9 @@ contains
 
       class(AbstractNode), pointer :: ptr
       integer :: status
-      real(kind=REAL64) :: safe_value
+      real(kind=REAL64), pointer :: safe_value
       real(kind=REAL32) :: pos_inf, neg_inf
 
-      value = ieee_value(value,  IEEE_QUIET_NAN)
       ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
       ! Not an error if selector not found when 'found' is used.   Code returns
@@ -503,7 +510,7 @@ contains
       end if
 
       ! unless it is a float in the acceptable range ...
-      safe_value = to_float(ptr, err_msg=err_msg, __RC__)
+      safe_value => to_float(ptr, err_msg=err_msg, __RC__)
       ! if we have not returned yet, then conversion
       ! is possible
       if (safe_value /= safe_value) then ! nan
@@ -569,10 +576,9 @@ contains
 
 
    module subroutine get_real64(this, value, SELECTORS, unusable, found, err_msg, rc)
-      use, intrinsic :: ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
-      real(kind=REAL64), intent(out) :: value
+      real(kind=REAL64), intent(inout) :: value
       class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
@@ -581,8 +587,8 @@ contains
 
       class(AbstractNode), pointer :: ptr
       integer :: status
+      real(kind=REAL64), pointer :: safe_value
 
-      value = ieee_value(value,  IEEE_QUIET_NAN)
       ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
 
       ! Not an error if selector not found when 'found' is used.   Code returns
@@ -591,7 +597,8 @@ contains
          if (.not. found) return
       end if
 
-      value = to_float(ptr, err_msg=err_msg, __RC__)
+      safe_value => to_float(ptr, err_msg=err_msg, __RC__)
+      if (associated(safe_value)) value = safe_value
 
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)

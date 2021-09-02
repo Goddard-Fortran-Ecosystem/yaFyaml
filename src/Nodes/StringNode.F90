@@ -71,7 +71,7 @@ contains
       type is (StringNode)
          ptr => this%value
       class default
-         ptr => DEFAULT_STRING
+         ptr => null()
          __FAIL2__(YAFYAML_TYPE_MISMATCH)
       end select
 

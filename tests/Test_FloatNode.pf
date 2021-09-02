@@ -101,7 +101,7 @@ contains
       i_node = IntNode(1_INT32)
       x_ptr => to_float(i_node, err_msg=err_msg, rc=rc)
       @assertExceptionRaised('Type of request does not match type in config.')
-      @assert_that(x_ptr, is(nearest(-huge(1._REAL64),1._REAL64)))
+      @assert_that(associated(x_ptr), is(false()))
       @assert_that(rc, is(YAFYAML_TYPE_MISMATCH))
       expected = error_message(YAFYAML_TYPE_MISMATCH)
       @assertEqual(expected, err_msg)

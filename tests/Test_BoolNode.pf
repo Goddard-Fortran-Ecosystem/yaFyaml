@@ -75,7 +75,7 @@ contains
       i_node = IntNode(1_INT32)
       l_ptr => to_bool(i_node, err_msg=err_msg, rc=rc)
       @assertExceptionRaised('Type of request does not match type in config.')
-      @assert_that(l_ptr, is(.false.))
+!!$      @assert_that(l_ptr, is(.false.))
       @assert_that(rc, is(YAFYAML_TYPE_MISMATCH))
       expected = error_message(YAFYAML_TYPE_MISMATCH)
       @assertEqual(expected, err_msg)
@@ -163,14 +163,13 @@ contains
       logical :: expected
 
       node = BoolNode(.true.)
+      x = -7.
       call node%get(x, rc=status)
 
-      print*,__FILE__,__LINE__, getnumexceptions()
-      expected = catch("Type of request does not match type in config.") .and. catch("status=15")
-      print*,__FILE__,__LINE__, getnumexceptions()
+!!$      expected = catch("Type of request does not match type in config.") .and. catch("status=15")
 !!$      expected = expected .and. catch("status=15")
 !!$      @assert_that(expected, is(true()))
-!!$      @assertIsNaN(x)
+      @assert_that(x, is(-7.))
    end subroutine test_get_real
 
 end module Test_BoolNode

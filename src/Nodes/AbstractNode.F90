@@ -109,7 +109,7 @@ module fy_AbstractNode
          import AbstractNode
          implicit none
          class(AbstractNode), target, intent(in) :: this
-         logical, intent(out) :: value
+         logical, intent(inout) :: value
          class(*), optional, intent(in) :: OPT_SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          logical, optional, intent(out) :: found
@@ -136,7 +136,7 @@ module fy_AbstractNode
          import AbstractNode
          implicit none
          class(AbstractNode), target, intent(in) :: this
-         character(:), allocatable, intent(out) :: value
+         character(:), allocatable, intent(inout) :: value
          class(*), optional, intent(in) :: OPT_SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          logical, optional, intent(out) :: found
@@ -164,7 +164,7 @@ module fy_AbstractNode
          import AbstractNode
          implicit none
          class(AbstractNode), target, intent(in) :: this
-         integer(kind=INT32), intent(out) :: value
+         integer(kind=INT32), intent(inout) :: value
          class(*), optional, intent(in) :: OPT_SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          logical, optional, intent(out) :: found
@@ -193,7 +193,7 @@ module fy_AbstractNode
          import AbstractNode
          implicit none
          class(AbstractNode), target, intent(in) :: this
-         integer(kind=INT64), intent(out) :: value
+         integer(kind=INT64), intent(inout) :: value
          class(*), optional, intent(in) :: OPT_SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          logical, optional, intent(out) :: found
@@ -222,7 +222,7 @@ module fy_AbstractNode
          import AbstractNode
          implicit none
          class(AbstractNode), target, intent(in) :: this
-         real(kind=REAL32), intent(out) :: value
+         real(kind=REAL32), intent(inout) :: value
          class(*), optional, intent(in) :: OPT_SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          logical, optional, intent(out) :: found
@@ -251,7 +251,7 @@ module fy_AbstractNode
          import AbstractNode
          implicit none
          class(AbstractNode), target, intent(in) :: this
-         real(kind=REAL64), intent(out) :: value
+         real(kind=REAL64), intent(inout) :: value
          class(*), optional, intent(in) :: OPT_SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          logical, optional, intent(out) :: found

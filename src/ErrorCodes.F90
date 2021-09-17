@@ -68,7 +68,7 @@ contains
          message = "Found nonalphanumeric character in anchor."
 
       case (YAFYAML_SELECTOR_NOT_FOUND)
-         message = 'Selected item does not exist and no default value is provided.'
+         message = 'Selected item does not exist.'
       case (YAFYAML_TYPE_MISMATCH)
          message = 'Type of request does not match type in config.'
       case (YAFYAML_INVALID_SEQUENCE_INDEX)

@@ -194,7 +194,7 @@ contains
       expected = catch("status=15").and. catch("Type of request does not match type in config.")
       expected = expected .and. catch("status=15")
       @assert_that(expected, is(true()))
-      @assert_that(size(flags), is(0))
+
       
    end subroutine test_get_logical_1d
 
@@ -227,7 +227,6 @@ contains
       expected = catch("status=15").and. catch("Type of request does not match type in config.")
       expected = expected .and. catch("status=15")
       @assert_that(expected, is(true()))
-      @assert_that(size(values), is(0))
       
    end subroutine test_get_integer32_1d
 
@@ -260,7 +259,6 @@ contains
       expected = catch("status=15").and. catch("Type of request does not match type in config.")
       expected = expected .and. catch("status=15")
       @assert_that(expected, is(true()))
-      @assert_that(size(values), is(0))
 
    end subroutine test_get_integer64_1d
 
@@ -293,7 +291,6 @@ contains
       expected = catch("status=15").and. catch("Type of request does not match type in config.")
       expected = expected .and. catch("status=15")
       @assert_that(expected, is(true()))
-      @assert_that(size(values), is(0))
       
    end subroutine test_get_real32_1d
 
@@ -326,7 +323,6 @@ contains
       expected = catch("status=15").and. catch("Type of request does not match type in config.")
       expected = expected .and. catch("status=15")
       @assert_that(expected, is(true()))
-      @assert_that(size(values), is(0))
 
    end subroutine test_get_real64_1d
 

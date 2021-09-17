@@ -166,7 +166,7 @@ contains
    end subroutine test_at_simple_mapping_B
       
    @test
-   subroutine test_at_simple_mapping_not_was_found()
+   subroutine test_at_simple_mapping_not_found()
       class(AbstractNode), pointer :: top
       class(AbstractNode), pointer :: sub_node
       type(MappingNode), target :: mapping_node
@@ -189,12 +189,12 @@ contains
 
       ! and now without found arg
       sub_node => top%at('C', err_msg=err_msg, rc=status)
-      @assertExceptionRaised('Selected item does not exist and no default value is provided.')
+      @assertExceptionRaised('Selected item does not exist.')
       @assert_that(status, is(YAFYAML_SELECTOR_NOT_FOUND))
-      @assertEqual('Selected item does not exist and no default value is provided.', err_msg)
+      @assertEqual('Selected item does not exist.', err_msg)
       @assert_that(was_found, is(false()))
       
-   end subroutine test_at_simple_mapping_not_was_found
+   end subroutine test_at_simple_mapping_not_found
       
    @test
    subroutine test_at_simple_sequence()

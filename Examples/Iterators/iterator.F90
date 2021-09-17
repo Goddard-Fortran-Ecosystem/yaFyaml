@@ -16,8 +16,8 @@ program main
    config = p%load(FileStream('iterator.yaml'))
    write(10,'(dt)', iostat=status) config
 
-   call optimistic(config)
-   call pessimistic(config)
+   call optimistic(config)  ! no error code checking
+   call pessimistic(config) ! with error code checking
 
 contains
    
@@ -47,12 +47,18 @@ contains
         iter = b
         do while (iter /= e)
            shape = iter%first() ! key
-           node => iter%second() ! value
+           node => iter%second() ! value (a mapping in this case)
            call node%get(n_edges, 'num_edges')
+           call node%get(edge_length, 'edge_length')
            print*,'Shape: ', shape, ' has ', n_edges, 'sides.'
            call iter%next()
         end do
       end associate
+
+      do i = 1, num_keys
+         call config%get(n_edges, 'shape', keys(i), 'num_edges')
+      end do
+
    end subroutine optimistic
 
    
@@ -68,12 +74,12 @@ contains
       character(:), allocatable :: shape, key
       integer :: n_edges
       integer :: status
+      logical :: found
 
       ! Iterating over a sequence
       subcfg = config%at('primes', rc=status)
       if (status /= YAFYAML_SUCCESS) return
 
-      
       do i = 1, subcfg%size()
          prime = subcfg%at(i, rc=status)
          if (status /= YAFYAML_SUCCESS) return
@@ -87,10 +93,15 @@ contains
         iter = b
         do while (iter /= e)
            shape = iter%first() ! key
-           node => iter%second() ! value
-           call node%get(n_edges, 'num_edges', rc=status)
+           node => iter%second() ! value (mapping in this case)
+           call node%get(n_edges, 'num_edges', found=found, rc=status)
            if (status /= YAFYAML_SUCCESS) return
-           print*,'Shape: ', shape, ' has ', n_edges, 'sides.'
+
+           if (found) then
+              print*,'Shape: ', shape, ' has ', n_edges, 'sides.'
+           else
+              print*,'Shape: ', shape, 'num_edges not found.'
+           end if
            call iter%next()
         end do
       end associate

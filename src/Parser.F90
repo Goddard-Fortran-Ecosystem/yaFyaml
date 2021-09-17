@@ -153,7 +153,7 @@ contains
          end select
       end do
 
-      if (.not. done) error stop
+      if (.not. done) error stop 'not done'
 
    end subroutine top
 
@@ -181,7 +181,7 @@ contains
             if (allocated(token)) deallocate(token)
             token = lexr%get_token()
          type is (AliasToken)
-            error stop
+            error stop 'improper AliasToken'
          end select
 
          select type (token)
@@ -272,7 +272,7 @@ contains
             type is (ValueToken)
                ! mandatory before value
             class default
-               error stop
+               error stop 'expected ValueToken'
             end select
             if (allocated(next_token)) deallocate(next_token)
             next_token = lexr%get_token()
@@ -318,7 +318,7 @@ contains
                subsequence => to_sequence(map%of(key))
                call this%process_sequence(subsequence, lexr)
             type is (BlockMappingStartToken)
-                 call map%insert(key,MappingNode())
+               call map%insert(key,MappingNode())
                submapping => to_mapping(map%of(key))
                call this%process_mapping(submapping, lexr)
             class default
@@ -381,7 +381,7 @@ contains
             key_str = next_token%value
             allocate(key, source=this%interpret(next_token))
          class default
-            error stop
+            error stop 'expected ScalarToken'
          end select
       end subroutine get_key
 

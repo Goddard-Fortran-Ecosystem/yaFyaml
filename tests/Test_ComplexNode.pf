@@ -45,18 +45,22 @@ contains
       type(Mapping), pointer :: m
       type(IntNode) :: inode
       
-      allocate(a, source=MappingNode())
+      a = MappingNode()
+      print*,__FILE__,__LINE__
       m => to_mapping(a)
       call m%insert(StringNode('cat'), IntNode(1))
+      print*,__FILE__,__LINE__
 
-      allocate(b, source=MappingNode())
-!!$      b = MappingNode()
+      b = MappingNode()
       m => to_mapping(b)
       inode = IntNode(2)
       call m%insert(IntNode(2), a)
+      print*,__FILE__,__LINE__
       
-      allocate(c, source=a)
+      c = a
+      print*,__FILE__,__LINE__
       m => to_mapping(c)
+      print*,__FILE__,__LINE__, m%size()
       @assert_that(m%size(), is(1_INT64))
       
    end subroutine test_deepcopy_2

@@ -22,6 +22,7 @@ program main
    
 
    p = Parser('core')
+   ! TODO should a return code
    config = p%load(FileStream('simple.yaml'))
 
    x = config%at('x')
@@ -32,6 +33,7 @@ program main
       print*,'failure;  expected 1.234 but found ', x
    end if
 
+   ! TODO:  what about Fred?
 
    flag = .false.
    flag = config%at('flag')
@@ -69,6 +71,10 @@ program main
    end if
 
    ! Block mapping
+   ! clear old values
+   v1 = -1
+   v2 = -1
+   ! get new values
    v1 = config%at('mapping_b', 'v1')
    v2 = config%at('mapping_b', 'v2')
 

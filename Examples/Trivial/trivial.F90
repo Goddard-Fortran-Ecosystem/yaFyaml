@@ -9,7 +9,8 @@ program main
    p = Parser('core')
    config = p%load(FileStream('trivial.yaml'))
 
-   prime = config%at('prime')
+   prime = config%of('prime')
+   prime = config%at('prime',rc=status)
 
    if (prime == 17) then
       print*,'success'

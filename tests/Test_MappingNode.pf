@@ -254,21 +254,27 @@ contains
       type(Mapping), pointer :: m
       real(kind=REAL32) :: x32
       real(kind=REAL64) :: x64
-      logical :: found
+      integer :: status
+      logical :: expected
       
       allocate(MappingNode :: n)
 
       m => to_mapping(n)
       call m%insert(StringNode('A'), IntNode(1))
 
-      call n%get(x32,'B', found=found)
-      @assert_that(found, is(false()))
-      ! cheap NaN test
-      @assert_that(x32 == x32, is(false()))
+      x32 = -1.
+      call n%get(x32,'B', rc=status)
+      expected = catch("Selected item does not exist.")
+      ! not found, so x32 value not changed
+      @assert_that(x32, is(-1.))
+      @assert_that(status, is(YAFYAML_SELECTOR_NOT_FOUND))
 
-      call n%get(x64,'B', found=found)
-      @assert_that(found, is(false()))
-      @assert_that(x64 == x64, is(false()))
+      x64 = -1.
+      call n%get(x64,'B', rc=status)
+      expected = catch("Selected item does not exist.")
+      ! not found, so x32 value not changed
+      @assert_that(x64, is(-1._REAL64))
+      @assert_that(status, is(YAFYAML_SELECTOR_NOT_FOUND))
       
    end subroutine test_get_float_not_found
 

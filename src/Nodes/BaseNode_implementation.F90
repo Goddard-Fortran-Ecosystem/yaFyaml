@@ -20,12 +20,12 @@ submodule (fy_BaseNode) BaseNode_implementation
 contains
 
 #define SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
-#define OPT_SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
+#define OPT_SELECTORS s2, s3, s4, s5, s6, s7, s8, s9
 
    module function at_multi_selector(this, SELECTORS, unusable, found, err_msg, rc) result(ptr)
       class(AbstractNode), pointer :: ptr
       class(BaseNode), target, intent(in) :: this
-      class(*), optional, intent(in) :: OPT_SELECTORS
+      class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
@@ -215,30 +215,26 @@ contains
    end function at_multi_selector
 
    ! Error conditions
-   ! 1. Selected item is not found _and_ no default value is provided _and_ found is not used
+   ! 1. Selected item is not found _and_ found is not used
    ! 2. Selected item does exist but is of the wrong type
 
-   module subroutine get_logical(this, value, SELECTORS, unusable, found, err_msg, rc)
+   module subroutine get_logical(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       logical, intent(inout) :: value
-      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      class(*), optional, intent(in) :: SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       class(AbstractNode), pointer :: ptr
       integer :: status
       logical, pointer :: bool_ptr
+      logical :: was_found
 
-      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=was_found, err_msg=err_msg, __RC__)
          
-      ! Not an error if selector not found when 'found' is used.   Code returns
-      ! and value remains undefined.
-      if (present(found)) then
-         if (.not. found) return
-      end if
+      __ASSERT2__(was_found, YAFYAML_SELECTOR_NOT_FOUND)
 
       bool_ptr => to_bool(ptr, err_msg=err_msg, __RC__)
       value = bool_ptr
@@ -247,13 +243,12 @@ contains
       __UNUSED_DUMMY__(unusable)
    end subroutine get_logical
 
-   module subroutine get_logical_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+   module subroutine get_logical_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
-      logical, allocatable, intent(out) :: values(:)
-      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      logical, allocatable, intent(inout) :: values(:)
+      class(*), optional, intent(in) :: SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
@@ -261,26 +256,21 @@ contains
       integer :: status
       logical :: tmp
       integer :: i
-
-      allocate(values(0)) ! unsure that return value is defined
+      logical :: was_found
 
       ! Is the selector list valid?
-      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=was_found, err_msg=err_msg, __RC__)
 
-      ! Not an error if selector not found when 'found' is used.   Code returns
-      ! and value remains undefined.
-      if (present(found)) then
-         if (.not. found) return
-      end if
-
+      __ASSERT2__(was_found, YAFYAML_SELECTOR_NOT_FOUND)
       __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
+
       ! check type of each entry ...
       do i = 1, ptr%size()
          call ptr%get(tmp, i, err_msg=err_msg, rc=status)
          __VERIFY2__(err_msg, status)
       end do
       
-      deallocate(values)
+      if (allocated(values)) deallocate(values)
       allocate(values(ptr%size()))
       do i = 1, ptr%size()
          call ptr%get(values(i), i)
@@ -291,26 +281,22 @@ contains
    end subroutine get_logical_1d
 
 
-   module subroutine get_string(this, value, SELECTORS, unusable, found, err_msg, rc)
+   module subroutine get_string(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       character(:), allocatable, intent(inout) :: value
-      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      class(*), optional, intent(in) :: SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       class(AbstractNode), pointer :: ptr
       integer :: status
+      logical :: was_found
 
-      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=was_found, err_msg=err_msg, __RC__)
 
-      ! Not an error if selector not found when 'found' is used.   Code returns
-      ! and value remains undefined.
-      if (present(found)) then
-         if (.not. found) return
-      end if
+      __ASSERT2__(was_found, YAFYAML_SELECTOR_NOT_FOUND)
 
       value = to_string(ptr, err_msg=err_msg, __RC__)
 
@@ -319,33 +305,30 @@ contains
    end subroutine get_string
 
 
-   module subroutine get_integer32(this, value, SELECTORS, unusable, found, err_msg, rc)
+   module subroutine get_integer32(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       integer(kind=INT32), intent(inout) :: value
-      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      class(*), optional, intent(in) :: SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       class(AbstractNode), pointer :: ptr
       integer :: status
       integer(kind=INT64), pointer :: safe_value
+      logical :: was_found
 
-      print*,__FILE__,__LINE__
-      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=was_found, err_msg=err_msg, __RC__)
 
-      ! Not an error if selector not found when 'found' is used.   Code returns
-      ! and value remains undefined.
-      if (present(found)) then
-         if (.not. found) return
-      end if
+      __ASSERT2__(was_found, YAFYAML_SELECTOR_NOT_FOUND)
 
       ! Must assign to 64-bit first to protect against overflow
-      print*,__FILE__,__LINE__
+
       safe_value => to_int(ptr, err_msg=err_msg, __RC__)
-      print*,__FILE__,__LINE__
+
+      ! Out of range should be a conversion error.
+      ! Do not update value.
       if (safe_value <= -huge(1_INT32)) then
          value = -huge(1_INT32)
       elseif (safe_value >= huge(1_INT32)) then
@@ -353,19 +336,17 @@ contains
       else
          value = safe_value  ! else keep default value
       end if
-      print*,__FILE__,__LINE__
    
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end subroutine get_integer32
 
-   module subroutine get_integer32_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+   module subroutine get_integer32_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
-      integer(kind=INT32), allocatable, intent(out) :: values(:)
-      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      integer(kind=INT32), allocatable, intent(inout) :: values(:)
+      class(*), optional, intent(in) :: SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
@@ -373,26 +354,21 @@ contains
       integer :: status
       integer(kind=INT32) :: tmp
       integer :: i
-
-      allocate(values(0)) ! unsure that return value is defined
+      logical :: was_found
 
       ! Is the selector list valid?
-      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=was_found, err_msg=err_msg, __RC__)
 
-      ! Not an error if selector not found when 'found' is used.   Code returns
-      ! and value remains undefined.
-      if (present(found)) then
-         if (.not. found) return
-      end if
-
+      __ASSERT2__(was_found, YAFYAML_SELECTOR_NOT_FOUND)
       __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
+
       ! check type of each entry ...
       do i = 1, ptr%size()
          call ptr%get(tmp, i, err_msg=err_msg, rc=status)
          __VERIFY2__(err_msg, status)
       end do
 
-      deallocate(values)
+      if (allocated(values)) deallocate(values)
       allocate(values(ptr%size()))
       do i = 1, ptr%size()
          call ptr%get(values(i), i)
@@ -404,30 +380,24 @@ contains
    end subroutine get_integer32_1d
 
 
-   module subroutine get_integer64(this, value, SELECTORS, unusable, found, err_msg, rc)
+   module subroutine get_integer64(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       integer(kind=INT64), intent(inout) :: value
-      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      class(*), optional, intent(in) :: SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       class(AbstractNode), pointer :: ptr
       integer :: status
       integer(kind=INT64), pointer :: safe_value
+      logical :: was_found
 
-      print*,__FILE__,__LINE__
-      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=was_found, err_msg=err_msg, __RC__)
 
-      ! Not an error if selector not found when 'found' is used.   Code returns
-      ! and value remains undefined.
-      if (present(found)) then
-         if (.not. found) return
-      end if
+      __ASSERT2__(was_found, YAFYAML_SELECTOR_NOT_FOUND)
 
-      print*,__FILE__,__LINE__
       safe_value => to_int(ptr, err_msg=err_msg, __RC__)
       if (associated(safe_value)) value = safe_value
       
@@ -436,13 +406,12 @@ contains
    end subroutine get_integer64
 
 
-   module subroutine get_integer64_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+   module subroutine get_integer64_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
-      integer(kind=INT64), allocatable, intent(out) :: values(:)
-      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      integer(kind=INT64), allocatable, intent(inout) :: values(:)
+      class(*), optional, intent(in) :: SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
@@ -450,30 +419,22 @@ contains
       integer :: status
       integer(kind=INT64) :: tmp
       integer :: i
-
-      allocate(values(0)) ! unsure that return value is defined
+      logical :: was_found
 
       ! Is the selector list valid?
-      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=was_found, err_msg=err_msg, __RC__)
 
-      ! Not an error if selector not found when 'found' is used.   Code returns
-      ! and value remains undefined.
-      if (present(found)) then
-         if (.not. found) return
-      end if
-
+      __ASSERT2__(was_found, YAFYAML_SELECTOR_NOT_FOUND)
       __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
+
       ! check type of each entry ...
       do i = 1, ptr%size()
          tmp = 0
-         print*,__LINE__,'tmp: ', i, tmp, ptr%size()
          call ptr%get(tmp, i, err_msg=err_msg, rc=status)
-         print*,__LINE__,'tmp: ', i, tmp, ptr%size()
          __VERIFY2__(err_msg, status)
-         print*,__LINE__,'tmp: ', i, tmp, ptr%size()
       end do
       
-      deallocate(values)
+      if (allocated(values)) deallocate(values)
       allocate(values(ptr%size()))
       do i = 1, ptr%size()
          call ptr%get(values(i), i)
@@ -484,15 +445,14 @@ contains
    end subroutine get_integer64_1d
 
 
-   module subroutine get_real32(this, value, SELECTORS, unusable, found, err_msg, rc)
+   module subroutine get_real32(this, value, SELECTORS, unusable, err_msg, rc)
       use, intrinsic :: ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
       use, intrinsic :: ieee_arithmetic, only: IEEE_POSITIVE_INF, IEEE_NEGATIVE_INF
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       real(kind=REAL32), intent(inout) :: value
-      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      class(*), optional, intent(in) :: SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
@@ -500,14 +460,11 @@ contains
       integer :: status
       real(kind=REAL64), pointer :: safe_value
       real(kind=REAL32) :: pos_inf, neg_inf
+      logical :: was_found
 
-      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=was_found, err_msg=err_msg, __RC__)
 
-      ! Not an error if selector not found when 'found' is used.   Code returns
-      ! and value remains undefined.
-      if (present(found)) then
-         if (.not. found) return
-      end if
+      __ASSERT2__(was_found, YAFYAML_SELECTOR_NOT_FOUND)
 
       ! unless it is a float in the acceptable range ...
       safe_value => to_float(ptr, err_msg=err_msg, __RC__)
@@ -518,6 +475,8 @@ contains
       else
          neg_inf = ieee_value(value, IEEE_NEGATIVE_INF)
          pos_inf = ieee_value(value, IEEE_POSITIVE_INF)
+         ! if not inf and out of range then is an error
+         ! and do not update value.
          if (safe_value <= neg_inf) then
             value = neg_inf
          else if (safe_value >= pos_inf) then
@@ -531,13 +490,12 @@ contains
       __UNUSED_DUMMY__(unusable)
    end subroutine get_real32
 
-   module subroutine get_real32_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+   module subroutine get_real32_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
-      real(kind=REAL32), allocatable, intent(out) :: values(:)
-      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      real(kind=REAL32), allocatable, intent(inout) :: values(:)
+      class(*), optional, intent(in) :: SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
@@ -545,26 +503,21 @@ contains
       integer :: status
       real(kind=REAL32) :: tmp
       integer :: i
-
-      allocate(values(0)) ! unsure that return value is defined
+      logical :: was_found
 
       ! Is the selector list valid?
-      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=was_found, err_msg=err_msg, __RC__)
 
-      ! Not an error if selector not found when 'found' is used.   Code returns
-      ! and value remains undefined.
-      if (present(found)) then
-         if (.not. found) return
-      end if
-
+      __ASSERT2__(was_found, YAFYAML_SELECTOR_NOT_FOUND)
       __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
+
       ! check type of each entry ...
       do i = 1, ptr%size()
          call ptr%get(tmp, i, err_msg=err_msg, rc=status)
          __VERIFY2__(err_msg, status)
       end do
 
-      deallocate(values)
+      if (allocated(values)) deallocate(values)
       allocate(values(ptr%size()))
       do i = 1, ptr%size()
          call ptr%get(values(i), i)
@@ -575,27 +528,23 @@ contains
    end subroutine get_real32_1d
 
 
-   module subroutine get_real64(this, value, SELECTORS, unusable, found, err_msg, rc)
+   module subroutine get_real64(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
       real(kind=REAL64), intent(inout) :: value
-      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      class(*), optional, intent(in) :: SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       class(AbstractNode), pointer :: ptr
       integer :: status
       real(kind=REAL64), pointer :: safe_value
+      logical :: was_found
 
-      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=was_found, err_msg=err_msg, __RC__)
 
-      ! Not an error if selector not found when 'found' is used.   Code returns
-      ! and value remains undefined.
-      if (present(found)) then
-         if (.not. found) return
-      end if
+      __ASSERT2__(was_found, YAFYAML_SELECTOR_NOT_FOUND)
 
       safe_value => to_float(ptr, err_msg=err_msg, __RC__)
       if (associated(safe_value)) value = safe_value
@@ -605,13 +554,12 @@ contains
    end subroutine get_real64
 
 
-   module subroutine get_real64_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+   module subroutine get_real64_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
       class(BaseNode), target, intent(in) :: this
-      real(kind=REAL64), allocatable, intent(out) :: values(:)
-      class(*), optional, intent(in) :: OPT_SELECTORS ! s2 - s9
+      real(kind=REAL64), allocatable, intent(inout) :: values(:)
+      class(*), optional, intent(in) :: SELECTORS ! s2 - s9
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
@@ -619,26 +567,21 @@ contains
       integer :: status
       real(kind=REAL64) :: tmp
       integer :: i
-
-      allocate(values(0)) ! unsure that return value is defined
+      logical :: was_found
 
       ! Is the selector list valid?
-      ptr => this%at(SELECTORS, found=found, err_msg=err_msg, __RC__)
+      ptr => this%at(SELECTORS, found=was_found, err_msg=err_msg, __RC__)
 
-      ! Not an error if selector not found when 'found' is used.   Code returns
-      ! and value remains undefined.
-      if (present(found)) then
-         if (.not. found) return
-      end if
-
+      __ASSERT2__(was_found, YAFYAML_SELECTOR_NOT_FOUND)
       __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
+
       ! check type of each entry ...
       do i = 1, ptr%size()
          call ptr%get(tmp, i, err_msg=err_msg, rc=status)
          __VERIFY2__(err_msg, status)
       end do
       
-      deallocate(values)
+      if (allocated(values)) deallocate(values)
       allocate(values(ptr%size()))
       do i = 1, ptr%size()
          call ptr%get(values(i), i)
@@ -647,6 +590,21 @@ contains
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end subroutine get_real64_1d
+
+   module function has_selector(this, SELECTORS) result(has)
+      logical :: has
+      class(BaseNode), intent(in) :: this
+      class(*), intent(in) :: s1
+      class(*), optional, intent(in) :: OPT_SELECTORS
+
+      logical :: was_found
+      integer :: status
+      class(AbstractNode), pointer :: node_ptr
+
+      node_ptr => this%at(SELECTORS, found=was_found, rc=status)
+      has = was_found
+
+   end function has_selector
 
 
 end submodule BaseNode_implementation

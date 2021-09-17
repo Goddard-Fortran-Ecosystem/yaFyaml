@@ -14,6 +14,7 @@ module fy_MappingNode
    public :: to_mapping
 
    type, extends(BaseNode) :: MappingNode
+      ! TODO undo private debugging
 !!$      private
       type(Mapping) :: value
    contains

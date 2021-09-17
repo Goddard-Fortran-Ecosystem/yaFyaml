@@ -166,9 +166,8 @@ contains
       x = -7.
       call node%get(x, rc=status)
 
-!!$      expected = catch("Type of request does not match type in config.") .and. catch("status=15")
-!!$      expected = expected .and. catch("status=15")
-!!$      @assert_that(expected, is(true()))
+      expected = catch("Type of request does not match type in config.") .and. catch("status=15")
+      @assert_that(expected, is(true()))
       @assert_that(x, is(-7.))
    end subroutine test_get_real
 

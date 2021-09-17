@@ -1,6 +1,7 @@
 #include "error_handling.h"
 #include "string_handling.h"
 #define SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
+#define OPT_SELECTORS s2, s3, s4, s5, s6, s7, s8, s9
 
 
 ! This class exists largely to shield Fortran developers from the
@@ -27,7 +28,7 @@ module fy_newConfiguration
    use fy_ErrorHandling
    use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    use, intrinsic :: iso_fortran_env, only: INT32, INT64
-7   implicit none
+   implicit none
    private
 
    public :: Configuration
@@ -40,6 +41,8 @@ module fy_newConfiguration
       generic :: at => at_multi_selector
       procedure :: of_multi_selector
       generic :: of => of_multi_selector
+      procedure :: has_selector
+      generic :: has => has_selector
 
       procedure :: get_logical
       procedure :: get_string
@@ -150,161 +153,159 @@ contains
 
    end function of_multi_selector
 
-
-   subroutine get_logical(this, value, SELECTORS, unusable, found, err_msg, rc)
+   logical function has_selector(this, s1, OPT_SELECTORS) result(has)
+      type(Configuration) :: subcfg
       class(Configuration), target, intent(in) :: this
-      logical, intent(out) :: value
+      class(*), optional, intent(in) :: SELECTORS
+
+      has = this%node%has(SELECTORS)
+
+   end function has_selector
+
+
+   subroutine get_logical(this, value, SELECTORS, unusable, err_msg, rc)
+      class(Configuration), target, intent(in) :: this
+      logical, intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      call this%node%get(value, SELECTORS, found=found, err_msg=err_msg, rc=rc)
+      call this%node%get(value, SELECTORS, err_msg=err_msg, rc=rc)
 
       __UNUSED_DUMMY__(unusable)
    end subroutine get_logical
 
 
-   subroutine get_logical_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+   subroutine get_logical_1d(this, values, SELECTORS, unusable, err_msg, rc)
       class(Configuration), target, intent(in) :: this
-      logical, allocatable, intent(out) :: values(:)
+      logical, allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      call this%node%get(values, SELECTORS, found=found, err_msg=err_msg, rc=rc)
+      call this%node%get(values, SELECTORS, err_msg=err_msg, rc=rc)
 
       __UNUSED_DUMMY__(unusable)
    end subroutine get_logical_1d
    
 
-   subroutine get_string(this, value, SELECTORS, unusable, found, err_msg, rc)
+   subroutine get_string(this, value, SELECTORS, unusable, err_msg, rc)
       class(Configuration), target, intent(in) :: this
-      character(:), allocatable, intent(out) :: value
+      character(:), allocatable, intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      call this%node%get(value, SELECTORS, found=found, err_msg=err_msg, rc=rc)
+      call this%node%get(value, SELECTORS, err_msg=err_msg, rc=rc)
 
       __UNUSED_DUMMY__(unusable)
    end subroutine get_string
 
 
-   subroutine get_integer32(this, value, SELECTORS, unusable, found, err_msg, rc)
+   subroutine get_integer32(this, value, SELECTORS, unusable, err_msg, rc)
       class(Configuration), target, intent(in) :: this
-      integer(kind=INT32), intent(out) :: value
+      integer(kind=INT32), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      call this%node%get(value, SELECTORS, found=found, err_msg=err_msg, rc=rc)
+      call this%node%get(value, SELECTORS, err_msg=err_msg, rc=rc)
 
       __UNUSED_DUMMY__(unusable)
    end subroutine get_integer32
 
-   subroutine get_integer32_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+   subroutine get_integer32_1d(this, values, SELECTORS, unusable, err_msg, rc)
       class(Configuration), target, intent(in) :: this
-      integer(kind=INT32), allocatable, intent(out) :: values(:)
+      integer(kind=INT32), allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      call this%node%get(values, SELECTORS, found=found, err_msg=err_msg, rc=rc)
+      call this%node%get(values, SELECTORS, err_msg=err_msg, rc=rc)
 
       __UNUSED_DUMMY__(unusable)
    end subroutine get_integer32_1d
 
-   subroutine get_integer64(this, value, SELECTORS, unusable, found, err_msg, rc)
+   subroutine get_integer64(this, value, SELECTORS, unusable, err_msg, rc)
       class(Configuration), target, intent(in) :: this
-      integer(kind=INT64), intent(out) :: value
+      integer(kind=INT64), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      call this%node%get(value, SELECTORS, found=found, err_msg=err_msg, rc=rc)
+      call this%node%get(value, SELECTORS, err_msg=err_msg, rc=rc)
 
       __UNUSED_DUMMY__(unusable)
    end subroutine get_integer64
 
-   subroutine get_integer64_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+   subroutine get_integer64_1d(this, values, SELECTORS, unusable, err_msg, rc)
       class(Configuration), target, intent(in) :: this
-      integer(kind=INT64), allocatable, intent(out) :: values(:)
+      integer(kind=INT64), allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      call this%node%get(values, SELECTORS, found=found, err_msg=err_msg, rc=rc)
+      call this%node%get(values, SELECTORS, err_msg=err_msg, rc=rc)
 
       __UNUSED_DUMMY__(unusable)
    end subroutine get_integer64_1d
 
 
-   subroutine get_real32(this, value, SELECTORS, unusable, found, err_msg, rc)
+   subroutine get_real32(this, value, SELECTORS, unusable, err_msg, rc)
       class(Configuration), target, intent(in) :: this
-      real(kind=REAL32), intent(out) :: value
+      real(kind=REAL32), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      call this%node%get(value, SELECTORS, found=found, err_msg=err_msg, rc=rc)
+      call this%node%get(value, SELECTORS, err_msg=err_msg, rc=rc)
 
       __UNUSED_DUMMY__(unusable)
    end subroutine get_real32
 
-   subroutine get_real32_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+   subroutine get_real32_1d(this, values, SELECTORS, unusable, err_msg, rc)
       class(Configuration), target, intent(in) :: this
-      real(kind=REAL32), allocatable, intent(out) :: values(:)
+      real(kind=REAL32), allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      call this%node%get(values, SELECTORS, found=found, err_msg=err_msg, rc=rc)
+      call this%node%get(values, SELECTORS, err_msg=err_msg, rc=rc)
 
       __UNUSED_DUMMY__(unusable)
    end subroutine get_real32_1d
 
-   subroutine get_real64(this, value, SELECTORS, unusable, found, err_msg, rc)
+   subroutine get_real64(this, value, SELECTORS, unusable, err_msg, rc)
       class(Configuration), target, intent(in) :: this
-      real(kind=REAL64), intent(out) :: value
+      real(kind=REAL64), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      call this%node%get(value, SELECTORS, found=found, err_msg=err_msg, rc=rc)
+      call this%node%get(value, SELECTORS, err_msg=err_msg, rc=rc)
 
       __UNUSED_DUMMY__(unusable)
    end subroutine get_real64
 
-   subroutine get_real64_1d(this, values, SELECTORS, unusable, found, err_msg, rc)
+   subroutine get_real64_1d(this, values, SELECTORS, unusable, err_msg, rc)
       class(Configuration), target, intent(in) :: this
-      real(kind=REAL64), allocatable, intent(out) :: values(:)
+      real(kind=REAL64), allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
-      logical, optional, intent(out) :: found
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      call this%node%get(values, SELECTORS, found=found, err_msg=err_msg, rc=rc)
+      call this%node%get(values, SELECTORS, err_msg=err_msg, rc=rc)
 
       __UNUSED_DUMMY__(unusable)
    end subroutine get_real64_1d
@@ -416,7 +417,7 @@ contains
          iter = m%begin()
       else
          __FAIL2__(YAFYAML_NOT_A_MAPPING)
-         error stop
+         error stop "expected mapping"
       end if
          
       __RETURN__(YAFYAML_SUCCESS)
@@ -438,7 +439,7 @@ contains
          iter = m%end()
       else
          __FAIL2__(YAFYAML_NOT_A_MAPPING)
-         error stop
+         error stop "epected mapping"
       end if
 
       __RETURN__(YAFYAML_SUCCESS)

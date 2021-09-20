@@ -20,6 +20,7 @@ module fy_ErrorCodes
      enumerator :: YAFYAML_NON_ALPHANUMERIC_CHARACTER
      ! Configuration usage errors
      enumerator :: YAFYAML_SELECTOR_NOT_FOUND
+     enumerator :: YAFYAML_INT32_OVERLFLOW
      enumerator :: YAFYAML_TYPE_MISMATCH
      enumerator :: YAFYAML_INVALID_SEQUENCE_INDEX
      enumerator :: YAFYAML_SEQUENCE_INDEX_OUT_OF_BOUNDS
@@ -69,6 +70,8 @@ contains
 
       case (YAFYAML_SELECTOR_NOT_FOUND)
          message = 'Selected item does not exist.'
+      case (YAFYAML_INT32_OVERLFLOW)
+         message = 'INT64 value too large for INT32 value.'
       case (YAFYAML_TYPE_MISMATCH)
          message = 'Type of request does not match type in config.'
       case (YAFYAML_INVALID_SEQUENCE_INDEX)

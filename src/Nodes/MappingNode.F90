@@ -22,8 +22,8 @@ module fy_MappingNode
       procedure, nopass :: is_mapping
       procedure, pass(this) :: assign_to_mapping
       procedure :: less_than
-      procedure :: analysis
       procedure :: write_node_formatted
+      final :: clear
    end type MappingNode
 
    type(MappingNode) :: mmm
@@ -85,31 +85,6 @@ contains
    end function to_mapping
    
 
-   function analysis(this, prefix)result(str)
-      character(:), allocatable :: str
-      class(MappingNode), target, intent(in) :: this
-      character(*), intent(in) :: prefix
-
-      integer :: i
-      character(100) :: buffer
-      type(MappingIterator) :: iter
-      class(AbstractNode), pointer :: p_node
-      type(Mapping), pointer :: m
-
-      write(buffer,'(i0)') this%value%size()
-      str = new_line('a') // prefix // "MappingNode: size " // trim(buffer)
-      m => to_mapping(this)
-      iter = m%begin()
-      do i = 1, this%value%size()
-         str = str // new_line('a')
-         p_node => iter%first()
-         str = str // p_node%analysis(prefix // '       key:     ') // new_line('a')
-         p_node => iter%second()
-         str = str // p_node%analysis(prefix // '       value:   ') // new_line('a')
-         call iter%next()
-      end do
-   end function analysis
-
    recursive subroutine write_node_formatted(this, unit, iotype, v_list, iostat, iomsg)
       class(MappingNode), intent(in) :: this
       integer, intent(in) :: unit
@@ -158,4 +133,9 @@ contains
       size = this%value%size()
    end function size
 
+
+   recursive subroutine clear(this)
+      type(MappingNode), intent(inout) :: this
+      call this%value%clear()
+   end subroutine clear
 end module fy_MappingNode

@@ -42,27 +42,29 @@ contains
    @test
    subroutine test_deepcopy_2()
       class(AbstractNode), target, allocatable :: a, b, c
-      type(Mapping), pointer :: m
-      type(IntNode) :: inode
+      type(Mapping), pointer :: ma, mb, mc
+      type(MappingNode) :: mn
       
       a = MappingNode()
-      print*,__FILE__,__LINE__
-      m => to_mapping(a)
-      call m%insert(StringNode('cat'), IntNode(1))
-      print*,__FILE__,__LINE__
+      ma => to_mapping(a)
+      call ma%insert(StringNode('cat'), IntNode(1))
 
       b = MappingNode()
-      m => to_mapping(b)
-      inode = IntNode(2)
-      call m%insert(IntNode(2), a)
-      print*,__FILE__,__LINE__
+      mb => to_mapping(b)
+!!$      call ma%insert(StringNode('cat'), IntNode(1))
+!!$      call ma%insert(IntNode(2), IntNode(1))
+      call mb%insert(IntNode(2), a)
+
       
-      c = a
-      print*,__FILE__,__LINE__
-      m => to_mapping(c)
-      print*,__FILE__,__LINE__, m%size()
-      @assert_that(m%size(), is(1_INT64))
-      
+!!$      c = a
+!!$      mc => to_mapping(c)
+!!$      @assert_that(mc%size(), is(1_INT64))
+
+      call mb%clear()
+      deallocate(b)
+      deallocate(a)
+
+
    end subroutine test_deepcopy_2
 
    @test

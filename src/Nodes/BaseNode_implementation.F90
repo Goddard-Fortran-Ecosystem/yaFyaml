@@ -233,10 +233,11 @@ contains
       logical :: was_found
 
       ptr => this%at(SELECTORS, found=was_found, err_msg=err_msg, __RC__)
-         
       __ASSERT2__(was_found, YAFYAML_SELECTOR_NOT_FOUND)
 
       bool_ptr => to_bool(ptr, err_msg=err_msg, __RC__)
+      __ASSERT2__(associated(bool_ptr), YAFYAML_TYPE_MISMATCH)
+
       value = bool_ptr
 
       __RETURN__(YAFYAML_SUCCESS)
@@ -318,6 +319,7 @@ contains
       integer :: status
       integer(kind=INT64), pointer :: safe_value
       logical :: was_found
+      logical :: is_safe
 
       ptr => this%at(SELECTORS, found=was_found, err_msg=err_msg, __RC__)
 
@@ -326,16 +328,13 @@ contains
       ! Must assign to 64-bit first to protect against overflow
 
       safe_value => to_int(ptr, err_msg=err_msg, __RC__)
+      __ASSERT2__(associated(safe_value),YAFYAML_TYPE_MISMATCH)
+      
+      is_safe = (safe_value >= -huge(1_INT32) .and. safe_value <= huge(1_INT32))
+      __ASSERT2__(is_safe, YAFYAML_INT32_OVERLFLOW)
 
-      ! Out of range should be a conversion error.
-      ! Do not update value.
-      if (safe_value <= -huge(1_INT32)) then
-         value = -huge(1_INT32)
-      elseif (safe_value >= huge(1_INT32)) then
-         value = huge(1_INT32)
-      else
-         value = safe_value  ! else keep default value
-      end if
+      ! conversion is safe
+      value = safe_value 
    
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
@@ -362,7 +361,7 @@ contains
       __ASSERT2__(was_found, YAFYAML_SELECTOR_NOT_FOUND)
       __ASSERT2__(ptr%is_sequence(),YAFYAML_TYPE_MISMATCH)
 
-      ! check type of each entry ...
+      ! check type (and conversion) of each entry ...
       do i = 1, ptr%size()
          call ptr%get(tmp, i, err_msg=err_msg, rc=status)
          __VERIFY2__(err_msg, status)
@@ -373,7 +372,6 @@ contains
       do i = 1, ptr%size()
          call ptr%get(values(i), i)
       end do
-
 
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
@@ -399,7 +397,9 @@ contains
       __ASSERT2__(was_found, YAFYAML_SELECTOR_NOT_FOUND)
 
       safe_value => to_int(ptr, err_msg=err_msg, __RC__)
-      if (associated(safe_value)) value = safe_value
+      __ASSERT2__(associated(safe_value),YAFYAML_TYPE_MISMATCH)
+
+      value = safe_value
       
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
@@ -468,11 +468,12 @@ contains
 
       ! unless it is a float in the acceptable range ...
       safe_value => to_float(ptr, err_msg=err_msg, __RC__)
-      ! if we have not returned yet, then conversion
-      ! is possible
+      __ASSERT2__(associated(safe_value),YAFYAML_TYPE_MISMATCH)
+
       if (safe_value /= safe_value) then ! nan
          value = ieee_value(value, IEEE_QUIET_NAN)
       else
+         ! conversion is always possible because of +/- Inf
          neg_inf = ieee_value(value, IEEE_NEGATIVE_INF)
          pos_inf = ieee_value(value, IEEE_POSITIVE_INF)
          ! if not inf and out of range then is an error
@@ -547,7 +548,9 @@ contains
       __ASSERT2__(was_found, YAFYAML_SELECTOR_NOT_FOUND)
 
       safe_value => to_float(ptr, err_msg=err_msg, __RC__)
-      if (associated(safe_value)) value = safe_value
+      __ASSERT2__(associated(safe_value), YAFYAML_TYPE_MISMATCH)
+      value = safe_value
+
 
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)

@@ -21,7 +21,6 @@ module fy_IntNode
       procedure, pass(this) :: assign_to_integer32
       procedure, pass(this) :: assign_to_integer64
       procedure :: less_than
-      procedure :: analysis
       procedure :: write_node_formatted
    end type IntNode
 
@@ -96,17 +95,6 @@ contains
 
       __RETURN__(YAFYAML_SUCCESS)
    end function to_int
-
-   function analysis(this, prefix)result(str)
-      character(:), allocatable :: str
-      class(IntNode), target, intent(in) :: this
-      character(*), intent(in) :: prefix
-
-      character(20) :: buffer
-      write(buffer,'(i0)') this%value
-      str = prefix//  'IntNode: ' // trim(buffer)
-
-   end function analysis
 
    subroutine write_node_formatted(this, unit, iotype, v_list, iostat, iomsg)
       class(IntNode), intent(in) :: this

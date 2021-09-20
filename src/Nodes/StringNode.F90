@@ -20,7 +20,6 @@ module fy_StringNode
       procedure, nopass :: is_string
       procedure, pass(this) :: assign_to_string
       procedure :: less_than
-      procedure :: analysis
       procedure :: write_node_formatted
    end type StringNode
 
@@ -77,15 +76,6 @@ contains
 
       __RETURN__(YAFYAML_SUCCESS)
    end function to_string
-
-   function analysis(this, prefix)result(str)
-      character(:), allocatable :: str
-      class(StringNode), target, intent(in) :: this
-      character(*), intent(in) :: prefix
-
-      str = prefix // 'StringNode: "' // this%value // '"'
-
-   end function analysis
 
    subroutine write_node_formatted(this, unit, iotype, v_list, iostat, iomsg)
       class(StringNode), intent(in) :: this

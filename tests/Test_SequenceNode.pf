@@ -191,8 +191,8 @@ contains
       call node%get(flags, rc=status)
 
       ! exceptions raised at multiple points in the stack ...
-      expected = catch("status=15").and. catch("Type of request does not match type in config.")
-      expected = expected .and. catch("status=15")
+      expected = catch("status=16").and. catch("Type of request does not match type in config.")
+      expected = expected .and. catch("status=16")
       @assert_that(expected, is(true()))
 
       
@@ -224,8 +224,8 @@ contains
       call node%get(values, rc=status)
 
       ! exceptions raised at multiple points in the stack ...
-      expected = catch("status=15").and. catch("Type of request does not match type in config.")
-      expected = expected .and. catch("status=15")
+      expected = catch("status=16").and. catch("Type of request does not match type in config.")
+      expected = expected .and. catch("status=16")
       @assert_that(expected, is(true()))
       
    end subroutine test_get_integer32_1d
@@ -256,8 +256,8 @@ contains
       call node%get(values, rc=status)
 
       ! exceptions raised at multiple points in the stack ...
-      expected = catch("status=15").and. catch("Type of request does not match type in config.")
-      expected = expected .and. catch("status=15")
+      expected = catch("status=16").and. catch("Type of request does not match type in config.")
+      expected = expected .and. catch("status=16")
       @assert_that(expected, is(true()))
 
    end subroutine test_get_integer64_1d
@@ -288,8 +288,8 @@ contains
       call node%get(values, rc=status)
 
       ! exceptions raised at multiple points in the stack ...
-      expected = catch("status=15").and. catch("Type of request does not match type in config.")
-      expected = expected .and. catch("status=15")
+      expected = catch("status=16").and. catch("Type of request does not match type in config.")
+      expected = expected .and. catch("status=16")
       @assert_that(expected, is(true()))
       
    end subroutine test_get_real32_1d
@@ -320,8 +320,8 @@ contains
       call node%get(values, rc=status)
 
       ! exceptions raised at multiple points in the stack ...
-      expected = catch("status=15").and. catch("Type of request does not match type in config.")
-      expected = expected .and. catch("status=15")
+      expected = catch("status=16").and. catch("Type of request does not match type in config.")
+      expected = expected .and. catch("status=16")
       @assert_that(expected, is(true()))
 
    end subroutine test_get_real64_1d

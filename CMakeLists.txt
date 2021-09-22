@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 project (YAFYAML
-  VERSION 0.5.1
+  VERSION 1.0.0
   LANGUAGES Fortran)
 
 # Most users of this software do not (should not?) have permissions to
@@ -21,10 +21,11 @@ endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if (NOT TARGET GFTL::gftl)
-  find_package (GFTL REQUIRED)
+  find_package (GFTL REQUIRED VERSION 1.5.0)
 endif ()
+
 if (NOT TARGET GFTL_SHARED::gftl-shared)
-  find_package (GFTL_SHARED REQUIRED VERSION 1.0.4)
+  find_package (GFTL_SHARED REQUIRED VERSION 1.3.0)
 endif ()
 find_package (PFUNIT 4.2 QUIET)
 

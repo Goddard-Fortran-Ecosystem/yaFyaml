@@ -1,6 +1,10 @@
 module Test_Lexer
    use, intrinsic :: iso_c_binding, only: NL => C_NEW_LINE
-   use yaFyaml
+   use fy_Lexer
+   use fy_TextStream
+   use fy_EscapedTextStream
+   use fy_Tokens
+   use fy_Reader
    use funit
    use fy_TokenVector
    implicit none

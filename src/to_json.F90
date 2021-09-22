@@ -1,6 +1,6 @@
 program main
    use, intrinsic :: iso_fortran_env, only: OUTPUT_UNIT
-   use yafyaml
+   use yaFyaml
 
    type(Parser) :: p
    type(Configuration) :: cfg

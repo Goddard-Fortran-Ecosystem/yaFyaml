@@ -5,432 +5,418 @@
 !!! keys to be simple strings.  
 
 module fy_Parser
-  use fy_Lexer
-  use fy_Tokens
-  use fy_Reader
-  use fy_AbstractTextStream
-  use fy_Configuration
-  use fy_None
-  use gFTL_UnlimitedVector
-  use fy_OrderedStringUnlimitedMap
-  use fy_StringUnlimitedPointerMap
-  use fy_AbstractSchema
-  use fy_FailsafeSchema
-  use fy_JSONSchema
-  use fy_CoreSchema
-  implicit none
-  private
+   use fy_Lexer
+   use fy_Tokens
+   use fy_Reader
+   use fy_AbstractTextStream
 
-  public :: Parser
+   use fy_AbstractNode
+   use fy_StringNodeMap
+   use fy_MappingNode
+   use fy_SequenceNode
+   use fy_Mapping
+   use fy_Sequence
+   use fy_StringNode
+   use fy_IntNode
+   use fy_Configuration
 
-  type :: Parser
-     private
-     class(AbstractSchema), allocatable :: schema
-     type(StringUnlimitedPointerMap) :: anchors
+   use fy_AbstractSchema
+   use fy_FailsafeSchema
+   use fy_JSONSchema
+   use fy_CoreSchema
+   implicit none
+   private
+
+   public :: Parser
+
+   type :: Parser
+      private
+      class(AbstractSchema), allocatable :: schema
+      type (StringNodeMap) :: anchors
+      
    contains
-     procedure :: load
-     procedure :: top
-     procedure :: process_sequence
-     procedure :: process_mapping
-     procedure :: interpret
-  end type Parser
+      procedure :: load
+      procedure :: top
+      procedure :: process_sequence
+      procedure :: process_mapping
+      procedure :: interpret
+   end type Parser
 
 
-  interface Parser
-     module procedure new_Parser_default
-     module procedure new_Parser_schema
-     module procedure new_Parser_schema_name
-  end interface Parser
+   interface Parser
+      module procedure new_Parser_default
+      module procedure new_Parser_schema
+      module procedure new_Parser_schema_name
+   end interface Parser
 
-  character(*), parameter :: MERGE_KEY = '<<'
+   character(*), parameter :: MERGE_KEY = '<<'
 
 contains
 
-  function new_Parser_default() result(p)
-    type(Parser) :: p
+   function new_Parser_default() result(p)
+      type(Parser) :: p
 
-    p = Parser(CoreSchema())
+      p = Parser(CoreSchema())
 
-  end function new_Parser_default
+   end function new_Parser_default
 
-  function new_Parser_schema(schema) result(p)
-    type(Parser) :: p
-    class(AbstractSchema), intent(in) :: schema
+   function new_Parser_schema(schema) result(p)
+      type(Parser) :: p
+      class(AbstractSchema), intent(in) :: schema
 
-    p%schema = schema
-  end function new_Parser_schema
+      p%schema = schema
+      p%anchors = StringNodeMap()
 
-  function new_Parser_schema_name(schema_name) result(p)
-    type(Parser) :: p
-    character(*), intent(in) :: schema_name
+   end function new_Parser_schema
 
-    select case (schema_name)
-    case ('json','JSON')
-       p = Parser(JSONSchema())
-    case ('core','Core')
-       p = Parser(CoreSchema())
-    case ('failsafe','Failsafe')
-       p = Parser(FailsafeSchema())
-    case default
-       error stop "Unknown schema"
-    end select
+   function new_Parser_schema_name(schema_name) result(p)
+      type(Parser) :: p
+      character(*), intent(in) :: schema_name
 
-  end function new_Parser_schema_name
+      select case (schema_name)
+      case ('json','JSON')
+         p = Parser(JSONSchema())
+      case ('core','Core')
+         p = Parser(CoreSchema())
+      case ('failsafe','Failsafe')
+         p = Parser(FailsafeSchema())
+      case default
+         error stop "Unknown schema"
+      end select
 
-
-  function load(this, stream) result(cfg)
-    type(Configuration) :: cfg
-    class(Parser), intent(inout) :: this
-    class(AbstractTextStream), intent(in) :: stream
-
-    type(Lexer) :: lexr
-
-    lexr = Lexer(Reader(stream))
-
-    call this%top(cfg, lexr)
-
-  end function load
+   end function new_Parser_schema_name
 
 
-  subroutine top(this, cfg, lexr)
-    class(Parser), intent(inout) :: this
-    type(Configuration), intent(inout) :: cfg
-    type(Lexer), intent(inout) :: lexr
+   function load(this, stream) result(cfg)
+      type(Configuration) :: cfg
+      class(Parser), intent(inout) :: this
+      class(AbstractTextStream), intent(in) :: stream
 
-    class(AbstractToken), allocatable :: token
-    logical :: done
-    class(*), pointer :: node
+      type(Lexer) :: lexr
+      class(AbstractNode), pointer :: node
 
-    done = .false.
-    do
-       if (allocated(token)) deallocate(token)
-       token = lexr%get_token()
-       select type (token)
-       type is (StreamStartToken)
-       type is (StreamEndToken)
-          exit
-       type is (DocumentStartToken)
-       type is (DocumentEndToken)
-          exit
-       type is (ScalarToken)
-!!$          __ASSERT__("Configuration can only have one top node.", .not. done)
-          cfg = Configuration(this%interpret(token))
-          done = .true.
-       type is (FlowSequenceStartToken)
-!!$          __ASSERT__("Configuration can only have one top node.", .not. done)
-          cfg = Configuration(scalar=UnlimitedVector())
-          call cfg%get_node_at_selector(node)
-!!$          call cfg%get_node(node)
-          call this%process_sequence(node, lexr)
-          done = .true.
-       type is (BlockSequenceStartToken)
-!!$          __ASSERT__("Configuration can only have one top node.", .not. done)
-          cfg = Configuration(scalar=UnlimitedVector())
-          call cfg%get_node_at_selector(node)
-!!$          call cfg%get_node(node)
-          call this%process_sequence(node, lexr)
-          done = .true.
-       type is (BlockMappingStartToken)
-!!$          __ASSERT__("Configuration can only have one top node.", .not. done)
-          cfg = Configuration(scalar=OrderedStringUnlimitedMap())
-          call cfg%get_node_at_selector(node)
-!!$          call cfg%get_node(node)
-          call this%process_mapping(node, lexr)
-          done = .true.
-       type is (FlowMappingStartToken)
-!!$          __ASSERT__("Configuration can only have one top node.", .not. done)
-          cfg = Configuration(scalar=OrderedStringUnlimitedMap())
-          call cfg%get_node_at_selector(node)
-!!$          call cfg%get_node(node)
-          call this%process_mapping(node, lexr)
-          done = .true.
-       class default
-          error stop 'unsupported token type in top'
-       end select
-    end do
+      lexr = Lexer(Reader(stream))
 
-  end subroutine top
+      call this%top(node, lexr)
+      cfg = Configuration(node)
+      nullify(node) ! not deallocate !
+
+   end function load
 
 
-  recursive subroutine process_sequence(this, node, lexr)
-    class(Parser), intent(inout) :: this
-    class(*), pointer, intent(in) :: node ! pointer association is not modified
-    type(Lexer), intent(inout) :: lexr 
+   subroutine top(this, node, lexr)
+      class(Parser), intent(inout) :: this
+      class(AbstractNode), pointer, intent(out) :: node
+      type(Lexer), intent(inout) :: lexr
 
-    class(AbstractToken), allocatable :: token
-    logical :: expect_another
-    type(Configuration) :: sub
-    character(:), allocatable :: anchor
+      class(AbstractToken), allocatable :: token
+      logical :: done
+      type(sequence), pointer :: seq
+      type(Mapping), pointer :: map
 
+      done = .false.
+      do
+         if (allocated(token)) deallocate(token)
+         token = lexr%get_token()
+         select type (token)
+         type is (StreamStartToken)
+         type is (StreamEndToken)
+            exit
+         type is (DocumentStartToken)
+         type is (DocumentEndToken)
+            exit
+         type is (ScalarToken)
+            allocate(node, source=this%interpret(token))
+            done = .true.
+         type is (FlowSequenceStartToken)
+            allocate(node, source=SequenceNode())
+            seq => to_sequence(node)
+            call this%process_sequence(seq, lexr)
+            done = .true.
+         type is (BlockSequenceStartToken)
+            allocate(node,source=SequenceNode())
+            seq => to_sequence(node)
+            call this%process_sequence(seq, lexr)
+            done = .true.
+         type is (BlockMappingStartToken)
+            allocate(node,source=MappingNode())
+            map => to_mapping(node)
+            call this%process_mapping(map, lexr)
+            done = .true.
+         type is (FlowMappingStartToken)
+            allocate(node,source=MappingNode())
+            map => to_mapping(node)
+            call this%process_mapping(map, lexr)
+            done = .true.
+         class default
+            error stop 'unsupported token type in top'
+         end select
+      end do
 
-    expect_another = .false.
-    select type (q => node)
-    type is (UnlimitedVector)
-       do
-          if (allocated(token)) deallocate(token)
-          token = lexr%get_token()
+      if (.not. done) error stop 'not done'
 
-          select type(qq => token)
-          type is (AnchorToken)
-             anchor = qq%value
-             if (allocated(token)) deallocate(token)
-             token = lexr%get_token()
-          type is (AliasToken)
-             print*, 'found alias unexpectedly'
-             error stop
-          end select
-
-          select type (token)
-          type is (ScalarToken)
-             call q%push_back(this%interpret(token))
-
-          type is (BlockSequenceStartToken)
-             call q%push_back(UnlimitedVector())
-             call this%process_sequence(q%back(), lexr)
-          type is (FlowNextEntryToken)
-             expect_another = .true.
-          type is (BlockNextEntryToken)
-             expect_another = .true.
-          type is (FlowSequenceEndToken)
-             ! TODO must match block/flow 
-!!$             if (expect_another) then
-!!$                __ASSERT__("dangling comma in flow sequence", expect_another)
-!!$             else
-!!$                exit
-!!$             end if
-             exit
-          type is (BlockEndToken)
-             ! TODO must match block/flow 
-             exit
-
-          type is (FlowSequenceStartToken)
-             call q%push_back(UnlimitedVector())
-             call this%process_sequence(q%back(), lexr)
-
-          type is (FlowMappingStartToken)
-             call q%push_back(OrderedStringUnlimitedMap())
-             call this%process_mapping(q%back(), lexr)
-          type is (BlockMappingStartToken)
-             call q%push_back(OrderedStringUnlimitedMap())
-             call this%process_mapping(q%back(), lexr)
-
-          class default
-             error stop 'illegal token encountered A'
-          end select
+   end subroutine top
 
 
-          if (allocated(anchor)) then
-             block
-               class(*), pointer :: ptr
-               ptr => q%back()
-               call this%anchors%insert(anchor, ptr)
+   recursive subroutine process_sequence(this, seq, lexr)
+      class(Parser), target, intent(inout) :: this
+      type(Sequence), intent(inout) :: seq
+      type(Lexer), intent(inout) :: lexr 
+
+      class(AbstractToken), allocatable :: token
+      logical :: expect_another
+      character(:), allocatable :: anchor
+
+      type(sequence), pointer :: subsequence
+      type(Mapping), pointer :: submapping
+
+      expect_another = .false.
+      do
+         if (allocated(token)) deallocate(token)
+         token = lexr%get_token()
+
+         select type(q => token)
+         type is (AnchorToken)
+            anchor = q%value
+            if (allocated(token)) deallocate(token)
+            token = lexr%get_token()
+         type is (AliasToken)
+            error stop 'improper AliasToken'
+         end select
+
+         select type (token)
+         type is (ScalarToken)
+            call seq%push_back(this%interpret(token))
+         type is (BlockSequenceStartToken)
+            call seq%push_back(SequenceNode())
+            subsequence => to_sequence(seq%back())
+            call this%process_sequence(subsequence, lexr)
+         type is (FlowNextEntryToken)
+            expect_another = .true.
+         type is (BlockNextEntryToken)
+            expect_another = .true.
+         type is (FlowSequenceEndToken)
+            ! TODO must match block/flow 
+  !           if (expect_another) then
+  !              __ASSERT__("dangling comma in flow sequence", expect_another)
+  !           else
+  !              exit
+  !           end if
+            exit
+         type is (BlockEndToken)
+            ! TODO must match block/flow 
+            exit
+
+         type is (FlowSequenceStartToken)
+            call seq%push_back(SequenceNode())
+            subsequence => to_sequence(seq%back())
+            call this%process_sequence(subsequence, lexr)
+
+         type is (FlowMappingStartToken)
+            call seq%push_back(MappingNode())
+            submapping => to_mapping(seq%back())
+            call this%process_mapping(submapping, lexr)
+         type is (BlockMappingStartToken)
+            call seq%push_back(MappingNode())
+            submapping => to_mapping(seq%back())
+            call this%process_mapping(submapping, lexr)
+         class default
+            error stop 'illegal token encountered A'
+         end select
+
+
+         if (allocated(anchor)) then
+            call this%anchors%insert(anchor, seq%back())
+            deallocate(anchor)
+         end if
+         deallocate(token)
+
+      end do
+
+      if (allocated(anchor)) deallocate(anchor)
+
+   end subroutine process_sequence
+
+
+   recursive subroutine process_mapping(this, map, lexr)
+      class(Parser), target, intent(inout) :: this
+      type(Mapping), target, intent(inout) :: map
+      type(Lexer), intent(inout) :: lexr
+
+      class(AbstractToken), allocatable :: token
+      logical :: expect_another
+      character(:), allocatable :: key_str
+      class(AbstractNode), allocatable :: key
+      class(AbstractToken), allocatable :: next_token
+      character(:), allocatable :: anchor
+      type(Mapping), pointer :: anchor_mapping
+
+      type(sequence), pointer :: subsequence
+      type(Mapping), pointer :: submapping
+
+      expect_another = .false.
+      do
+         if (allocated(token)) deallocate(token)
+         token = lexr%get_token()
+
+         select type (token)
+         type is (ScalarToken)
+         type is (KeyToken)
+            if (allocated(next_token)) deallocate(next_token)
+            next_token = lexr%get_token()
+            call get_key(next_token, key, key_str)
+            if (allocated(next_token)) deallocate(next_token)
+            next_token = lexr%get_token()
+!!$            allocate(next_token, source=lexr%get_token())
+            select type(next_token)
+            type is (ValueToken)
+               ! mandatory before value
+            class default
+               error stop 'expected ValueToken'
+            end select
+            if (allocated(next_token)) deallocate(next_token)
+            next_token = lexr%get_token()
+
+            ! Possible anchor or alias?
+            select type(q => next_token)
+            type is (AnchorToken)
+               anchor = q%value
+               if (allocated(next_token)) deallocate(next_token)
+               next_token = lexr%get_token()
+            type is (AliasToken)
+               anchor = q%value
+               if (this%anchors%count(anchor) > 0) then
+                  if (key_str == MERGE_KEY) then
+                     !TODO - should throw exception if not mapping ...
+                     anchor_mapping => to_mapping(this%anchors%of(anchor))
+                     call merge(map, anchor_mapping)
+                     deallocate(anchor)
+                     cycle
+                  else
+                     call map%insert(key, this%anchors%of(anchor))
+                     deallocate(anchor)
+                     cycle
+                  end if
+               else
+                  error stop "no such anchor"
+               end if
+            end select
+
+            select type(next_token)
+            type is (ScalarToken)
+               call map%insert(key, this%interpret(next_token))
+            type is (FlowSequenceStartToken)
+               call map%insert(key,SequenceNode())
+               subsequence => to_sequence(map%of(key))
+               call this%process_sequence(subsequence, lexr)
+            type is (FlowMappingStartToken)
+                 call map%insert(key,MappingNode())
+               submapping => to_mapping(map%of(key))
+               call this%process_mapping(submapping, lexr)
+            type is (BlockSequenceStartToken)
+               call map%insert(key,SequenceNode())
+               subsequence => to_sequence(map%of(key))
+               call this%process_sequence(subsequence, lexr)
+            type is (BlockMappingStartToken)
+               call map%insert(key,MappingNode())
+               submapping => to_mapping(map%of(key))
+               call this%process_mapping(submapping, lexr)
+            class default
+               error stop 'illegal token encountered C'
+            end select
+
+            if (allocated(anchor)) then
+               call this%anchors%insert(anchor, map%of(key))
                deallocate(anchor)
-             end block
-          end if
-          deallocate(token)
+            end if
 
-          
-       end do
+         type is (FlowNextEntryToken)
+            expect_another = .true.
 
-    class default
-       error stop 'inconsistent state in parser:: process_sequence()'
+         type is (FlowMappingEndToken)
+            exit
+         type is (BlockEndToken)
+            exit
+         class default
+            error stop 'illegal token encountered B'
+         end select
 
-    end select
+      end do
 
-  end subroutine process_sequence
-
-
-  recursive subroutine process_mapping(this, node, lexr)
-    class(Parser), intent(inout) :: this
-    class(*), pointer, intent(in) :: node
-    type(Lexer), intent(inout) :: lexr
-
-    class(AbstractToken), allocatable :: token
-    logical :: expect_another
-    character(:), allocatable :: key
-    class(AbstractToken), allocatable :: next_token
-    character(:), allocatable :: anchor
-    character(:), allocatable :: alias
-
-    expect_another = .false.
-    select type (q => node)
-    type is (OrderedStringUnlimitedMap)
-       do
-          if (allocated(token)) deallocate(token)
-          token = lexr%get_token()
-
-          select type (token)
-          type is (ScalarToken)
-          type is (KeyToken)
-             if (allocated(next_token)) deallocate(next_token)
-             next_token = lexr%get_token()
-             select type(next_token)
-             type is (ScalarToken)
-                key = next_token%value ! always a string
-             class default
-                error stop
-             end select
-             if (allocated(next_token)) deallocate(next_token)
-             next_token = lexr%get_token()
-             select type(next_token)
-             type is (ValueToken)
-                ! mandatory before value
-             class default
-                error stop
-             end select
-             if (allocated(next_token)) deallocate(next_token)
-             next_token = lexr%get_token()
-
-             ! Possible anchor or alias?
-             select type(qq => next_token)
-             type is (AnchorToken)
-                anchor = qq%value
-                if (allocated(next_token)) deallocate(next_token)
-                next_token = lexr%get_token()
-             type is (AliasToken)
-                anchor = qq%value
-                if (this%anchors%count(anchor) > 0) then
-
-                   if (key == MERGE_KEY) then
-                      call merge(q, this%anchors%at(anchor))
-                      deallocate(anchor)
-                      cycle
-                   else
-                      call q%insert(key, this%anchors%at(anchor))
-                      deallocate(anchor)
-                      cycle
-                   end if
-                else
-                   error stop "no such anchor"
-                end if
-             end select
-
-             select type(next_token)
-             type is (ScalarToken)
-                call q%insert(key, this%interpret(next_token))
-             type is (FlowSequenceStartToken)
-                call q%insert(key,UnlimitedVector())
-                call this%process_sequence(q%at(key), lexr)
-             type is (FlowMappingStartToken)
-                call q%insert(key,OrderedStringUnlimitedMap())
-                call this%process_mapping(q%at(key), lexr)
-             type is (BlockSequenceStartToken)
-                call q%insert(key,UnlimitedVector())
-                call this%process_sequence(q%at(key), lexr)
-             type is (BlockMappingStartToken)
-                call q%insert(key,OrderedStringUnlimitedMap())
-                call this%process_mapping(q%at(key), lexr)
-             class default
-                error stop 'illegal token encountered C'
-             end select
-             if (allocated(anchor)) then
-                block
-                  class(*), pointer :: ptr
-                  ptr => q%at(key)
-                  call this%anchors%insert(anchor, ptr)
-                  deallocate(anchor)
-                end block
-             end if
-
-          type is (FlowNextEntryToken)
-             expect_another = .true.
-
-          type is (FlowMappingEndToken)
-             exit
-          type is (BlockEndToken)
-             exit
-          class default
-             error stop 'illegal token encountered B'
-          end select
-
-       end do
-       
-    class default
-       error stop 'inconsistent state in parser:: process_mapping()'
-
-    end select
-
- contains
-
-    subroutine merge(m1, q)
-       use fy_String
-       use fy_OrderedStringUnlimitedMap
-       use gftl_UnlimitedVector
-       type(OrderedStringUnlimitedMap), intent(inout) :: m1
-       class(*), intent(in) :: q
-
-       type (OrderedStringUnlimitedMapIterator) :: iter
-
-       character(:), pointer :: key
-       class(*), pointer :: v
+      ! Odd workaround for gfortran 10.3
+      if (allocated(anchor)) deallocate(anchor)
+      if (allocated(key)) deallocate(key)
 
 
-       select type (q)
-       type is (OrderedStringUnlimitedMap)
-          iter = q%begin()
-          do while (iter /= q%end())
-             key => iter%key()
-             if (m1%count(key) == 0) then
-                v => iter%value()
-                ! Unfortunately, GFortran 9.3 fails with a direct
-                ! insert here.  Thus we need to do a select case over
-                ! each type/kind even though it results in the exact same
-                ! procedure being called in each case.  Sigh.
-                select type (v)
-                type is (integer)
-                   call m1%insert(key, v)
-                type is (real)
-                   call m1%insert(key, v)
-                type is (logical)
-                   call m1%insert(key, v)
-                type is (character(*))
-                   call m1%insert(key, v)
-                type is (String)
-                   call m1%insert(key, v)
-                type is (UnlimitedVector)
-                   call m1%insert(key, v)
-                type is (OrderedStringUnlimitedMap)
-                   call m1%insert(key, v)
-                end select
-             end if
-             call iter%next()
-          end do
-       end select
+   contains
 
-    end subroutine merge
-    
- end subroutine process_mapping
+      subroutine merge(m1, m2)
+         use fy_String
+         use gftl_UnlimitedVector
+         type(Mapping), intent(inout) :: m1
+         type(Mapping), intent(in) :: m2
 
-     
+         type (MappingIterator) :: iter
 
-  function interpret(this, scalar) result(value)
-     use fy_String
-    class(*), allocatable :: value
-    class(Parser), intent(in) :: this
-    type(ScalarToken) :: scalar
+         class(AbstractNode), pointer :: key, value
 
-    character(:), allocatable :: text
-    integer :: status
+         iter = m2%begin()
+         do while (iter /= m2%end())
+            key => iter%first()
+            if (m1%count(key) == 0) then
+               value => iter%second()
+               call m1%insert(key, value)
+            end if
+            call iter%next()
+         end do
 
-    text = scalar%value
+      end subroutine merge
 
-    if (any(scalar%style == ['"',"'"])) then
-       value = String(text)
-    elseif (this%schema%matches_null(text)) then
-       value = None
-    elseif (this%schema%matches_logical(text)) then
-       value = this%schema%to_logical(text)
-    elseif (this%schema%matches_logical(text)) then
-       value = this%schema%to_logical(text)
-    elseif (this%schema%matches_integer(text)) then
-       value = this%schema%to_integer(text)
-    elseif(this%schema%matches_real(text)) then
-       value = this%schema%to_real(text)
-    else
-       ! anything else is a string (workaround for gFortran)
-       value = String(text)
-    end if
+      subroutine get_key(token, key, key_str)
+         class(AbstractToken), intent(in) :: token
+         class(AbstractNode), intent(out), allocatable :: key
+         character(:), allocatable, intent(out) :: key_str
+         select type(next_token)
+         type is (ScalarToken)
+            key_str = next_token%value
+            allocate(key, source=this%interpret(next_token))
+         class default
+            error stop 'expected ScalarToken'
+         end select
+      end subroutine get_key
 
-  end function interpret
-  
+   end subroutine process_mapping
+
+
+
+   function interpret(this, scalar) result(value)
+      use fy_BoolNode
+      use fy_IntNode
+      use fy_FloatNode
+
+      class(AbstractNode), allocatable :: value
+      class(Parser), intent(in) :: this
+      type(ScalarToken) :: scalar
+
+      character(:), allocatable :: text
+
+      text = scalar%value
+
+      if (any(scalar%style == ['"',"'"])) then
+         value = StringNode(text)
+ !   elseif (this%schema%matches_null(text)) then
+ !      value = NullNode()
+      elseif (this%schema%matches_logical(text)) then
+         value = BoolNode(this%schema%to_logical(text))
+      elseif (this%schema%matches_integer(text)) then
+         value = IntNode(this%schema%to_integer(text))
+      elseif(this%schema%matches_real(text)) then
+         value = FloatNode(this%schema%to_real(text))
+      else
+         ! anything else is a string (workaround for gFortran)
+         value = StringNode(text)
+      end if
+
+   end function interpret
+
 end module fy_Parser

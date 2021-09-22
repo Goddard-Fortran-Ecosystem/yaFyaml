@@ -2,7 +2,6 @@ module Test_UnlimitedUtilities
   use funit
   use fy_UnlimitedUtilities
   use fy_ArrayWrapper
-  use gFTL_UnlimitedVector
   implicit none
 
 contains
@@ -31,6 +30,7 @@ contains
 
   @test
   subroutine test_is_logical_unlimited_vector
+     use gFTL2_UnlimitedVector
     class(*), pointer :: u
     type(UnlimitedVector), target :: v
     logical :: stat

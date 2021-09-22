@@ -159,7 +159,13 @@ contains
 
     integer :: n_raw
 
-    this%buffer = this%buffer(this%local_pos:)
+    ! Conditional here suppresses a valgrind warning
+    ! about uninitialized value for NAG 7053.
+    if (this%local_pos > len(this%buffer)) then
+       this%buffer = ''
+    else
+       this%buffer = this%buffer(this%local_pos:)
+    end if
     this%local_pos = 1
 
     do while (len(this%buffer) < n_characters)

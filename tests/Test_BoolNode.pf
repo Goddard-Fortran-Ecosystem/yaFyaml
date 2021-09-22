@@ -1,0 +1,174 @@
+module Test_BoolNode
+   use funit
+   use fy_Nodes
+   use fy_ErrorCodes
+   use, intrinsic :: iso_fortran_env, only: INT32, INT64
+   use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
+   implicit none
+
+contains
+
+   @test
+   subroutine test_is_bool()
+      class(AbstractNode), allocatable :: node
+      type(BoolNode), target :: b_node
+      logical :: flag
+
+      b_node = BoolNode(.true.)
+      @assertTrue(b_node%is_bool())
+
+      allocate(node,source=BoolNode(.false.))
+      flag = node%is_bool()
+      @assertTrue(flag)
+
+      node = IntNode(1_INT32)
+      @assertFalse(node%is_bool())
+
+   end subroutine test_is_bool
+
+   @test
+   subroutine test_assignment()
+      type(BoolNode) :: b_node
+      logical :: flag
+      
+      b_node = BoolNode(.true.)
+
+      flag= b_node
+      @assert_that(flag, is(true()))
+
+      b_node = BoolNode(.false.)
+
+      flag = b_node
+      @assert_that(flag, is(false()))
+
+
+   end subroutine test_assignment
+
+   @test
+   subroutine test_casting_succeed()
+      class(AbstractNode), allocatable :: node
+      logical, pointer :: l_ptr
+
+      character(:), allocatable :: err_msg
+      integer :: rc
+
+      node = BoolNode(.true.)
+      err_msg = 'foo'
+      l_ptr => to_bool(node, err_msg=err_msg, rc=rc)
+
+      @assert_that(l_ptr, is(true()))
+      @assert_that(rc, is(YAFYAML_SUCCESS))
+      ! err_msg not changed if no error
+      @assert_that(err_msg, is('foo'))
+   end subroutine test_casting_succeed
+
+   @test
+   subroutine test_casting_fail()
+      type(IntNode) :: i_node
+      logical, pointer :: l_ptr
+      integer, parameter :: MAXLEN=128
+
+      character(MAXLEN) :: err_msg
+      character(:), allocatable :: expected
+      integer :: rc
+
+      i_node = IntNode(1_INT32)
+      l_ptr => to_bool(i_node, err_msg=err_msg, rc=rc)
+      @assertExceptionRaised('Type of request does not match type in config.')
+!!$      @assert_that(l_ptr, is(.false.))
+      @assert_that(rc, is(YAFYAML_TYPE_MISMATCH))
+      expected = error_message(YAFYAML_TYPE_MISMATCH)
+      @assertEqual(expected, err_msg)
+
+   end subroutine test_casting_fail
+
+
+   @test
+   ! Empty sequences are ==, so not <
+   subroutine test_less_than_trivial()
+      type(BoolNode) :: t, f 
+
+      t = BoolNode(.true.)
+      f = BoolNode(.false.)
+
+      @assertFalse(t < t)
+      @assertFalse(f < f)
+
+   end subroutine test_less_than_trivial
+   
+   @test
+   subroutine test_less_than_same_type()
+      type(BoolNode) :: a, b 
+
+      a = BoolNode(.false.)
+      b = BoolNode(.true.)
+
+      @assertTrue(a < b)
+      @assertFalse(b < a)
+
+   end subroutine test_less_than_same_type
+   
+
+   @test
+   subroutine test_less_than_diff_type()
+      type(BoolNode) :: flag
+      type(IntNode) :: i
+      type(StringNode) :: str
+      type(FloatNode) :: x
+      type(SequenceNode) :: seq
+      type(MappingNode) :: m
+
+      flag = BoolNode(.false.)
+      i = IntNode(1)
+      x = FloatNode(1.)
+      str = StringNode('cat')
+
+      @assertTrue(flag < i)
+      @assertTrue(flag < str)
+      @assertTrue(flag < x)
+      @assertTrue(flag < seq)
+      @assertTrue(flag < m)
+
+   end subroutine test_less_than_diff_type
+
+   ! Modifying interface to allow get() with no
+   ! selectors  
+   @test
+   subroutine test_get_logical()
+
+      type(BoolNode) :: node
+      logical :: flag
+      integer :: status
+      
+      node = BoolNode(.true.)
+      call node%get(flag, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(flag, is(true()))
+      
+      node = BoolNode(.false.)
+      call node%get(flag, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(flag, is(false()))
+   end subroutine test_get_logical
+
+   ! Check that error is detected when getting real from BoolNode.
+   ! Throws multiple exceptions, so much check by hand ..
+   @test
+   subroutine test_get_real()
+      use, intrinsic :: ieee_arithmetic, only: IEEE_NEGATIVE_INF, ieee_value
+      use pf_exceptionlist
+      type(BoolNode) :: node
+      real :: x
+      integer :: status
+      logical :: expected
+
+      node = BoolNode(.true.)
+      x = -7.
+      call node%get(x, rc=status)
+
+      expected = catch("Type of request does not match type in config.") .and. catch("status=16")
+      @assert_that(expected, is(true()))
+      @assert_that(x, is(-7.))
+   end subroutine test_get_real
+
+end module Test_BoolNode

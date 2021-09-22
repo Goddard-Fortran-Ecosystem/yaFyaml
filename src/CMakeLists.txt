@@ -1,9 +1,10 @@
 add_library (yafyaml
-  OrderedStringUnlimitedMap.F90
+  analyze.F90
+  
   ArrayWrapper.F90
   AbstractFile.F90
   File.F90
-  StringUnlimitedPointerMap.F90
+  StringNodeMap.F90
 
   String.F90
   UnlimitedUtilities.F90
@@ -20,7 +21,6 @@ add_library (yafyaml
   FailsafeSchema.F90
   JSONSchema.F90
   CoreSchema.F90
-  None.F90
 
   Configuration.F90
   KeywordEnforcer.F90
@@ -28,6 +28,25 @@ add_library (yafyaml
   SimpleKey.F90
   ErrorHandling.F90
   IntegerSimpleKeyMap.F90
+
+  Nodes/AbstractNode.F90
+  Nodes/BaseNode.F90
+  Nodes/BaseNode_implementation.F90
+  Nodes/SequenceNode.F90
+  Nodes/SequenceNode_implementation.F90
+  Nodes/MappingNode.F90
+  Nodes/MappingNode_implementation.F90
+  Nodes/BoolNode.F90
+  Nodes/BoolNode_implementation.F90
+  Nodes/IntNode.F90
+  Nodes/IntNode_implementation.F90
+  Nodes/FloatNode.F90
+  Nodes/FloatNode_implementation.F90
+  Nodes/StringNode.F90
+  Nodes/StringNode_implementation.F90
+  Nodes/Sequence.F90
+  Nodes/Mapping.F90
+  Nodes/Nodes.F90
   # package
   yafyaml.F90
   )
@@ -35,7 +54,8 @@ add_library (yafyaml
 add_library(YAFYAML::yafyaml ALIAS yafyaml)
 
 set_target_properties (yafyaml PROPERTIES Fortran_MODULE_DIRECTORY ${YAFYAML_BINARY_DIR}/include)
-target_link_libraries(yafyaml GFTL_SHARED::gftl-shared)
+target_link_libraries(yafyaml GFTL::gftl-v2 GFTL_SHARED::gftl-shared-v1 GFTL_SHARED::gftl-shared-v2)
+target_include_directories(yafyaml PRIVATE ${YAFYAML_SOURCE_DIR}/include)
 
 set (dest "YAFYAML-${YAFYAML_VERSION_MAJOR}.${YAFYAML_VERSION_MINOR}")
 

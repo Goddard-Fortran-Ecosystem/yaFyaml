@@ -1,7 +1,7 @@
 module fy_UnlimitedUtilities
   use fy_String
   use fy_ArrayWrapper
-  use gFTL_UnlimitedVector
+  use gFTL2_UnlimitedVector
   implicit none
   private
 
@@ -47,7 +47,7 @@ contains
        is_logical = .true. ! unless
        iter = u%begin()
        do while (iter /= u%end())
-          if (.not. is_logical_scalar(iter%get())) then
+          if (.not. is_logical_scalar(iter%of())) then
              is_logical = .false.
              return
           end if

@@ -1,9 +1,22 @@
 # ChangeLog
 
+## [Unreleased]
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+
+## [1.0-beta]
+
+- The interfaces to configuration have been considerably modified to
+  better support some advanced use cases.  Existing code that uses
+  yaFyaml will generally require some changes See Examples directories
+  for defacto documentation.
+
+- Tested with Intel 2021, gfortran 8.5, 9.4, 10.3, 11.2
+
+
+
 
 ## [0.5.1] - 2021-04-01
 
@@ -11,10 +24,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Ability to embed yaFyaml alongside the other GFE libraries in a superproject.
 
+### Added
+
+- Allow `get()` to have 0 selectors.
+
 ## [0.5.0] - 2021-03-15
 
 ### CHANGED
 
+## Added
+
+- Mappings with non-string keys (including complex keys) now supported.
+
+## Changed
+
+- Introduced new interfaces, thought very similar to before.  Most routines now also
+  can provide an optional error message.
 - Adopted CMake namespaces for package integration/management
 
 ## [0.4.2] - 2020-12-07

@@ -8,7 +8,7 @@ program main
 
    p = Parser('core')
    c = p%load(FileStream('integer-array.json'))
-   nodes = c%at('nodes')
+   call c%get(nodes, 'nodes')
 
    if (any(nodes/=[1,2,3])) error stop "Test failed: wrong nodes values."
 

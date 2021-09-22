@@ -1,10 +1,11 @@
 program main
    use yafyaml
-
+   implicit none
+   
    type(Parser) :: p
    type(Configuration) :: config
    integer :: prime
-
+   integer :: status
    
    p = Parser('core')
    config = p%load(FileStream('trivial.yaml'))

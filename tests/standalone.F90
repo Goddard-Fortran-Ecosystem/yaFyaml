@@ -1,8 +1,8 @@
 program standalone
    use funit
-   use fy_NewConfiguration
+   use fy_Configuration
    use fy_EscapedTextStream
-   use fy_NewParser
+   use fy_Parser
    implicit none
    
    call test_single_scalar()

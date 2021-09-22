@@ -1,6 +1,6 @@
 module yafyaml
-  use fy_NewConfiguration
-  use fy_NewParser
+  use fy_Configuration
+  use fy_Parser
   use fy_ErrorCodes
   use fy_Nodes
   use fy_String

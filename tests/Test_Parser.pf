@@ -1,8 +1,8 @@
-module Test_NewParser
+module Test_Parser
    use funit
-   use fy_NewConfiguration
+   use fy_Configuration
    use fy_EscapedTextStream
-   use fy_NewParser
+   use fy_Parser
    implicit none
 
 contains
@@ -255,5 +255,5 @@ contains
 
    end subroutine test_pflogger_reproducer3
 
-end module Test_NewParser
+end module Test_Parser
 

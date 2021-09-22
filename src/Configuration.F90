@@ -17,7 +17,7 @@
    ! configuration, will need to use the lower level types.
 
 
-module fy_newConfiguration
+module fy_Configuration
    use fy_AbstractNode
    use fy_Mapping
    use fy_MappingNode
@@ -469,4 +469,4 @@ contains
     
   end subroutine write_formatted
 
-end module fy_newConfiguration
+end module fy_Configuration

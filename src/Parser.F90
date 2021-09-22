@@ -4,7 +4,7 @@
 !!! opposite.  The difference may in part be that this package restricts
 !!! keys to be simple strings.  
 
-module fy_newParser
+module fy_Parser
    use fy_Lexer
    use fy_Tokens
    use fy_Reader
@@ -18,7 +18,7 @@ module fy_newParser
    use fy_Sequence
    use fy_StringNode
    use fy_IntNode
-   use fy_NewConfiguration
+   use fy_Configuration
 
    use fy_AbstractSchema
    use fy_FailsafeSchema
@@ -419,4 +419,4 @@ contains
 
    end function interpret
 
-end module fy_newParser
+end module fy_Parser

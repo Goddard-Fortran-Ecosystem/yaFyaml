@@ -25,8 +25,6 @@ module fy_Configuration
    use fy_SequenceNode
    use fy_ErrorCodes
    use fy_ErrorHandling
-   use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
-   use, intrinsic :: iso_fortran_env, only: INT32, INT64
    implicit none
    private
 
@@ -156,6 +154,7 @@ module fy_Configuration
    interface
 
       module function size_config(this) result(size)
+         use, intrinsic :: iso_fortran_env, only: INT64
          integer(kind=INT64) :: size
          class(Configuration), intent(in) :: this
       end function size_config
@@ -221,6 +220,7 @@ module fy_Configuration
 
       module subroutine get_integer32(this, value, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT32
          class(Configuration), target, intent(in) :: this
          integer(kind=INT32), intent(inout) :: value
          class(*), optional, intent(in) :: SELECTORS
@@ -231,6 +231,7 @@ module fy_Configuration
 
       module subroutine get_integer32_1d(this, values, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT32
          class(Configuration), target, intent(in) :: this
          integer(kind=INT32), allocatable, intent(inout) :: values(:)
          class(*), optional, intent(in) :: SELECTORS
@@ -241,6 +242,7 @@ module fy_Configuration
 
       module subroutine get_integer64(this, value, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT64
          class(Configuration), target, intent(in) :: this
          integer(kind=INT64), intent(inout) :: value
          class(*), optional, intent(in) :: SELECTORS
@@ -251,6 +253,7 @@ module fy_Configuration
 
       module subroutine get_integer64_1d(this, values, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT64
          class(Configuration), target, intent(in) :: this
          integer(kind=INT64), allocatable, intent(inout) :: values(:)
          class(*), optional, intent(in) :: SELECTORS
@@ -262,6 +265,7 @@ module fy_Configuration
 
       module subroutine get_real32(this, value, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL32
          class(Configuration), target, intent(in) :: this
          real(kind=REAL32), intent(inout) :: value
          class(*), optional, intent(in) :: SELECTORS
@@ -272,6 +276,7 @@ module fy_Configuration
 
       module subroutine get_real32_1d(this, values, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL32
          class(Configuration), target, intent(in) :: this
          real(kind=REAL32), allocatable, intent(inout) :: values(:)
          class(*), optional, intent(in) :: SELECTORS
@@ -282,6 +287,7 @@ module fy_Configuration
 
       module subroutine get_real64(this, value, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL64
          class(Configuration), target, intent(in) :: this
          real(kind=REAL64), intent(inout) :: value
          class(*), optional, intent(in) :: SELECTORS
@@ -292,6 +298,7 @@ module fy_Configuration
 
       module subroutine get_real64_1d(this, values, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL64
          class(Configuration), target, intent(in) :: this
          real(kind=REAL64), allocatable, intent(inout) :: values(:)
          class(*), optional, intent(in) :: SELECTORS
@@ -322,25 +329,28 @@ module fy_Configuration
       end subroutine assign_to_string
 
       module subroutine assign_to_integer32(i32, this)
+         use, intrinsic :: iso_fortran_env, only: INT32
          integer(kind=INT32), intent(out) :: i32
          class(Configuration), intent(in) :: this
       end subroutine assign_to_integer32
 
       module subroutine assign_to_integer64(i64, this)
+         use, intrinsic :: iso_fortran_env, only: INT64
          integer(kind=INT64), intent(out) :: i64
          class(Configuration), intent(in) :: this
       end subroutine assign_to_integer64
 
       module subroutine assign_to_real32(r32, this)
+         use, intrinsic :: iso_fortran_env, only: REAL32
          real(kind=REAL32), intent(out) :: r32
          class(Configuration), intent(in) :: this
       end subroutine assign_to_real32
 
       module subroutine assign_to_real64(r64, this)
+         use, intrinsic :: iso_fortran_env, only: REAL64
          real(kind=REAL64), intent(out) :: r64
          class(Configuration), intent(in) :: this
       end subroutine assign_to_real64
-
 
 
 
@@ -436,6 +446,7 @@ module fy_Configuration
 
       module subroutine get_key_integer32(this, value, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT32
          class(ConfigurationIterator), target, intent(in) :: this
          integer(kind=INT32), intent(inout) :: value
          class(*), optional, intent(in) :: SELECTORS
@@ -446,6 +457,7 @@ module fy_Configuration
 
       module subroutine get_key_integer64(this, value, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT64
          class(ConfigurationIterator), target, intent(in) :: this
          integer(kind=INT64), intent(inout) :: value
          class(*), optional, intent(in) :: SELECTORS
@@ -456,6 +468,7 @@ module fy_Configuration
 
       module subroutine get_key_real32(this, value, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL32
          class(ConfigurationIterator), target, intent(in) :: this
          real(kind=REAL32), intent(inout) :: value
          class(*), optional, intent(in) :: SELECTORS
@@ -466,6 +479,7 @@ module fy_Configuration
 
       module subroutine get_key_real64(this, value, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL64
          class(ConfigurationIterator), target, intent(in) :: this
          real(kind=REAL64), intent(inout) :: value
          class(*), optional, intent(in) :: SELECTORS
@@ -496,6 +510,7 @@ module fy_Configuration
 
       module subroutine get_key_integer32_1d(this, values, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT32
          class(ConfigurationIterator), target, intent(in) :: this
          integer(kind=INT32), allocatable, intent(inout) :: values(:)
          class(*), optional, intent(in) :: SELECTORS
@@ -506,6 +521,7 @@ module fy_Configuration
 
       module subroutine get_key_integer64_1d(this, values, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT64
          class(ConfigurationIterator), target, intent(in) :: this
          integer(kind=INT64), allocatable, intent(inout) :: values(:)
          class(*), optional, intent(in) :: SELECTORS
@@ -516,6 +532,7 @@ module fy_Configuration
 
       module subroutine get_key_real32_1d(this, values, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL32
          class(ConfigurationIterator), target, intent(in) :: this
          real(kind=REAL32), allocatable, intent(inout) :: values(:)
          class(*), optional, intent(in) :: SELECTORS
@@ -526,6 +543,7 @@ module fy_Configuration
 
       module subroutine get_key_real64_1d(this, values, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL64
          class(ConfigurationIterator), target, intent(in) :: this
          real(kind=REAL64), allocatable, intent(inout) :: values(:)
          class(*), optional, intent(in) :: SELECTORS
@@ -557,6 +575,7 @@ module fy_Configuration
 
       module subroutine get_value_integer32(this, value, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT32
          class(ConfigurationIterator), target, intent(in) :: this
          integer(kind=INT32), intent(inout) :: value
          class(*), optional, intent(in) :: SELECTORS
@@ -567,6 +586,7 @@ module fy_Configuration
 
       module subroutine get_value_integer64(this, value, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT64
          class(ConfigurationIterator), target, intent(in) :: this
          integer(kind=INT64), intent(inout) :: value
          class(*), optional, intent(in) :: SELECTORS
@@ -577,6 +597,7 @@ module fy_Configuration
 
       module subroutine get_value_real32(this, value, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL32
          class(ConfigurationIterator), target, intent(in) :: this
          real(kind=REAL32), intent(inout) :: value
          class(*), optional, intent(in) :: SELECTORS
@@ -587,6 +608,7 @@ module fy_Configuration
 
       module subroutine get_value_real64(this, value, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL64
          class(ConfigurationIterator), target, intent(in) :: this
          real(kind=REAL64), intent(inout) :: value
          class(*), optional, intent(in) :: SELECTORS
@@ -617,6 +639,7 @@ module fy_Configuration
 
       module subroutine get_value_integer32_1d(this, values, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT32
          class(ConfigurationIterator), target, intent(in) :: this
          integer(kind=INT32), allocatable, intent(inout) :: values(:)
          class(*), optional, intent(in) :: SELECTORS
@@ -627,6 +650,7 @@ module fy_Configuration
 
       module subroutine get_value_integer64_1d(this, values, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT64
          class(ConfigurationIterator), target, intent(in) :: this
          integer(kind=INT64), allocatable, intent(inout) :: values(:)
          class(*), optional, intent(in) :: SELECTORS
@@ -637,6 +661,7 @@ module fy_Configuration
 
       module subroutine get_value_real32_1d(this, values, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL32
          class(ConfigurationIterator), target, intent(in) :: this
          real(kind=REAL32), allocatable, intent(inout) :: values(:)
          class(*), optional, intent(in) :: SELECTORS
@@ -647,6 +672,7 @@ module fy_Configuration
 
       module subroutine get_value_real64_1d(this, values, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL64
          class(ConfigurationIterator), target, intent(in) :: this
          real(kind=REAL64), allocatable, intent(inout) :: values(:)
          class(*), optional, intent(in) :: SELECTORS

@@ -48,6 +48,7 @@ program main
   if ( any(d%vertices(1)%depends_on /= [2,3]      )) error stop "dag%vertices(1) incorrect"
   if ( any(d%vertices(2)%depends_on /= [3]        )) error stop "dag%vertices(2) incorrect"
   if ( any(d%vertices(3)%depends_on /= [integer::])) error stop "dag%vertices(3) incorrect"
+  
+  print *,"Test passed"
 
-  if (this_image()==1) print *,"Test passed"
 end program

@@ -101,10 +101,10 @@ program main
       print*,'expected failure "v3" not found'
    end if
 
-   print*,__FILE__,__LINE__
+
    ! error if wrong type:
    call config%get(flag, 'mapping_b', 'v2', rc=status)
-   print*,__FILE__,__LINE__
+
    if (status == YAFYAML_TYPE_MISMATCH) then
       print*,'expected failure (type mismatch)'
    else

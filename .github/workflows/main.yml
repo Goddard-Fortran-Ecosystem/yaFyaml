@@ -57,3 +57,10 @@ jobs:
         run: |
           cd build
           ctest -j1 --output-on-failure --repeat until-pass:4
+      - name: Archive log files
+        uses: actions/upload-artifact@v2
+        with:
+          name: logfiles
+          path: |
+            build/**/*.log
+

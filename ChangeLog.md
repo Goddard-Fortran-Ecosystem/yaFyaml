@@ -5,15 +5,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0-beta2]
+
 ### Added
 
 - Introduced new overload for 'Configuration::get()' which returns a
   subconfig.
+- Introduced ConfigurationIterator to reduced difficulty in accessing
+  string keys.  Ended up with fairly general overloads of `get_key()`
+  and `get_value()` which are analogus to `get()`.
   
 ### Changed
 
 - Introduced Fortran submodule for Configuration.  Code was already long and now need to introduce
   an iterator class in the same namespace.
+  
+### Fixed
+
+- Eliminated co-array reference in JSON examples
   
 ## [1.0-beta]
 

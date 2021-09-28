@@ -12,4 +12,6 @@ program main
 
    if (.not. science) error stop "Test failed"
 
+   print *,"Test passed"
+
 end program

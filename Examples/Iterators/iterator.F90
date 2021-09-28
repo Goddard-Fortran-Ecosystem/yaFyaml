@@ -28,10 +28,9 @@ contains
 
       integer :: i
       integer :: prime
-      type(Configuration) :: subcfg
-      type(MappingIterator) :: iter
-      class(AbstractNode), pointer :: node
-      character(:), allocatable :: shape, key
+      type(Configuration) :: subcfg, subsubcfg
+      type(ConfigurationIterator) :: iter
+      character(:), allocatable :: shape
       integer :: n_edges
 
       ! Iterating over a sequence
@@ -46,17 +45,13 @@ contains
       associate (b => subcfg%begin(), e => subcfg%end())
         iter = b
         do while (iter /= e)
-           shape = iter%first() ! key
-           node => iter%second() ! value (a mapping in this case)
-           call node%get(n_edges, 'num_edges')
+           call iter%get_key(shape)
+           call iter%get_value(subsubcfg)
+           call subsubcfg%get(n_edges, 'num_edges')
            print*,'Shape: ', shape, ' has ', n_edges, 'sides.'
            call iter%next()
         end do
       end associate
-
-!!$      do i = 1, num_keys
-!!$         call config%get(n_edges, 'shape', keys(i), 'num_edges')
-!!$      end do
 
    end subroutine optimistic
 
@@ -67,9 +62,8 @@ contains
 
       integer :: i
       integer :: prime
-      type(Configuration) :: subcfg
-      type(MappingIterator) :: iter
-      class(AbstractNode), pointer :: node
+      type(Configuration) :: subcfg, subsubcfg
+      type(ConfigurationIterator) :: iter
       character(:), allocatable :: shape, key
       integer :: n_edges
       integer :: status
@@ -91,11 +85,19 @@ contains
       associate (b => subcfg%begin(), e => subcfg%end())
         iter = b
         do while (iter /= e)
-           shape = iter%first() ! key
-           node => iter%second() ! value (mapping in this case)
 
-           if (node%has('num_edges')) then
-              call node%get(n_edges, 'num_edges', rc=status)
+           call iter%get_key(shape, rc=status)
+           if (status/= YAFYAML_SUCCESS) then
+              print*,"failed to obtain string for key"
+           end if
+
+           call iter%get_value(subsubcfg, rc=status)
+           if (status/= YAFYAML_SUCCESS) then
+              print*,"failed to obtain config for value"
+           end if
+
+           if (subsubcfg%has('num_edges')) then
+              call subsubcfg%get(n_edges, 'num_edges', rc=status)
               if (status /= YAFYAML_SUCCESS) return
               print*,'Shape: ', shape, ' has ', n_edges, 'sides.'
            else

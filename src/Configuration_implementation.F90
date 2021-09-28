@@ -230,7 +230,12 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      value%node => this%node%at(SELECTORS, err_msg=err_msg, rc=rc)
+      class(AbstractNode), pointer :: node
+
+      ! To be consistent with other getters, we only update value _if_
+      ! accessor is successful.
+      node => this%node%at(SELECTORS, err_msg=err_msg, rc=rc)
+      if (rc == YAFYAML_SUCCESS) value = Configuration(node)
 
       __UNUSED_DUMMY__(unusable)
    end subroutine get_subconfig
@@ -336,7 +341,7 @@ contains
    ! Factory methods to create an iterator
    module function begin_cfg(this, unusable, err_msg, rc) result(iter)
       use fy_KeywordEnforcer
-      type(MappingIterator) :: iter
+      type(ConfigurationIterator) :: iter
       class(Configuration), intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(out) :: err_msg
@@ -347,7 +352,7 @@ contains
 
       if (this%is_mapping()) then
          m => to_mapping(this%node)
-         iter = m%begin()
+         iter%mapping_iterator = m%begin()
       else
          __FAIL2__(YAFYAML_NOT_A_MAPPING)
          error stop "expected mapping"
@@ -359,7 +364,7 @@ contains
 
    module function end_cfg(this, unusable, err_msg, rc) result(iter)
       use fy_KeywordEnforcer
-      type(MappingIterator) :: iter
+      type(ConfigurationIterator) :: iter
       class(Configuration), intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(out) :: err_msg
@@ -370,7 +375,7 @@ contains
 
       if (this%is_mapping()) then
          m => to_mapping(this%node)
-         iter = m%end()
+         iter%mapping_iterator = m%end()
       else
          __FAIL2__(YAFYAML_NOT_A_MAPPING)
          error stop "epected mapping"

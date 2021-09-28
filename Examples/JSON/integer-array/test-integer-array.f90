@@ -11,4 +11,7 @@ program main
    call c%get(nodes, 'nodes')
 
    if (any(nodes/=[1,2,3])) error stop "Test failed: wrong nodes values."
+
+   print *,"Test passed"
+
 end program

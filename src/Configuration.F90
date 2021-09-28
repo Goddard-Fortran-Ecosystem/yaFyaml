@@ -31,6 +31,10 @@ module fy_Configuration
    private
 
    public :: Configuration
+   public :: ConfigurationIterator
+   public :: operator(==)
+   public :: operator(/=)
+
 
    type :: Configuration
       private
@@ -96,10 +100,59 @@ module fy_Configuration
 
    end type Configuration
 
+   type ConfigurationIterator
+      private
+      type(MappingIterator) :: mapping_iterator
+   contains
+      procedure :: next => next_iter
+
+      procedure :: get_key_logical
+      procedure :: get_key_string
+      procedure :: get_key_integer32
+      procedure :: get_key_integer64
+      procedure :: get_key_real32
+      procedure :: get_key_real64
+      procedure :: get_key_logical_1d
+      procedure :: get_key_integer32_1d
+      procedure :: get_key_integer64_1d
+      procedure :: get_key_real32_1d
+      procedure :: get_key_real64_1d
+      procedure :: get_key_subconfig
+      generic :: get_key => get_key_logical, get_key_logical_1d
+      generic :: get_key => get_key_string
+      generic :: get_key => get_key_integer32, get_key_integer32_1d
+      generic :: get_key => get_key_integer64, get_key_integer64_1d
+      generic :: get_key => get_key_real32, get_key_real32_1d
+      generic :: get_key => get_key_real64, get_key_real64_1d
+      generic :: get_key => get_key_subconfig
+
+      procedure :: get_value_logical
+      procedure :: get_value_string
+      procedure :: get_value_integer32
+      procedure :: get_value_integer64
+      procedure :: get_value_real32
+      procedure :: get_value_real64
+      procedure :: get_value_logical_1d
+      procedure :: get_value_integer32_1d
+      procedure :: get_value_integer64_1d
+      procedure :: get_value_real32_1d
+      procedure :: get_value_real64_1d
+      procedure :: get_value_subconfig
+      generic :: get_value => get_value_logical, get_value_logical_1d
+      generic :: get_value => get_value_string
+      generic :: get_value => get_value_integer32, get_value_integer32_1d
+      generic :: get_value => get_value_integer64, get_value_integer64_1d
+      generic :: get_value => get_value_real32, get_value_real32_1d
+      generic :: get_value => get_value_real64, get_key_real64_1d
+      generic :: get_value => get_value_subconfig
+
+   end type ConfigurationIterator
+
    interface Configuration
       module procedure new_Configuration
    end interface Configuration
 
+   ! Configuration type-bound procedures
    interface
 
       module function size_config(this) result(size)
@@ -323,7 +376,7 @@ module fy_Configuration
       ! Factory methods to create an iterator
       module function begin_cfg(this, unusable, err_msg, rc) result(iter)
          use fy_KeywordEnforcer
-         type(MappingIterator) :: iter
+         type(ConfigurationIterator) :: iter
          class(Configuration), intent(in) :: this
          class(KeywordEnforcer), optional, intent(in) :: unusable
          STRING_DUMMY, optional, intent(out) :: err_msg
@@ -332,7 +385,7 @@ module fy_Configuration
 
       module function end_cfg(this, unusable, err_msg, rc) result(iter)
          use fy_KeywordEnforcer
-         type(MappingIterator) :: iter
+         type(ConfigurationIterator) :: iter
          class(Configuration), intent(in) :: this
          class(KeywordEnforcer), optional, intent(in) :: unusable
          STRING_DUMMY, optional, intent(out) :: err_msg
@@ -354,8 +407,274 @@ module fy_Configuration
 
    end interface
 
+   ! ConfigurationIterator type-bound procedures
+   interface
+
+      module subroutine next_iter(this)
+         class(ConfigurationIterator), intent(inout) :: this
+      end subroutine next_iter
+
+      module subroutine get_key_logical(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         logical, intent(inout) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_key_logical
+
+      module subroutine get_key_string(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         character(:), allocatable, intent(inout) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_key_string
+
+      module subroutine get_key_integer32(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         integer(kind=INT32), intent(inout) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_key_integer32
+
+      module subroutine get_key_integer64(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         integer(kind=INT64), intent(inout) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_key_integer64
+
+      module subroutine get_key_real32(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         real(kind=REAL32), intent(inout) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_key_real32
+
+      module subroutine get_key_real64(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         real(kind=REAL64), intent(inout) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_key_real64
+
+      module subroutine get_key_subconfig(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         type(Configuration), intent(inout) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_key_subconfig
+
+      module subroutine get_key_logical_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         logical, allocatable, intent(inout) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_key_logical_1d
+
+      module subroutine get_key_integer32_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         integer(kind=INT32), allocatable, intent(inout) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_key_integer32_1d
+
+      module subroutine get_key_integer64_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         integer(kind=INT64), allocatable, intent(inout) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_key_integer64_1d
+
+      module subroutine get_key_real32_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         real(kind=REAL32), allocatable, intent(inout) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_key_real32_1d
+
+      module subroutine get_key_real64_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         real(kind=REAL64), allocatable, intent(inout) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_key_real64_1d
+
+
+      module subroutine get_value_logical(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         logical, intent(inout) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_value_logical
+
+      module subroutine get_value_string(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         character(:), allocatable, intent(inout) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_value_string
+
+      module subroutine get_value_integer32(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         integer(kind=INT32), intent(inout) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_value_integer32
+
+      module subroutine get_value_integer64(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         integer(kind=INT64), intent(inout) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_value_integer64
+
+      module subroutine get_value_real32(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         real(kind=REAL32), intent(inout) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_value_real32
+
+      module subroutine get_value_real64(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         real(kind=REAL64), intent(inout) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_value_real64
+
+      module subroutine get_value_subconfig(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         type(Configuration), intent(inout) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_value_subconfig
+
+      module subroutine get_value_logical_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         logical, allocatable, intent(inout) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_value_logical_1d
+
+      module subroutine get_value_integer32_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         integer(kind=INT32), allocatable, intent(inout) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_value_integer32_1d
+
+      module subroutine get_value_integer64_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         integer(kind=INT64), allocatable, intent(inout) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_value_integer64_1d
+
+      module subroutine get_value_real32_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         real(kind=REAL32), allocatable, intent(inout) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_value_real32_1d
+
+      module subroutine get_value_real64_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(ConfigurationIterator), target, intent(in) :: this
+         real(kind=REAL64), allocatable, intent(inout) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine get_value_real64_1d
+
+   end interface
+
+   ! Relational operators
+   interface operator(==)
+      module function equal_iter(a, b) result(equal)
+         logical :: equal
+         type(ConfigurationIterator), intent(in) :: a, b
+      end function equal_iter
+   end interface operator(==)
+
+   interface operator(/=)
+      module function not_equal_iter(a, b) result(not_equal)
+         logical :: not_equal
+         type(ConfigurationIterator), intent(in) :: a, b
+      end function not_equal_iter
+   end interface operator(/=)
+
 contains
 
+   ! Constructor
    function new_Configuration(node) result(config)
       type(Configuration) :: config
       class(AbstractNode), target, intent(in) :: node

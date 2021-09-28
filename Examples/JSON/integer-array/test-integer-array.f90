@@ -11,7 +11,4 @@ program main
    call c%get(nodes, 'nodes')
 
    if (any(nodes/=[1,2,3])) error stop "Test failed: wrong nodes values."
-
-!   sync all
-   if (this_image()==1) print *,"Test passed"
 end program

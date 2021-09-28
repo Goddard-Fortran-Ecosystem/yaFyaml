@@ -15,7 +15,7 @@ module fy_MappingNode
 
    type, extends(BaseNode) :: MappingNode
       ! TODO undo private debugging
-!!$      private
+      private
       type(Mapping) :: value
    contains
       procedure :: size

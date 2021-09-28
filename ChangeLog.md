@@ -1,11 +1,20 @@
 # ChangeLog
 
-## [Unreleased]
-
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
 
+### Added
+
+- Introduced new overload for 'Configuration::get()' which returns a
+  subconfig.
+  
+### Changed
+
+- Introduced Fortran submodule for Configuration.  Code was already long and now need to introduce
+  an iterator class in the same namespace.
+  
 ## [1.0-beta]
 
 - The interfaces to configuration have been considerably modified to
@@ -30,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.0] - 2021-03-15
 
-### CHANGED
+### Changed
 
 ## Added
 

@@ -23,6 +23,9 @@ add_library (yafyaml
   CoreSchema.F90
 
   Configuration.F90
+  Configuration_implementation.F90
+  
+#  ConfigurationIterator.F90
   KeywordEnforcer.F90
   ErrorCodes.F90
   SimpleKey.F90

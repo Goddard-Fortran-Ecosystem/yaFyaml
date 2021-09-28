@@ -5,6 +5,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Added gfortran-8 and macos-11 to CI
+
 ## [1.0-beta2]
 
 ### Added
@@ -32,9 +36,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for defacto documentation.
 
 - Tested with Intel 2021, gfortran 8.5, 9.4, 10.3, 11.2
-
-
-
 
 ## [0.5.1] - 2021-04-01
 

@@ -7,8 +7,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-10.15]
-        compiler: [gfortran-9, gfortran-10]
+        os: [ubuntu-20.04, macos-10.15, macos-11]
+        #compiler: [gfortran-8, gfortran-9, gfortran-10, gfortran-11]
+        compiler: [gfortran-8, gfortran-9, gfortran-10]
+        exclude:
+          - os: macos-10.15
+            compiler: gfortran-8
+          - os: macos-11
+            compiler: gfortran-8
 
       # fail-fast is set to 'true' here which is good for production, but when
       # debugging, set to 'false'. fail-fast means if *any* ci test in the matrix fails
@@ -43,7 +49,7 @@ jobs:
           fetch-depth: 1
       - name: Build GFE Prereqs
         run: |
-          bash ./tools/travis-install-gfe.bash
+          bash ./tools/ci-install-gfe.bash
       - name: Build yaFyaml
         run: |
           mkdir -p build

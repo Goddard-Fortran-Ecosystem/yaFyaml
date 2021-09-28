@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Added gfortran-8, gfortran-11, and macos-11 to CI
+- Added gfortran-8 and macos-11 to CI
 
 ## [1.0-beta2]
 

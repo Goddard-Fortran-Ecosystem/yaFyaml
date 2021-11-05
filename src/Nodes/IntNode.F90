@@ -18,6 +18,7 @@ module fy_IntNode
       integer(kind=INT64) :: value = -huge(1_INT64)
    contains
       procedure, nopass :: is_int
+      procedure, nopass :: is_scalar
       procedure, pass(this) :: assign_to_integer32
       procedure, pass(this) :: assign_to_integer64
       procedure :: less_than
@@ -43,6 +44,10 @@ contains
    pure logical function is_int() result(is)
       is = .true.
    end function is_int
+
+   pure logical function is_scalar() result(is)
+      is = .true.
+   end function is_scalar
 
    function new_IntNode_i32(i32) result(node)
       type(IntNode) :: node

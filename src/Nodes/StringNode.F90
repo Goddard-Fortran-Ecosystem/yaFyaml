@@ -18,6 +18,7 @@ module fy_StringNode
       character(:), allocatable :: value
    contains
       procedure, nopass :: is_string
+      procedure, nopass :: is_scalar
       procedure, pass(this) :: assign_to_string
       procedure :: less_than
       procedure :: write_node_formatted
@@ -43,6 +44,9 @@ contains
       is = .true.
    end function is_string
 
+   pure logical function is_scalar() result(is)
+      is = .true.
+   end function is_scalar
 
    function new_StringNode(str) result(node)
       type(StringNode) :: node

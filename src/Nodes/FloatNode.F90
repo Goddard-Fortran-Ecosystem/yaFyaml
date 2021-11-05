@@ -18,6 +18,7 @@ module fy_FloatNode
       real(kind=REAL64) :: value = -huge(1._REAL64)
    contains
       procedure, nopass :: is_float
+      procedure, nopass :: is_scalar
       procedure, pass(this) :: assign_to_real32
       procedure, pass(this) :: assign_to_real64
       procedure :: less_than
@@ -43,6 +44,10 @@ contains
    pure logical function is_float() result(is)
       is = .true.
    end function is_float
+
+   pure logical function is_scalar() result(is)
+      is = .true.
+   end function is_scalar
 
    function new_FloatNode_r32(r32) result(node)
       type(FloatNode) :: node

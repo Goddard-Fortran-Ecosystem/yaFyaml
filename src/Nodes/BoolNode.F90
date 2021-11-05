@@ -17,6 +17,7 @@ module fy_BoolNode
       logical :: value = .false.
    contains
       procedure, nopass :: is_bool
+      procedure, nopass :: is_scalar
       procedure, pass(this) :: assign_to_logical
       procedure :: less_than
       procedure :: write_node_formatted
@@ -44,6 +45,9 @@ contains
       is = .true.
    end function is_bool
 
+   pure logical function is_scalar() result(is)
+      is = .true.
+   end function is_scalar
 
    function new_BoolNode(flag) result(node)
       type(BoolNode) :: node

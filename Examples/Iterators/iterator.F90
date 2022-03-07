@@ -13,7 +13,7 @@ program main
    integer :: status
 
    p = Parser('core')
-   config = p%load(FileStream('iterator.yaml'))
+   config = p%load('iterator.yaml')
    write(10,'(dt)', iostat=status) config
 
    call optimistic(config)  ! no error code checking

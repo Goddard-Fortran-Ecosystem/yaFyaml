@@ -19,6 +19,7 @@ module fy_Parser
    use fy_StringNode
    use fy_IntNode
    use fy_Configuration
+   use fy_FileStream
 
    use fy_AbstractSchema
    use fy_FailsafeSchema
@@ -35,7 +36,9 @@ module fy_Parser
       type (StringNodeMap) :: anchors
       
    contains
-      procedure :: load
+      procedure :: load_from_file
+      procedure :: load_from_stream
+      generic   :: load => load_from_file, load_from_stream
       procedure :: top
       procedure :: process_sequence
       procedure :: process_mapping
@@ -87,7 +90,7 @@ contains
    end function new_Parser_schema_name
 
 
-   function load(this, stream) result(cfg)
+   function load_from_stream(this, stream) result(cfg)
       type(Configuration) :: cfg
       class(Parser), intent(inout) :: this
       class(AbstractTextStream), intent(in) :: stream
@@ -101,8 +104,16 @@ contains
       cfg = Configuration(node)
       nullify(node) ! not deallocate !
 
-   end function load
+   end function load_from_stream
 
+   function load_from_file(this, fname) result(cfg)
+      type(Configuration) :: cfg
+      class(Parser), intent(inout) :: this
+      character(len=*), intent(in) :: fname
+
+      cfg = this%load(FileStream(fname))
+
+   end function load_from_file
 
    subroutine top(this, node, lexr)
       class(Parser), intent(inout) :: this

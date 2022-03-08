@@ -22,7 +22,7 @@ program main
 
    p = Parser('core')
    ! TODO should a return code
-   config = p%load(FileStream('simple.yaml'))
+   config = p%load('simple.yaml')
 
    x = config%at('x')
 

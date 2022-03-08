@@ -5,6 +5,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0-beta5] 2022-03-08
+
+### Added
+
+- New interface for Parser::load() that allows user to just specify a file name and not require them to separately construct a FileStream from the filename.
+
 ### Changed
 
 - Added gfortran-8 and macos-11 to CI

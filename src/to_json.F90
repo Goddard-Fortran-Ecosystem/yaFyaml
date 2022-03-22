@@ -3,7 +3,7 @@ program main
    use yaFyaml
 
    type(Parser) :: p
-   type(Configuration) :: cfg
+   type(YAML_Node) :: cfg
 
    character(:), allocatable :: filename
    integer :: n

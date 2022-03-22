@@ -1,9 +1,9 @@
 program main
-   use yafyaml, only : Parser, Configuration, FileStream
+   use yafyaml, only : Parser, YAML_Node, FileStream
    implicit none
 
    type(Parser) p
-   type(Configuration) c
+   type(YAML_Node) c
    integer, allocatable :: nodes(:)
 
    p = Parser('core')

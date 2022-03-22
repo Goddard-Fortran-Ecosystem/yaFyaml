@@ -1,5 +1,8 @@
 module yafyaml
-  use fy_Configuration
+  use fy_YAML_Node, only: YAML_Node
+  use fy_YAML_Node, only: YAML_NodeIterator
+!!$  use fy_YAML_Node, only: Configuration => YAML_Node
+!!$  use fy_YAML_Node, only: ConfigurationIterator => YAML_NodeIterator
   use fy_Parser
   use fy_ErrorCodes
   use fy_Nodes

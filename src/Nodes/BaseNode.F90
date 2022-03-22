@@ -24,6 +24,7 @@ module fy_BaseNode
       procedure :: get_real32, get_real32_1d
       procedure :: get_real64, get_real64_1d
 
+      procedure :: set_node
 
       procedure, pass(this) :: assign_to_logical
       procedure, pass(this) :: assign_to_string
@@ -184,6 +185,18 @@ module fy_BaseNode
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end subroutine get_real64_1d
+
+      module subroutine set_node(this, node, selectors, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use gftl2_UnlimitedVector
+         class(BaseNode), target, intent(inout) :: this
+         class(AbstractNode), intent(in) :: node
+!!$         type(UnlimitedVector), target, intent(inout) :: selectors
+         type(UnlimitedVector), target, intent(in) :: selectors
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_node
 
    end interface
 

@@ -1,8 +1,8 @@
-!!! The Parser imports a sequence of tokens and constructs a
-!!! configuration object.  I naively expect this to be rather simple
-!!! compared to the Lexer, but reading suggests that it should be the
-!!! opposite.  The difference may in part be that this package restricts
-!!! keys to be simple strings.  
+!!! The Parser imports a sequence of tokens and constructs a YAML_Node
+!!! object.  I naively expect this to be rather simple compared to the
+!!! Lexer, but reading suggests that it should be the opposite.  The
+!!! difference may in part be that this package restricts keys to be
+!!! simple strings.
 
 module fy_Parser
    use fy_Lexer
@@ -18,7 +18,7 @@ module fy_Parser
    use fy_Sequence
    use fy_StringNode
    use fy_IntNode
-   use fy_Configuration
+   use fy_YAML_Node
    use fy_FileStream
 
    use fy_AbstractSchema
@@ -91,7 +91,7 @@ contains
 
 
    function load_from_stream(this, stream) result(cfg)
-      type(Configuration) :: cfg
+      type(YAML_Node) :: cfg
       class(Parser), intent(inout) :: this
       class(AbstractTextStream), intent(in) :: stream
 
@@ -101,13 +101,13 @@ contains
       lexr = Lexer(Reader(stream))
 
       call this%top(node, lexr)
-      cfg = Configuration(node)
+      call cfg%initialize(node)
       nullify(node) ! not deallocate !
 
    end function load_from_stream
 
    function load_from_file(this, fname) result(cfg)
-      type(Configuration) :: cfg
+      type(YAML_Node) :: cfg
       class(Parser), intent(inout) :: this
       character(len=*), intent(in) :: fname
 

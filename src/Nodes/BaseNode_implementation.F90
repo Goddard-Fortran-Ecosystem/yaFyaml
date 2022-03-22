@@ -31,21 +31,39 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
+      integer :: status
+      type(UnlimitedVector), target :: v
+
+      call selectors_to_vector(v, SELECTORS)
+
+      ptr => at_vector_selector(this, v, unusable, found=found, err_msg=err_msg, rc=status)
+      if (present(rc)) rc=status
+      return
+      __UNUSED_DUMMY__(unusable)
+
+   end function
+
+   function at_vector_selector(this, v, unusable, found, err_msg, rc) result(ptr)
+      class(AbstractNode), pointer :: ptr
+      class(BaseNode), target, intent(in) :: this
+      type(UnlimitedVector), intent(in) :: v
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      logical, optional, intent(out) :: found
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
 
       class(AbstractNode), pointer :: config, next_config
       class(*), pointer :: selector
       
       integer :: status
-      type(UnlimitedVector), target :: v
       type(UnlimitedVectorIterator) :: iter
       logical :: found_
-
-      call selectors_to_vector(v)
 
       config => this
       if (present(rc)) rc = YAFYAML_SUCCESS ! unless ...
       if (present(found)) found=.true. ! unless proven otherwise
-      
+
       associate(b => v%begin(), e => v%end())
         iter = b 
         do while (iter /= e)
@@ -97,32 +115,6 @@ contains
       __UNUSED_DUMMY__(unusable)
       
    contains
-
-      subroutine selectors_to_vector(v)
-         type (UnlimitedVector), intent(out) :: v
-
-         if (present(s1)) call save_one(v, s1)
-         if (present(s2)) call save_one(v, s2)
-         if (present(s3)) call save_one(v, s3)
-         if (present(s4)) call save_one(v, s4)
-         if (present(s5)) call save_one(v, s5)
-         if (present(s6)) call save_one(v, s6)
-         if (present(s7)) call save_one(v, s7)
-         if (present(s8)) call save_one(v, s8)
-         if (present(s9)) call save_one(v, s9)
-      end subroutine selectors_to_vector
-
-      subroutine save_one(v, arg)
-         type(UnlimitedVector), intent(inout) :: v
-         class(*), intent(in) :: arg
-         select type (arg)
-         type is (character(*))
-            call v%push_back(String(arg))
-         class default
-            call v%push_back(arg)
-         end select
-      end subroutine save_one
-    
 
       ! selector for sequence must be some kind of integer
       subroutine get_sequence_item(s, selector, found, rc)
@@ -212,7 +204,7 @@ contains
             
       end subroutine get_mapping_item
 
-   end function at_multi_selector
+   end function at_vector_selector
 
    ! Error conditions
    ! 1. Selected item is not found _and_ found is not used
@@ -594,6 +586,133 @@ contains
       __UNUSED_DUMMY__(unusable)
    end subroutine get_real64_1d
 
+
+   module subroutine set_node(this, node, selectors, unusable, err_msg, rc)
+      use fy_KeywordEnforcer
+      use gftl2_UnlimitedVector
+      use fy_SequenceNode
+      use fy_MappingNode
+      class(BaseNode), target, intent(inout) :: this
+      class(AbstractNode), intent(in) :: node
+!!$      type(UnlimitedVector), target, intent(inout) :: selectors
+      type(UnlimitedVector), target, intent(in) :: selectors
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      class(AbstractNode), pointer :: ptr
+      integer :: status
+      logical, pointer :: bool_ptr
+      logical :: was_found
+      type(UnlimitedVector) :: v
+
+      class(AbstractNode), pointer :: parent_node
+!!$      class(*), allocatable :: last_selector
+      class(*), pointer :: last_selector
+      Type(UnlimitedVector) :: parent_selectors
+      type(Sequence), pointer :: seq
+      type(Mapping), pointer :: map
+
+      __ASSERT2__(selectors%size() > 0, YAFYAML_MISSING_SELECTOR)
+
+!!$      last_selector = selectors%back()
+!!$      call selectors%pop_back()
+
+      last_selector => selectors%back()
+      call clone_unlimited(selectors, parent_selectors)
+      call parent_selectors%pop_back()
+
+      !TODO: make at_vector_selector() a TBP
+!!$      parent_node => at_vector_selector(this, selectors, err_msg=err_msg, rc=status)
+      parent_node => at_vector_selector(this, parent_selectors, err_msg=err_msg, rc=status)
+      __VERIFY2__(err_msg, status)
+
+      select type (q => parent_node)
+      type is (SequenceNode)
+
+         seq => to_sequence(q, err_msg=err_msg, rc=status)
+         __VERIFY2__(err_msg, status)
+         select type (i => last_selector)
+         type is (integer(kind=INT32))
+            __ASSERT2__(i > 0 .and. i <= seq%size(), YAFYAML_SEQUENCE_INDEX_OUT_OF_BOUNDS)
+            call seq%set(i, node)
+         type is (integer(kind=INT64))
+            __ASSERT2__(i > 0 .and. i <= seq%size(), YAFYAML_SEQUENCE_INDEX_OUT_OF_BOUNDS)
+            call seq%set(i, node)
+         class default
+            __FAIL2__(YAFYAML_TYPE_MISMATCH)
+         end select
+
+      type is (MappingNode)
+         map => to_mapping(q, err_msg=err_msg, rc=status)
+         __VERIFY2__(err_msg, status)
+         select type (qq => last_selector)
+         type is (integer(kind=INT32))
+            call map%set(IntNode(qq), node)
+         type is (integer(kind=INT64))
+            call map%set(IntNode(qq), node)
+         type is (real(kind=REAL32))
+            call map%set(FloatNode(qq), node)
+         type is (real(kind=REAL64))
+            call map%set(FloatNode(qq), node)
+         type is (character(*))
+            call map%set(StringNode(qq), node)
+         type is (String)
+            call map%set(StringNode(qq%s), node)
+         type is (sequence)
+            call map%set(SequenceNode(qq), node)
+         type is (Mapping)
+            call map%set(MappingNode(qq), node)
+         class default
+            __FAIL2__(YAFYAML_TYPE_MISMATCH)
+         end select
+
+      class default
+         ! Not the ideal error code.  May need a new one
+         __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)
+      end select
+         
+
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   contains
+
+      subroutine clone_unlimited(v_a, v_b)
+         type(UnlimitedVector), target, intent(in) :: v_a
+         type(UnlimitedVector), target, intent(out) :: v_b
+
+         type(UnlimitedVectorIterator) :: iter
+         integer :: i
+         
+
+         associate (b => v_a%begin(), e => v_a%end())
+           i = 1
+           iter = b
+           do while (iter /= e)
+              select type (q => iter%of())
+              type is (logical)
+                 call v_b%push_back(q)
+              type is (character(len=*))
+                 call v_b%push_back(q)
+              type is (String)
+                 call v_b%push_back(q)
+              type is (integer(kind=INT32))
+                 call v_b%push_back(q)
+              type is (integer(kind=INT64))
+                 call v_b%push_back(q)
+              type is (real(kind=REAL32))
+                 call v_b%push_back(q)
+              type is (real(kind=REAL64))
+                 call v_b%push_back(q)
+              end select
+              i = i + 1
+              call iter%next()
+           end do
+         end associate
+      end subroutine clone_unlimited
+   end subroutine set_node
+
+
    module function has_selector(this, SELECTORS) result(has)
       logical :: has
       class(BaseNode), intent(in) :: this
@@ -608,6 +727,34 @@ contains
       has = was_found
 
    end function has_selector
+
+   subroutine selectors_to_vector(v, SELECTORS)
+      type (UnlimitedVector), intent(out) :: v
+      class(*), optional, intent(in) :: SELECTORS
+      
+      if (present(s1)) call save_one(v, s1)
+      if (present(s2)) call save_one(v, s2)
+      if (present(s3)) call save_one(v, s3)
+      if (present(s4)) call save_one(v, s4)
+      if (present(s5)) call save_one(v, s5)
+      if (present(s6)) call save_one(v, s6)
+      if (present(s7)) call save_one(v, s7)
+      if (present(s8)) call save_one(v, s8)
+      if (present(s9)) call save_one(v, s9)
+
+contains
+
+   subroutine save_one(v, arg)
+      type(UnlimitedVector), intent(inout) :: v
+      class(*), intent(in) :: arg
+      select type (arg)
+      type is (character(*))
+         call v%push_back(String(arg))
+      class default
+         call v%push_back(arg)
+         end select
+      end subroutine save_one
+   end subroutine selectors_to_vector
 
 
 end submodule BaseNode_implementation

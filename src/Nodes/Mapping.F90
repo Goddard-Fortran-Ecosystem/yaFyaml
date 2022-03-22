@@ -12,7 +12,11 @@ module fy_Mapping
 #define OrderedMapIterator MappingIterator
 #define Pair MappingPair
 
-#include "ordered_map/template.inc"
+#define Map Mapping
+#define MapIterator MappingIterator
+
+!#include "ordered_map/template.inc"
+#include "map/template.inc"
 
 #undef Pair
 #undef OrderedMapIterator

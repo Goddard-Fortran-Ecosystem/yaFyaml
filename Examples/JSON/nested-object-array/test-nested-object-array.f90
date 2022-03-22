@@ -1,6 +1,6 @@
 program main
   !! Test the reading of a JSON file with a nested array of objects
-  use yafyaml, only : Parser, Configuration, FileStream, YAFYAML_SUCCESS
+  use yafyaml, only : Parser, YAML_Node, FileStream, YAFYAML_SUCCESS
   use gFTL_UnlimitedVector, only : UnlimitedVector
   implicit none
 
@@ -14,8 +14,8 @@ program main
 
   type(dag) :: d
   type(Parser) :: p
-  type(Configuration) :: c
-  type(Configuration) :: dag_vertices, dag_vertices_i_depends_on
+  type(YAML_Node) :: c
+  type(YAML_Node) :: dag_vertices, dag_vertices_i_depends_on
 
   integer :: i, j, status
 

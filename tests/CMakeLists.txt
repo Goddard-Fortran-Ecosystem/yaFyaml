@@ -16,6 +16,8 @@ set (pf_tests
   Test_MappingNode.pf
 
   Test_ComplexNode.pf
+
+  Test_YAML_Node_Set.pf
   )
 
 

@@ -138,5 +138,59 @@ contains
 
    end function less_than
 
+   recursive module subroutine clone_mapping_node(a, b)
+      use fy_SequenceNode
+      use fy_Sequence
+      type(MappingNode), target, intent(in) :: a
+      type(MappingNode), target, intent(out) :: b
+
+      type(Mapping), pointer :: m_a, m_b
+      type(MappingIterator) :: iter
+      class(AbstractNode), pointer :: key, val
+      class(AbstractNode), pointer :: subobject
+
+      m_a => to_mapping(a)
+      m_b => to_mapping(b)
+!!$      call clone(m_a, m_b)
+   end subroutine clone_mapping_node
+     
+   recursive module subroutine clone_mapping(a, b)
+      use fy_SequenceNode
+      use fy_Sequence
+      type(Mapping), target, intent(in) :: a
+      type(Mapping), target, intent(out) :: b
+
+      type(MappingIterator) :: iter
+      class(AbstractNode), pointer :: key, val
+      class(AbstractNode), pointer :: subobject
+
+!!$      associate (beg => a%begin(), e => a%end())
+!!$        iter = beg
+!!$        do while (iter /= e)
+!!$           key => iter%first()
+!!$           val => iter%second()
+!!$           select type (q => val)
+!!$           type is (SequenceNode)
+!!$              call b%insert(key, SequenceNode())
+!!$              subobject => b%of(key)
+!!$              select type (qq => subobject)
+!!$              type is (SequenceNode) ! guaranteed
+!!$                 call clone(q, qq)
+!!$              end select
+!!$           type is (MappingNode)
+!!$              call b%insert(key, MappingNode())
+!!$              subobject => b%of(key)
+!!$              select type (qq => subobject)
+!!$              type is (MappingNode) ! guaranteed
+!!$                 call clone(q, qq)
+!!$              end select
+!!$           class default ! scalar
+!!$              call b%insert(key, val)
+!!$           end select
+!!$           call iter%next()
+!!$        end do
+!!$      end associate
+   end subroutine clone_mapping
+     
 end submodule MappingNode_implementation
    

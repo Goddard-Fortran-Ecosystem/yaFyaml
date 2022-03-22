@@ -28,7 +28,7 @@ module fy_ErrorCodes
      enumerator :: YAFYAML_MAPPING_KEY_NOT_FOUND
      enumerator :: YAFYAML_NOT_A_COLLECTION
      enumerator :: YAFYAML_NOT_A_MAPPING
-
+     enumerator :: YAFYAML_MISSING_SELECTOR
   end enum
 
 contains
@@ -86,6 +86,8 @@ contains
          message = 'Selector applied to a non-collection.'
       case (YAFYAML_NOT_A_MAPPING)
          message = 'Can only construct iterator for mappings.'
+      case (YAFYAML_MISSING_SELECTOR)
+         message = 'set() method requires at least one selector.  None provided.'
       case default
          message = 'Unkown error code'
       end select

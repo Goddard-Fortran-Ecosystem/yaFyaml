@@ -22,9 +22,9 @@ add_library (yafyaml
   JSONSchema.F90
   CoreSchema.F90
 
-  Configuration.F90
-  Configuration_implementation.F90
-  ConfigurationIterator_implementation.F90
+  YAML_Node.F90
+  YAML_Node_implementation.F90
+  YAML_NodeIterator_implementation.F90
   KeywordEnforcer.F90
   ErrorCodes.F90
   SimpleKey.F90

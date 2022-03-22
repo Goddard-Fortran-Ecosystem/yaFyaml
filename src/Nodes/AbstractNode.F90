@@ -12,30 +12,28 @@ module fy_AbstractNode
 
       ! accessors to sub-nodes
       procedure(I_at_multi_selector), deferred :: at_multi_selector
-      generic :: at => at_multi_selector
       procedure(I_of_multi_selector), deferred :: of_multi_selector
+      procedure(I_has),               deferred :: has
+      generic :: at => at_multi_selector
       generic :: of => of_multi_selector
-      procedure(I_has), deferred :: has
 
-      procedure(I_get_logical),   deferred :: get_logical
+      procedure(I_get_logical),      deferred :: get_logical
       procedure(I_get_logical_1d),   deferred :: get_logical_1d
-      procedure(I_get_string),    deferred :: get_string
-      procedure(I_get_integer32), deferred :: get_integer32
+      procedure(I_get_string),       deferred :: get_string
+      procedure(I_get_integer32),    deferred :: get_integer32
       procedure(I_get_integer32_1d), deferred :: get_integer32_1d
-      procedure(I_get_integer64), deferred :: get_integer64
+      procedure(I_get_integer64),    deferred :: get_integer64
       procedure(I_get_integer64_1d), deferred :: get_integer64_1d
-
-      procedure(I_get_real32),    deferred :: get_real32
+      procedure(I_get_real32),       deferred :: get_real32
       procedure(I_get_real32_1d),    deferred :: get_real32_1d
-      procedure(I_get_real64),    deferred :: get_real64
+      procedure(I_get_real64),       deferred :: get_real64
       procedure(I_get_real64_1d),    deferred :: get_real64_1d
-
-      generic :: get => get_logical, get_logical_1d
       generic :: get => get_string
+      generic :: get => get_logical,   get_logical_1d
       generic :: get => get_integer32, get_integer32_1d
       generic :: get => get_integer64, get_integer64_1d
-      generic :: get => get_real32, get_real32_1d
-      generic :: get => get_real64, get_real64_1d
+      generic :: get => get_real32,    get_real32_1d
+      generic :: get => get_real64,    get_real64_1d
 
       procedure(I_set_node), deferred :: set_node
       generic :: set => set_node
@@ -62,11 +60,11 @@ module fy_AbstractNode
       procedure(I_is), deferred, nopass :: is_int
       procedure(I_is), deferred, nopass :: is_float
 
-      procedure(I_write_formatted), deferred :: write_formatted
-      generic :: write(formatted) => write_formatted
+      procedure(I_write_formatted),      deferred :: write_formatted
       procedure(I_write_node_formatted), deferred :: write_node_formatted
+      generic :: write(formatted) => write_formatted
 
-      ! "<"
+      ! "<" opertor.
       ! Necessary to support map container with *Node keys.
       procedure(I_less_than), deferred :: less_than
       generic :: operator(<) => less_than

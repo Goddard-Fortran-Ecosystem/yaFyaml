@@ -72,40 +72,20 @@ module fy_YAML_Node
       procedure :: set_integer64
       procedure :: set_real32
       procedure :: set_real64
-!!$      procedure :: set_logical_1d
-!!$      procedure :: set_integer32_1d
-!!$      procedure :: set_integer64_1d
-!!$      procedure :: set_real32_1d
-!!$      procedure :: set_real64_1d
+      procedure :: set_logical_1d
+      procedure :: set_integer32_1d
+      procedure :: set_integer64_1d
+      procedure :: set_real32_1d
+      procedure :: set_real64_1d
 !!$      procedure :: set_subconfig
-      generic :: set => set_logical!, set_logical_1d
       generic :: set => set_string
-      generic :: set => set_integer32!, set_integer32_1db
-      generic :: set => set_integer64!, set_integer64_1d
-      generic :: set => set_real32!, set_real32_1d
-      generic :: set => set_real64!, set_real64_1d
+      generic :: set => set_logical,   set_logical_1d
+      generic :: set => set_integer32, set_integer32_1d
+      generic :: set => set_integer64, set_integer64_1d
+      generic :: set => set_real32,    set_real32_1d
+      generic :: set => set_real64,    set_real64_1d
 !!$      generic :: set => set_subconfig
-!!$
-!!$      procedure :: insert_logical
-!!$      procedure :: insert_string
-!!$      procedure :: insert_integer32
-!!$      procedure :: insert_integer64
-!!$      procedure :: insert_real32
-!!$      procedure :: insert_real64
-!!$      procedure :: insert_logical_1d
-!!$      procedure :: insert_integer32_1d
-!!$      procedure :: insert_integer64_1d
-!!$      procedure :: insert_real32_1d
-!!$      procedure :: insert_real64_1d
-!!$      procedure :: insert_subconfig
-!!$      generic :: insert => insert_logical, insert_logical_1d
-!!$      generic :: insert => insert_string
-!!$      generic :: insert => insert_integer32, insert_integer32_1d
-!!$      generic :: insert => insert_integer64, insert_integer64_1d
-!!$      generic :: insert => insert_real32, insert_real32_1d
-!!$      generic :: insert => insert_real64, insert_real64_1d
-!!$      generic :: insert => insert_subconfig
-!!$
+
       procedure, pass(this) :: assign_to_logical
       procedure, pass(this) :: assign_to_string
       procedure, pass(this) :: assign_to_integer32
@@ -452,6 +432,60 @@ module fy_YAML_Node
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end subroutine set_real64
+
+      module subroutine set_logical_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(YAML_Node), target, intent(inout) :: this
+         logical, intent(in) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_logical_1d
+
+      module subroutine set_integer32_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT32
+         class(YAML_Node), target, intent(inout) :: this
+         integer(kind=INT32), intent(in) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_integer32_1d
+
+      module subroutine set_integer64_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT64
+         class(YAML_Node), target, intent(inout) :: this
+         integer(kind=INT64), intent(in) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_integer64_1d
+
+      module subroutine set_real32_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL32
+         class(YAML_Node), target, intent(inout) :: this
+         real(kind=REAL32), intent(in) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_real32_1d
+
+      module subroutine set_real64_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL64
+         class(YAML_Node), target, intent(inout) :: this
+         real(kind=REAL64), intent(in) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_real64_1d
 
 
       module subroutine get_subconfig(this, value, SELECTORS, unusable, err_msg, rc)
@@ -854,22 +888,6 @@ contains
       class(AbstractNode), intent(in) :: node
 
       allocate(this%node, source=node)
-!!$      select type(q => node)
-!!$      type is (MappingNode)
-!!$         allocate(this%node, source=MappingNode())
-!!$         select type (qq => this%node)
-!!$         type is (MappingNode) ! guaranteed
-!!$            call clone(q, qq)
-!!$         end select
-!!$      type is (SequenceNode)
-!!$         allocate(this%node, source=SequenceNode())
-!!$         select type (qq => this%node)
-!!$         type is (SequenceNode) ! guaranteed
-!!$            call clone(q, qq)
-!!$         end select
-!!$      class default
-!!$         allocate(this%node, source=node)
-!!$      end select
 
    end function new_YAML_Node
 

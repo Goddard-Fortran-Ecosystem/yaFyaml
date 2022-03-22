@@ -5,6 +5,8 @@
 
 submodule (fy_YAML_Node)  YAML_Node_implementation
    use, intrinsic :: iso_fortran_env, only: INT32, INT64, REAL32, REAL64
+   implicit none
+   
 contains
    
    module function size_config(this) result(size)
@@ -409,36 +411,6 @@ contains
   end subroutine write_formatted
 
 
-!!$  subroutine make_selectors(v, SELECTORS)
-!!$     use gFTL2_UnlimitedVector
-!!$     type(UnlimitedVector), intent(out) :: v
-!!$     class(*), optional, intent(in) :: SELECTORS
-!!$     
-!!$     if (present(s1)) call save_one(v, s1)
-!!$     if (present(s2)) call save_one(v, s2)
-!!$     if (present(s3)) call save_one(v, s3)
-!!$     if (present(s4)) call save_one(v, s4)
-!!$     if (present(s5)) call save_one(v, s5)
-!!$     if (present(s6)) call save_one(v, s6)
-!!$     if (present(s7)) call save_one(v, s7)
-!!$     if (present(s8)) call save_one(v, s8)
-!!$     if (present(s9)) call save_one(v, s9)
-!!$
-!!$  contains
-!!$     
-!!$     subroutine save_one(v, arg)
-!!$        use fy_String
-!!$        type(UnlimitedVector), intent(inout) :: v
-!!$        class(*), intent(in) :: arg
-!!$        select type (arg)
-!!$        type is (character(*))
-!!$           call v%push_back(String(arg))
-!!$        class default
-!!$           call v%push_back(arg)
-!!$        end select
-!!$     end subroutine save_one
-!!$  end subroutine make_selectors
-!!$
   function selectors(SELECTORS) result(v)
      use gFTL2_UnlimitedVector
      type(UnlimitedVector) :: v
@@ -472,7 +444,6 @@ contains
   module subroutine set_logical(this, value, SELECTORS, unusable, err_msg, rc)
      use fy_KeywordEnforcer
      use fy_BoolNode
-     use gFTL2_UnlimitedVector
      class(YAML_Node), target, intent(inout) :: this
      logical, intent(in) :: value
      class(*), optional, intent(in) :: SELECTORS
@@ -480,18 +451,15 @@ contains
      STRING_DUMMY, optional, intent(inout) :: err_msg
      integer, optional, intent(out) :: rc
 
-!!$     type(UnlimitedVector) :: selectors
-!!$     call make_selectors(selectors, SELECTORS)
-!!$     call this%node%set(BoolNode(value), selectors, err_msg=err_msg, rc=rc)
      call this%node%set(BoolNode(value), selectors(SELECTORS), err_msg=err_msg, rc=rc)
 
       __UNUSED_DUMMY__(unusable)
    end subroutine set_logical
 
+
   module subroutine set_string(this, value, SELECTORS, unusable, err_msg, rc)
      use fy_KeywordEnforcer
      use fy_StringNode
-     use gFTL2_UnlimitedVector
      class(YAML_Node), target, intent(inout) :: this
      character(*), intent(in) :: value
      class(*), optional, intent(in) :: SELECTORS
@@ -499,9 +467,6 @@ contains
      STRING_DUMMY, optional, intent(inout) :: err_msg
      integer, optional, intent(out) :: rc
      
-!!$     type(UnlimitedVector) :: selectors
-!!$     call make_selectors(selectors, SELECTORS)
-!!$     call this%node%set(StringNode(value), selectors, err_msg=err_msg, rc=rc)
      call this%node%set(StringNode(value), selectors(SELECTORS), err_msg=err_msg, rc=rc)
 
       __UNUSED_DUMMY__(unusable)
@@ -511,7 +476,6 @@ contains
   module subroutine set_integer32(this, value, SELECTORS, unusable, err_msg, rc)
      use fy_KeywordEnforcer
      use fy_IntNode
-     use gFTL2_UnlimitedVector
      class(YAML_Node), target, intent(inout) :: this
      integer(kind=INT32), intent(in) :: value
      class(*), optional, intent(in) :: SELECTORS
@@ -519,9 +483,6 @@ contains
      STRING_DUMMY, optional, intent(inout) :: err_msg
      integer, optional, intent(out) :: rc
      
-!!$     type(UnlimitedVector) :: selectors
-!!$     call make_selectors(selectors, SELECTORS)
-!!$     call this%node%set(IntNode(value), selectors, err_msg=err_msg, rc=rc)
      call this%node%set(IntNode(value), selectors(SELECTORS), err_msg=err_msg, rc=rc)
 
      __UNUSED_DUMMY__(unusable)
@@ -531,7 +492,6 @@ contains
   module subroutine set_integer64(this, value, SELECTORS, unusable, err_msg, rc)
      use fy_KeywordEnforcer
      use fy_IntNode
-     use gFTL2_UnlimitedVector
      class(YAML_Node), target, intent(inout) :: this
      integer(kind=INT64), intent(in) :: value
      class(*), optional, intent(in) :: SELECTORS
@@ -539,9 +499,6 @@ contains
      STRING_DUMMY, optional, intent(inout) :: err_msg
      integer, optional, intent(out) :: rc
      
-!!$     type(UnlimitedVector) :: selectors
-!!$     call make_selectors(selectors, SELECTORS)
-!!$     call this%node%set(IntNode(value), selectors, err_msg=err_msg, rc=rc)
      call this%node%set(IntNode(value), selectors(SELECTORS), err_msg=err_msg, rc=rc)
 
      __UNUSED_DUMMY__(unusable)
@@ -551,7 +508,6 @@ contains
   module subroutine set_real32(this, value, SELECTORS, unusable, err_msg, rc)
      use fy_KeywordEnforcer
      use fy_FloatNode
-     use gFTL2_UnlimitedVector
      class(YAML_Node), target, intent(inout) :: this
      real(kind=REAL32), intent(in) :: value
      class(*), optional, intent(in) :: SELECTORS
@@ -559,9 +515,6 @@ contains
      STRING_DUMMY, optional, intent(inout) :: err_msg
      integer, optional, intent(out) :: rc
      
-!!$     type(UnlimitedVector) :: selectors
-!!$     call make_selectors(selectors, SELECTORS)
-!!$     call this%node%set(FloatNode(value), selectors, err_msg=err_msg, rc=rc)
      call this%node%set(FloatNode(value), selectors(SELECTORS), err_msg=err_msg, rc=rc)
 
      __UNUSED_DUMMY__(unusable)
@@ -571,7 +524,6 @@ contains
   module subroutine set_real64(this, value, SELECTORS, unusable, err_msg, rc)
      use fy_KeywordEnforcer
      use fy_FloatNode
-     use gFTL2_UnlimitedVector
      class(YAML_Node), target, intent(inout) :: this
      real(kind=REAL64), intent(in) :: value
      class(*), optional, intent(in) :: SELECTORS
@@ -579,14 +531,126 @@ contains
      STRING_DUMMY, optional, intent(inout) :: err_msg
      integer, optional, intent(out) :: rc
      
-!!$     type(UnlimitedVector) :: selectors
-!!$     call make_selectors(selectors, SELECTORS)
-!!$     call this%node%set(FloatNode(value), selectors, err_msg=err_msg, rc=rc)
      call this%node%set(FloatNode(value), selectors(SELECTORS), err_msg=err_msg, rc=rc)
 
      __UNUSED_DUMMY__(unusable)
   end subroutine set_real64
 
+
+  module subroutine set_logical_1d(this, values, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_SequenceNode
+     use fy_BoolNode
+     class(YAML_Node), target, intent(inout) :: this
+     logical, intent(in) :: values(:)
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     type(Sequence) :: s
+     integer :: i
+
+     do i = 1, product(shape(values)) ! size(values)
+        call s%push_back(BoolNode(values(i)))
+     end do
+
+     call this%node%set(SequenceNode(s), selectors(SELECTORS), err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_logical_1d
+
+  module subroutine set_integer32_1d(this, values, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_SequenceNode
+     use fy_IntNode
+     class(YAML_Node), target, intent(inout) :: this
+     integer(kind=INT32), intent(in) :: values(:)
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     type(Sequence) :: s
+     integer :: i
+
+     do i = 1, product(shape(values)) ! size(values)
+        call s%push_back(IntNode(values(i)))
+     end do
+
+     call this%node%set(SequenceNode(s), selectors(SELECTORS), err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_integer32_1d
+
+  module subroutine set_integer64_1d(this, values, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_SequenceNode
+     use fy_IntNode
+     class(YAML_Node), target, intent(inout) :: this
+     integer(kind=INT64), intent(in) :: values(:)
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     type(Sequence) :: s
+     integer :: i
+
+     do i = 1, product(shape(values)) ! size(values)
+        call s%push_back(IntNode(values(i)))
+     end do
+
+     call this%node%set(SequenceNode(s), selectors(SELECTORS), err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_integer64_1d
+
+  module subroutine set_real32_1d(this, values, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_SequenceNode
+     use fy_FloatNode
+     class(YAML_Node), target, intent(inout) :: this
+     real(kind=REAL32), intent(in) :: values(:)
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     type(Sequence) :: s
+     integer :: i
+
+     do i = 1, product(shape(values)) ! size(values)
+        call s%push_back(FloatNode(values(i)))
+     end do
+
+     call this%node%set(SequenceNode(s), selectors(SELECTORS), err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_real32_1d
+
+  module subroutine set_real64_1d(this, values, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_SequenceNode
+     use fy_FloatNode
+     class(YAML_Node), target, intent(inout) :: this
+     real(kind=REAL64), intent(in) :: values(:)
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     type(Sequence) :: s
+     integer :: i
+
+     do i = 1, product(shape(values)) ! size(values)
+        call s%push_back(FloatNode(values(i)))
+     end do
+
+     call this%node%set(SequenceNode(s), selectors(SELECTORS), err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_real64_1d
 
 
 

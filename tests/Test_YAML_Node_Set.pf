@@ -151,6 +151,33 @@ contains
      @assert_that(status, is(YAFYAML_SUCCESS))
      @assert_that(x, is(5.))
 
+  end subroutine test_set_as_insert
 
-   end subroutine test_set_as_insert
+  @test
+  subroutine test_set_1d()
+      type(YAML_Node) :: node
+
+      integer :: status
+      logical, allocatable :: flags(:)
+      real, allocatable :: x(:)
+      type(mapping) :: m
+
+      call m%insert(StringNode('a'), IntNode(1))
+      node = YAML_Node(MappingNode(m))
+
+      call node%set([.true.,.false.,.true.], 'a', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+
+      call node%get(flags, 'a', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(flags, is (equal_to([.true., .false., .true.])))
+
+      call node%set([1.,2.,3.,4.], 'a', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+
+      call node%get(x, 'a', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(x, is (equal_to([1.,2.,3.,4.])))
+  end subroutine test_set_1d
+`
 end module Test_YAML_Node_Set

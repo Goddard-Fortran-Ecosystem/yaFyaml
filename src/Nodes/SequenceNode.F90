@@ -11,7 +11,6 @@ module fy_SequenceNode
    private
 
    public :: SequenceNode
-!!$   public :: clone
    public :: to_sequence
    
    type, extends(BaseNode) :: SequenceNode
@@ -40,23 +39,6 @@ module fy_SequenceNode
       module procedure new_SequenceNode_empty
       module procedure new_SequenceNode
    end interface SequenceNode
-
-!!$   interface clone
-!!$      module procedure clone_sequence_node
-!!$      module procedure clone_sequence
-!!$   end interface clone
-
-   interface 
-      recursive module subroutine clone_sequence_node(a, b)
-         type(SequenceNode), target, intent(in) :: a
-         type(SequenceNode), target, intent(out) :: b
-      end subroutine clone_sequence_node
-      recursive module subroutine clone_sequence(a, b)
-         type(Sequence), target, intent(in) :: a
-         type(Sequence), target, intent(out) :: b
-      end subroutine clone_sequence
-   end interface
-
    
 
 contains
@@ -71,8 +53,8 @@ contains
       type(SequenceNode) :: node
       type(sequence), intent(in) :: s
 
-!!$      call clone(s, node%value)
       node%value = s
+
    end function new_SequenceNode
 
    subroutine assign_to_sequence(s, this)

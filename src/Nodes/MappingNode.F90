@@ -11,7 +11,6 @@ module fy_MappingNode
    private
 
    public :: MappingNode
-!!$   public :: clone
    public :: to_mapping
 
    type, extends(BaseNode) :: MappingNode
@@ -46,23 +45,6 @@ module fy_MappingNode
       module procedure new_MappingNode
    end interface MappingNode
 
-   ! Workaround for compilers that break during deep copies
-!!$   interface clone
-!!$      module procedure clone_mapping_node
-!!$      module procedure clone_mapping
-!!$   end interface clone
-
-   interface
-      recursive module subroutine clone_mapping_node(a, b)
-         type(MappingNode), target, intent(in) :: a
-         type(MappingNode), target, intent(out) :: b
-      end subroutine clone_mapping_node
-      recursive module subroutine clone_mapping(a, b)
-         type(Mapping), target, intent(in) :: a
-         type(Mapping), target, intent(out) :: b
-      end subroutine clone_mapping
-   end interface
-
 contains
 
    pure logical function is_mapping() result(is)
@@ -80,7 +62,6 @@ contains
       type(Mapping), intent(in) :: m
       type(MappingNode) :: node
 
-!!$      call clone(m, node%value)
       node%value = m
 
    end function new_MappingNode

@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Interfaces for config setters
+  `call node%set(<value>, SELECTORS, err_msg, rc)`
+  Where <value> can be integer (32/64 bit), real (32/64 bit), logical or string.
 
 - Interface to initialize `YAML_node` (formerly `Configuration`)
   objects.  This is now the interface that associates the internal

@@ -12,8 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Where <value> can be:
       . integer (32/64 bit), real (32/64 bit), logical or string.
       . scalar or 1D array
+  
+- Add `NVHPC.cmake` and `PGI.cmake` files for NVHPC support (requires nvfortran 22.3)
 	  
-- Interface to initialize `YAML_node` (formerly `Configuration`)
+- A new interface to initialize `YAML_node` (formerly `Configuration`)
   objects.  This is now the interface that associates the internal
   pointer with the target argument.  Previously was the constructor.
 
@@ -26,7 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   
 - `YAML_Node` constructor now _copies_ the argument.  Before it only
   associated pointer with target.
-
 
 ## [1.0-beta5] 2022-03-08
 

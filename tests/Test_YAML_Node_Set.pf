@@ -179,5 +179,38 @@ contains
       @assert_that(status, is(YAFYAML_SUCCESS))
       @assert_that(x, is (equal_to([1.,2.,3.,4.])))
   end subroutine test_set_1d
-`
+
+  ! Insert a mapping into an existing mapping.
+  @test
+  subroutine test_set_mapping()
+      type(YAML_Node) :: node
+
+      integer :: status
+      type(mapping) :: m1
+      type(mapping), pointer :: m2
+      type(MappingNode), target :: mnode
+      type(YAML_Node) :: subnode1
+      integer :: i
+      real :: x
+
+      call m1%insert(StringNode('a'), IntNode(1))
+      node = YAML_Node(MappingNode(m1))
+
+      mnode = MappingNode()
+      m2 => to_mapping(mnode)
+      call m2%insert(StringNode('zero'), IntNode(0))
+      call m2%insert(StringNode('pi'), FloatNode(3.14159))
+      subnode1 = YAML_Node(mnode)
+      call node%set(subnode1, 'b', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+
+      call node%get(i, 'b', 'zero', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(i, is(0))
+
+      call node%get(x, 'b','pi', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(x, is(3.14159))
+  end subroutine test_set_mapping
+
 end module Test_YAML_Node_Set

@@ -77,14 +77,14 @@ module fy_YAML_Node
       procedure :: set_integer64_1d
       procedure :: set_real32_1d
       procedure :: set_real64_1d
-!!$      procedure :: set_subconfig
+      procedure :: set_subconfig
       generic :: set => set_string
       generic :: set => set_logical,   set_logical_1d
       generic :: set => set_integer32, set_integer32_1d
       generic :: set => set_integer64, set_integer64_1d
       generic :: set => set_real32,    set_real32_1d
       generic :: set => set_real64,    set_real64_1d
-!!$      generic :: set => set_subconfig
+      generic :: set => set_subconfig
 
       procedure, pass(this) :: assign_to_logical
       procedure, pass(this) :: assign_to_string
@@ -486,6 +486,16 @@ module fy_YAML_Node
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end subroutine set_real64_1d
+
+      module subroutine set_subconfig(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         class(YAML_Node), target, intent(inout) :: this
+         type(YAML_Node), intent(in) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_subconfig
 
 
       module subroutine get_subconfig(this, value, SELECTORS, unusable, err_msg, rc)

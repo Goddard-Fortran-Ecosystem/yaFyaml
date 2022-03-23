@@ -21,6 +21,7 @@ module fy_BoolNode
       procedure, pass(this) :: assign_to_logical
       procedure :: less_than
       procedure :: write_node_formatted
+!!$      procedure :: clone
    end type BoolNode
 
    interface
@@ -98,5 +99,12 @@ contains
       end if
       
    end subroutine write_node_formatted
+
+!!$   subroutine clone(this, other)
+!!$      class(BoolNode), intent(in) :: this
+!!$      class(BoolNode), intent(out)  :: other
+!!$
+!!$      other = this
+!!$   end subroutine clone
 
 end module fy_BoolNode

@@ -12,6 +12,7 @@ module fy_MappingNode
 
    public :: MappingNode
    public :: to_mapping
+   public :: clone
 
    type, extends(BaseNode) :: MappingNode
       ! TODO undo private debugging
@@ -44,6 +45,26 @@ module fy_MappingNode
       module procedure new_MappingNode_empty
       module procedure new_MappingNode
    end interface MappingNode
+
+
+   ! Workaround for compilers that break during deep copies
+                                                                                                                      
+   interface clone
+      module procedure clone_mapping_node
+      module procedure clone_mapping
+   end interface clone
+
+   interface
+      recursive module subroutine clone_mapping_node(from, to)
+         type(MappingNode), target, intent(in) :: from
+         class(AbstractNode), target, intent(out) :: to
+      end subroutine clone_mapping_node
+      recursive module subroutine clone_mapping(from, to)
+         type(Mapping), target, intent(in) :: from
+         type(Mapping), target, intent(out) :: to
+      end subroutine clone_mapping
+   end interface
+
 
 contains
 

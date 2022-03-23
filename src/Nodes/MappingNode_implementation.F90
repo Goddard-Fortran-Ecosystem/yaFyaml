@@ -138,5 +138,67 @@ contains
 
    end function less_than
 
+   recursive module subroutine clone_mapping_node(from, to)
+      use fy_SequenceNode
+      use fy_Sequence
+      type(MappingNode), target, intent(in) :: from
+      class(AbstractNode), target, intent(out) :: to
+      
+      type(Mapping), pointer :: m_a, m_b
+      type(MappingIterator) :: iter
+      class(AbstractNode), pointer :: key, val
+      class(AbstractNode), pointer :: subobject
+
+      m_a => to_mapping(from)
+      select type (to)
+      type is (MappingNode)
+         m_b => to_mapping(to)
+         call clone(m_a, m_b)
+      class default
+         error stop "Should not be possible."
+      end select
+
+   end subroutine clone_mapping_node
+
+   recursive module subroutine clone_mapping(from, to)
+      use fy_SequenceNode
+      use fy_Sequence
+      type(Mapping), target, intent(in) :: from
+      type(Mapping), target, intent(out) :: to
+
+      type(MappingIterator) :: iter
+      class(AbstractNode), pointer :: key, val
+      class(AbstractNode), pointer :: subobject
+
+      associate (beg => from%begin(), e => from%end())                                                                                      
+        iter = beg                                                                                                                    
+        do while (iter /= e)                                                                                                          
+           key => iter%first()                                                                                                        
+           val => iter%second()                                                                                                       
+           select type (q => val)                                                                                                     
+           type is (SequenceNode)                                                                                                     
+              call to%insert(key, SequenceNode())                                                                                      
+              subobject => to%of(key)                                                                                                  
+              select type (qq => subobject)                                                                                           
+              type is (SequenceNode) ! guaranteed                                                                                     
+                 call clone(q, qq)                                                                                                    
+              end select                                                                                                              
+           type is (MappingNode)                                                                                                      
+              call to%insert(key, MappingNode())                                                                                       
+              subobject => to%of(key)                                                                                                  
+              select type (qq => subobject)                                                                                           
+              type is (MappingNode) ! guaranteed                                                                                      
+                 call clone(q, qq)                                                                                                    
+              end select                                                                                                              
+           class default ! scalar                                                                                                     
+              call to%insert(key, val)                                                                                                 
+           end select                                                                                                                 
+           call iter%next()                                                                                                           
+        end do                                                                                                                        
+      end associate                                                                                                                   
+   end subroutine clone_mapping
+
+
+
 end submodule MappingNode_implementation
    

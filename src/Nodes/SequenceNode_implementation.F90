@@ -40,5 +40,58 @@ contains
 
    end function less_than
 
+   recursive module subroutine clone_sequence_node(from, to)
+      type(SequenceNode), target, intent(in) :: from
+      class(AbstractNode), target, intent(out) :: to
+
+      type(sequence), pointer :: s_a, s_b
+
+      s_a => to_sequence(from)
+      select type(to)
+      type is (SequenceNode)
+         s_b => to_sequence(to)
+         call clone(s_a, s_b)
+      class default
+         error stop "Should not be happen."
+      end select
+
+   end subroutine clone_sequence_node
+
+
+   recursive module subroutine clone_sequence(from, to)
+      type(Sequence), target, intent(in) :: from
+      type(Sequence), target, intent(out) :: to
+
+      type(SequenceIterator) :: iter
+      class(AbstractNode), pointer :: item
+      class(AbstractNode), pointer :: subobject
+
+      associate (beg => from%begin(), e => from%end())                                                                                      
+        iter = beg                                                                                                                    
+        do while (iter /= e)                                                                                                          
+           item => iter%of()                                                                                                          
+           select type (q => item)                                                                                                    
+           type is (SequenceNode)                                                                                                     
+              call to%push_back(SequenceNode())                                                                                        
+              subobject => to%back()                                                                                                   
+              select type (qq => subobject)                                                                                           
+              type is (SequenceNode) ! guaranteed                                                                                     
+                 call clone(q, qq)                                                                                                    
+              end select                                                                                                              
+           type is (MappingNode)                                                                                                      
+              call to%push_back(MappingNode())                                                                                         
+              subobject => to%back()                                                                                                   
+              select type (qq => subobject)                                                                                           
+              type is (MappingNode) ! guaranteed                                                                                      
+                 call clone(q, qq)                                                                                                    
+              end select                                                                                                              
+           class default ! scalar                                                                                                     
+              call to%push_back(item)                                                                                                  
+           end select                                                                                                                 
+           call iter%next()                                                                                                           
+        end do                                                                                                                        
+      end associate                                                                                                                   
+   end subroutine clone_sequence
+
 end submodule SequenceNode_implementation
    

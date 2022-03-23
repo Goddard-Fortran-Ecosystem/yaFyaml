@@ -186,13 +186,11 @@ module fy_BaseNode
          integer, optional, intent(out) :: rc
       end subroutine get_real64_1d
 
-      module subroutine set_node(this, node, selectors, unusable, err_msg, rc)
+      module subroutine set_node(this, node, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
-         use gftl2_UnlimitedVector
          class(BaseNode), target, intent(inout) :: this
          class(AbstractNode), intent(in) :: node
-!!$         type(UnlimitedVector), target, intent(inout) :: selectors
-         type(UnlimitedVector), target, intent(in) :: selectors
+         class(*), optional, intent(in) :: SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc

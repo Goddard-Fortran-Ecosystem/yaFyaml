@@ -38,8 +38,10 @@ contains
 
       flag = cfg%of(1)
       @assert_that(flag, is(true()))
+
       flag = cfg%of(2)
       @assert_that(flag, is(false()))
+
       flag = cfg%of(3)
       @assert_that(flag, is(true()))
 
@@ -53,7 +55,6 @@ contains
 
       p = Parser()
       cfg = p%load(EscapedTextStream("---\n {a: true, b: false}\n..."))
-
       flag = cfg%at("a")
       @assert_that(flag, is(equal_to(.true.)))
 

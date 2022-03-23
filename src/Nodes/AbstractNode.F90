@@ -269,15 +269,13 @@ module fy_AbstractNode
          integer, optional, intent(out) :: rc
       end subroutine I_get_real64_1d
 
-      subroutine I_set_node(this, node, selectors, unusable, err_msg, rc)
+      subroutine I_set_node(this, node, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
-         use gftl2_UnlimitedVector
          import AbstractNode
          implicit none
          class(AbstractNode), target, intent(inout) :: this
          class(AbstractNode), intent(in) :: node
-!!$         type(UnlimitedVector), target, intent(inout) :: selectors
-         type(UnlimitedVector), target, intent(in) :: selectors
+         class(*), optional, intent(in) :: SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc

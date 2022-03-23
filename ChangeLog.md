@@ -5,6 +5,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `NVHPC.cmake` and `PGI.cmake` files for NVHPC support (requires nvfortran 22.3)
+
 ## [1.0-beta5] 2022-03-08
 
 ### Added

@@ -3,20 +3,20 @@
 #define SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
 #define OPT_SELECTORS s2, s3, s4, s5, s6, s7, s8, s9
 
-submodule (fy_Configuration)  ConfigurationIterator_implementation
+submodule (fy_YAML_Node)  YAML_NodeIterator_implementation
    use, intrinsic :: iso_fortran_env, only: INT32, INT64, REAL32, REAL64
    implicit none
 
 contains
    
    module subroutine next_iter(this)
-      class(ConfigurationIterator), intent(inout) :: this
+      class(YAML_NodeIterator), intent(inout) :: this
       call this%mapping_iterator%next()
    end subroutine next_iter
 
    module subroutine get_key_logical(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       logical, intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -34,7 +34,7 @@ contains
 
    module subroutine get_key_logical_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       logical, allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -52,7 +52,7 @@ contains
 
    module subroutine get_key_string(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       character(:), allocatable, intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -70,7 +70,7 @@ contains
 
    module subroutine get_key_integer32(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       integer(kind=INT32), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -87,7 +87,7 @@ contains
 
    module subroutine get_key_integer32_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       integer(kind=INT32), allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -104,7 +104,7 @@ contains
 
    module subroutine get_key_integer64(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       integer(kind=INT64), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -121,7 +121,7 @@ contains
 
    module subroutine get_key_integer64_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       integer(kind=INT64), allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -139,7 +139,7 @@ contains
 
    module subroutine get_key_real32(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       real(kind=REAL32), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -156,7 +156,7 @@ contains
 
    module subroutine get_key_real32_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       real(kind=REAL32), allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -173,7 +173,7 @@ contains
 
    module subroutine get_key_real64(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       real(kind=REAL64), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -190,7 +190,7 @@ contains
 
    module subroutine get_key_real64_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       real(kind=REAL64), allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -207,8 +207,8 @@ contains
 
    module subroutine get_key_subconfig(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
-      type(Configuration), intent(inout) :: value
+      class(YAML_NodeIterator), target, intent(in) :: this
+      type(YAML_Node), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
@@ -221,7 +221,7 @@ contains
       ! accessor is successful.
       node => this%mapping_iterator%first()
       subnode => node%at(SELECTORS, err_msg=err_msg, rc=rc)
-      if (status == YAFYAML_SUCCESS) value = Configuration(subnode)
+      if (status == YAFYAML_SUCCESS) call value%initialize(subnode)
       if (present(rc)) rc = status
 
       __UNUSED_DUMMY__(unusable)
@@ -229,7 +229,7 @@ contains
 
    module subroutine get_value_logical(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       logical, intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -247,7 +247,7 @@ contains
 
    module subroutine get_value_logical_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       logical, allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -265,7 +265,7 @@ contains
 
    module subroutine get_value_string(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       character(:), allocatable, intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -283,7 +283,7 @@ contains
 
    module subroutine get_value_integer32(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       integer(kind=INT32), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -300,7 +300,7 @@ contains
 
    module subroutine get_value_integer32_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       integer(kind=INT32), allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -317,7 +317,7 @@ contains
 
    module subroutine get_value_integer64(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       integer(kind=INT64), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -334,7 +334,7 @@ contains
 
    module subroutine get_value_integer64_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       integer(kind=INT64), allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -352,7 +352,7 @@ contains
 
    module subroutine get_value_real32(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       real(kind=REAL32), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -369,7 +369,7 @@ contains
 
    module subroutine get_value_real32_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       real(kind=REAL32), allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -386,7 +386,7 @@ contains
 
    module subroutine get_value_real64(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       real(kind=REAL64), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -403,7 +403,7 @@ contains
 
    module subroutine get_value_real64_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
+      class(YAML_NodeIterator), target, intent(in) :: this
       real(kind=REAL64), allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -420,8 +420,8 @@ contains
 
    module subroutine get_value_subconfig(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(ConfigurationIterator), target, intent(in) :: this
-      type(Configuration), intent(inout) :: value
+      class(YAML_NodeIterator), target, intent(in) :: this
+      type(YAML_Node), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
@@ -434,7 +434,7 @@ contains
       ! accessor is successful.
       node => this%mapping_iterator%second()
       subnode => node%at(SELECTORS, err_msg=err_msg, rc=status)
-      if (status == YAFYAML_SUCCESS) value = Configuration(subnode)
+      if (status == YAFYAML_SUCCESS) call value%initialize(subnode)
       if (present(rc)) rc = status
 
       __UNUSED_DUMMY__(unusable)
@@ -443,19 +443,19 @@ contains
 
    module function equal_iter(a, b) result(equal)
       logical :: equal
-      type(ConfigurationIterator), intent(in) :: a
-      type(ConfigurationIterator), intent(in) :: b
+      type(YAML_NodeIterator), intent(in) :: a
+      type(YAML_NodeIterator), intent(in) :: b
 
       equal = a%mapping_iterator == b%mapping_iterator
    end function equal_iter
 
    module function not_equal_iter(a, b) result(not_equal)
       logical :: not_equal
-      type(ConfigurationIterator), intent(in) :: a
-      type(ConfigurationIterator), intent(in) :: b
+      type(YAML_NodeIterator), intent(in) :: a
+      type(YAML_NodeIterator), intent(in) :: b
 
       not_equal = a%mapping_iterator /= b%mapping_iterator
    end function not_equal_iter
 
    
-end submodule ConfigurationIterator_implementation
+end submodule YAML_NodeIterator_implementation

@@ -7,7 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Interfaces for config setters
+  `call node%set(<value>, SELECTORS, err_msg, rc)`
+  Where <value> can be:
+      . integer (32/64 bit), real (32/64 bit), logical or string.
+      . scalar or 1D array
+  
 - Add `NVHPC.cmake` and `PGI.cmake` files for NVHPC support (requires nvfortran 22.3)
+	  
+- A new interface to initialize `YAML_node` (formerly `Configuration`)
+  objects.  This is now the interface that associates the internal
+  pointer with the target argument.  Previously was the constructor.
+
+### Changed
+
+- The derived type `Configuration` has been renamed to `YAML_Node`.  A
+  temporary workaround is provided to users to allow the older name to
+  be used, but it is deprecated and will go away whev V2.0.0 is
+  formally released.
+  
+- `YAML_Node` constructor now _copies_ the argument.  Before it only
+  associated pointer with target.
 
 ## [1.0-beta5] 2022-03-08
 

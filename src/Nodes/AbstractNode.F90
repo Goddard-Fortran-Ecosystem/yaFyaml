@@ -12,30 +12,31 @@ module fy_AbstractNode
 
       ! accessors to sub-nodes
       procedure(I_at_multi_selector), deferred :: at_multi_selector
-      generic :: at => at_multi_selector
       procedure(I_of_multi_selector), deferred :: of_multi_selector
+      procedure(I_has),               deferred :: has
+      generic :: at => at_multi_selector
       generic :: of => of_multi_selector
-      procedure(I_has), deferred :: has
 
-      procedure(I_get_logical),   deferred :: get_logical
+      procedure(I_get_logical),      deferred :: get_logical
       procedure(I_get_logical_1d),   deferred :: get_logical_1d
-      procedure(I_get_string),    deferred :: get_string
-      procedure(I_get_integer32), deferred :: get_integer32
+      procedure(I_get_string),       deferred :: get_string
+      procedure(I_get_integer32),    deferred :: get_integer32
       procedure(I_get_integer32_1d), deferred :: get_integer32_1d
-      procedure(I_get_integer64), deferred :: get_integer64
+      procedure(I_get_integer64),    deferred :: get_integer64
       procedure(I_get_integer64_1d), deferred :: get_integer64_1d
-
-      procedure(I_get_real32),    deferred :: get_real32
+      procedure(I_get_real32),       deferred :: get_real32
       procedure(I_get_real32_1d),    deferred :: get_real32_1d
-      procedure(I_get_real64),    deferred :: get_real64
+      procedure(I_get_real64),       deferred :: get_real64
       procedure(I_get_real64_1d),    deferred :: get_real64_1d
-
-      generic :: get => get_logical, get_logical_1d
       generic :: get => get_string
+      generic :: get => get_logical,   get_logical_1d
       generic :: get => get_integer32, get_integer32_1d
       generic :: get => get_integer64, get_integer64_1d
-      generic :: get => get_real32, get_real32_1d
-      generic :: get => get_real64, get_real64_1d
+      generic :: get => get_real32,    get_real32_1d
+      generic :: get => get_real64,    get_real64_1d
+
+      procedure(I_set_node), deferred :: set_node
+      generic :: set => set_node
 
       procedure(I_assign_to_logical),   pass(this), deferred :: assign_to_logical
       procedure(I_assign_to_string),    pass(this), deferred :: assign_to_string
@@ -59,11 +60,11 @@ module fy_AbstractNode
       procedure(I_is), deferred, nopass :: is_int
       procedure(I_is), deferred, nopass :: is_float
 
-      procedure(I_write_formatted), deferred :: write_formatted
-      generic :: write(formatted) => write_formatted
+      procedure(I_write_formatted),      deferred :: write_formatted
       procedure(I_write_node_formatted), deferred :: write_node_formatted
+      generic :: write(formatted) => write_formatted
 
-      ! "<"
+      ! "<" opertor.
       ! Necessary to support map container with *Node keys.
       procedure(I_less_than), deferred :: less_than
       generic :: operator(<) => less_than
@@ -268,6 +269,163 @@ module fy_AbstractNode
          integer, optional, intent(out) :: rc
       end subroutine I_get_real64_1d
 
+      subroutine I_set_node(this, node, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         import AbstractNode
+         implicit none
+         class(AbstractNode), target, intent(inout) :: this
+         class(AbstractNode), intent(in) :: node
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine I_set_node
+
+      subroutine I_set_logical_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         import AbstractNode
+         implicit none
+         class(AbstractNode), target, intent(in) :: this
+         logical, allocatable, intent(in) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine I_set_logical_1d
+
+
+      subroutine I_set_string(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         import AbstractNode
+         implicit none
+         class(AbstractNode), target, intent(in) :: this
+         character(:), allocatable, intent(in) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine I_set_string
+
+      subroutine I_set_string_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         import AbstractNode
+         implicit none
+         class(AbstractNode), target, intent(in) :: this
+         character(:), allocatable, intent(in) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine I_set_string_1d
+
+
+      subroutine I_set_integer32(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT32
+         import AbstractNode
+         implicit none
+         class(AbstractNode), target, intent(in) :: this
+         integer(kind=INT32), intent(in) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine I_set_integer32
+
+      subroutine I_set_integer32_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT32
+         import AbstractNode
+         implicit none
+         class(AbstractNode), target, intent(in) :: this
+         integer(kind=INT32), allocatable, intent(in) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine I_set_integer32_1d
+
+
+      subroutine I_set_integer64(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT64
+         import AbstractNode
+         implicit none
+         class(AbstractNode), target, intent(in) :: this
+         integer(kind=INT64), intent(in) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine I_set_integer64
+
+      subroutine I_set_integer64_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT64
+         import AbstractNode
+         implicit none
+         class(AbstractNode), target, intent(in) :: this
+         integer(kind=INT64), allocatable, intent(in) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine I_set_integer64_1d
+
+
+      subroutine I_set_real32(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL32
+         import AbstractNode
+         implicit none
+         class(AbstractNode), target, intent(in) :: this
+         real(kind=REAL32), intent(in) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine I_set_real32
+
+      subroutine I_set_real32_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL32
+         import AbstractNode
+         implicit none
+         class(AbstractNode), target, intent(in) :: this
+         real(kind=REAL32), allocatable, intent(in) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine I_set_real32_1d
+
+
+      subroutine I_set_real64(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL64
+         import AbstractNode
+         implicit none
+         class(AbstractNode), target, intent(in) :: this
+         real(kind=REAL64), intent(in) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine I_set_real64
+
+      subroutine I_set_real64_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL64
+         import AbstractNode
+         implicit none
+         class(AbstractNode), target, intent(in) :: this
+         real(kind=REAL64), allocatable, intent(in) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine I_set_real64_1d
+
 
       subroutine I_assign_to_logical(flag, this)
          import AbstractNode
@@ -348,6 +506,5 @@ module fy_AbstractNode
       end subroutine i_write_node_formatted
 
    end interface
-
 
 end module fy_AbstractNode

@@ -3,13 +3,15 @@
 #define SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
 #define OPT_SELECTORS s2, s3, s4, s5, s6, s7, s8, s9
 
-submodule (fy_Configuration)  Configuration_implementation
+submodule (fy_YAML_Node)  YAML_Node_implementation
    use, intrinsic :: iso_fortran_env, only: INT32, INT64, REAL32, REAL64
+   implicit none
+   
 contains
    
    module function size_config(this) result(size)
       integer(kind=INT64) :: size
-      class(Configuration), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
       type(Mapping), pointer :: m
       type(Sequence), pointer :: s
 
@@ -30,8 +32,8 @@ contains
    ! With error handling
    module function at_multi_selector(this, SELECTORS, unusable, found, err_msg, rc) result(subcfg)
       use fy_KeywordEnforcer
-      type(Configuration) :: subcfg
-      class(Configuration), target, intent(in) :: this
+      type(YAML_Node) :: subcfg
+      class(YAML_Node), target, intent(in) :: this
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
       logical, optional, intent(out) :: found
@@ -45,8 +47,8 @@ contains
 
    ! No error handling
    module function of_multi_selector(this, SELECTORS) result(subcfg)
-      type(Configuration) :: subcfg
-      class(Configuration), target, intent(in) :: this
+      type(YAML_Node) :: subcfg
+      class(YAML_Node), target, intent(in) :: this
       class(*), optional, intent(in) :: SELECTORS
 
       subcfg%node => this%node%of(SELECTORS)
@@ -55,7 +57,7 @@ contains
 
    module function has_selector(this, s1, OPT_SELECTORS) result(has)
       logical :: has
-      class(Configuration), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       class(*), optional, intent(in) :: SELECTORS
 
       has = this%node%has(SELECTORS)
@@ -65,7 +67,7 @@ contains
 
    module subroutine get_logical(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(Configuration), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       logical, intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -80,7 +82,7 @@ contains
 
    module subroutine get_logical_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(Configuration), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       logical, allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -95,7 +97,7 @@ contains
 
    module subroutine get_string(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(Configuration), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       character(:), allocatable, intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -110,7 +112,7 @@ contains
 
    module subroutine get_integer32(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(Configuration), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       integer(kind=INT32), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -124,7 +126,7 @@ contains
 
    module subroutine get_integer32_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(Configuration), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       integer(kind=INT32), allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -138,7 +140,7 @@ contains
 
    module subroutine get_integer64(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(Configuration), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       integer(kind=INT64), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -152,7 +154,7 @@ contains
 
    module subroutine get_integer64_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(Configuration), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       integer(kind=INT64), allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -167,7 +169,7 @@ contains
 
    module subroutine get_real32(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(Configuration), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       real(kind=REAL32), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -181,7 +183,7 @@ contains
 
    module subroutine get_real32_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(Configuration), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       real(kind=REAL32), allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -195,7 +197,7 @@ contains
 
    module subroutine get_real64(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(Configuration), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       real(kind=REAL64), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -209,7 +211,7 @@ contains
 
    module subroutine get_real64_1d(this, values, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(Configuration), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       real(kind=REAL64), allocatable, intent(inout) :: values(:)
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -223,8 +225,8 @@ contains
 
    module subroutine get_subconfig(this, value, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      class(Configuration), target, intent(in) :: this
-      type(Configuration), intent(inout) :: value
+      class(YAML_Node), target, intent(in) :: this
+      type(YAML_Node), intent(inout) :: value
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
@@ -235,7 +237,7 @@ contains
       ! To be consistent with other getters, we only update value _if_
       ! accessor is successful.
       node => this%node%at(SELECTORS, err_msg=err_msg, rc=rc)
-      if (rc == YAFYAML_SUCCESS) value = Configuration(node)
+      if (rc == YAFYAML_SUCCESS) call value%initialize(node)
 
       __UNUSED_DUMMY__(unusable)
    end subroutine get_subconfig
@@ -244,37 +246,37 @@ contains
 
    module subroutine assign_to_logical(flag, this)
       logical, intent(out) :: flag
-      class(Configuration), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
       flag = this%node
    end subroutine assign_to_logical
 
    module subroutine assign_to_string(string, this)
       character(:), allocatable, intent(out) :: string
-      class(Configuration), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
       string = this%node
    end subroutine assign_to_string
 
    module subroutine assign_to_integer32(i32, this)
       integer(kind=INT32), intent(out) :: i32
-      class(Configuration), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
       i32 = this%node
    end subroutine assign_to_integer32
 
    module subroutine assign_to_integer64(i64, this)
       integer(kind=INT64), intent(out) :: i64
-      class(Configuration), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
       i64 = this%node
    end subroutine assign_to_integer64
 
    module subroutine assign_to_real32(r32, this)
       real(kind=REAL32), intent(out) :: r32
-      class(Configuration), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
       r32 = this%node
    end subroutine assign_to_real32
 
    module subroutine assign_to_real64(r64, this)
       real(kind=REAL64), intent(out) :: r64
-      class(Configuration), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
       r64 = this%node
    end subroutine assign_to_real64
 
@@ -283,7 +285,7 @@ contains
 
    module function is_sequence(this)
       logical :: is_sequence
-      class(Configuration), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
       class(AbstractNode), pointer :: node
       node => this%node
       is_sequence = node%is_sequence()
@@ -291,7 +293,7 @@ contains
 
    module function is_mapping(this)
       logical :: is_mapping
-      class(Configuration), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
       class(AbstractNode), pointer :: node
       node => this%node
       is_mapping = node%is_mapping()
@@ -299,7 +301,7 @@ contains
 
    module function is_scalar(this)
       logical :: is_scalar
-      class(Configuration), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
       class(AbstractNode), pointer :: node
       node => this%node
       is_scalar = node%is_scalar()
@@ -307,7 +309,7 @@ contains
 
    module function is_bool(this)
       logical :: is_bool
-      class(Configuration), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
       class(AbstractNode), pointer :: node
       node => this%node
       is_bool = node%is_bool()
@@ -315,7 +317,7 @@ contains
 
    module function is_string(this)
       logical :: is_string
-      class(Configuration), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
       class(AbstractNode), pointer :: node
       node => this%node
       is_string = node%is_string()
@@ -323,7 +325,7 @@ contains
 
    module function is_int(this)
       logical :: is_int
-      class(Configuration), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
       class(AbstractNode), pointer :: node
       node => this%node
       is_int = node%is_int()
@@ -331,7 +333,7 @@ contains
    
    module function is_float(this)
       logical :: is_float
-      class(Configuration), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
       class(AbstractNode), pointer :: node
       node => this%node
       is_float = node%is_float()
@@ -341,8 +343,8 @@ contains
    ! Factory methods to create an iterator
    module function begin_cfg(this, unusable, err_msg, rc) result(iter)
       use fy_KeywordEnforcer
-      type(ConfigurationIterator) :: iter
-      class(Configuration), intent(in) :: this
+      type(YAML_NodeIterator) :: iter
+      class(YAML_Node), intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(out) :: err_msg
       integer, optional, intent(out) :: rc
@@ -364,8 +366,8 @@ contains
 
    module function end_cfg(this, unusable, err_msg, rc) result(iter)
       use fy_KeywordEnforcer
-      type(ConfigurationIterator) :: iter
-      class(Configuration), intent(in) :: this
+      type(YAML_NodeIterator) :: iter
+      class(YAML_Node), intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(out) :: err_msg
       integer, optional, intent(out) :: rc
@@ -386,14 +388,14 @@ contains
    end function end_cfg
 
    module subroutine clear(this)
-      class(Configuration), intent(inout) :: this
+      class(YAML_Node), intent(inout) :: this
       deallocate(this%node)
       nullify(this%node)
    end subroutine clear
 
 
   module subroutine write_formatted(this, unit, iotype, v_list, iostat, iomsg)
-    class(Configuration), intent(in) :: this
+    class(YAML_Node), intent(in) :: this
     integer, intent(in) :: unit
     character(*), intent(in) :: iotype
     integer, intent(in) :: v_list(:)
@@ -408,4 +410,234 @@ contains
     
   end subroutine write_formatted
 
-end submodule Configuration_implementation
+
+  module subroutine set_logical(this, value, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_BoolNode
+     class(YAML_Node), target, intent(inout) :: this
+     logical, intent(in) :: value
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     call this%node%set(BoolNode(value), SELECTORS, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_logical
+
+
+  module subroutine set_string(this, value, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_StringNode
+     class(YAML_Node), target, intent(inout) :: this
+     character(*), intent(in) :: value
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+     
+     call this%node%set(StringNode(value), SELECTORS, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_string
+
+
+  module subroutine set_integer32(this, value, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_IntNode
+     class(YAML_Node), target, intent(inout) :: this
+     integer(kind=INT32), intent(in) :: value
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+     
+     call this%node%set(IntNode(value), SELECTORS, err_msg=err_msg, rc=rc)
+
+     __UNUSED_DUMMY__(unusable)
+  end subroutine set_integer32
+
+
+  module subroutine set_integer64(this, value, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_IntNode
+     class(YAML_Node), target, intent(inout) :: this
+     integer(kind=INT64), intent(in) :: value
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+     
+     call this%node%set(IntNode(value), SELECTORS, err_msg=err_msg, rc=rc)
+
+     __UNUSED_DUMMY__(unusable)
+  end subroutine set_integer64
+
+
+  module subroutine set_real32(this, value, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_FloatNode
+     class(YAML_Node), target, intent(inout) :: this
+     real(kind=REAL32), intent(in) :: value
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+     
+     call this%node%set(FloatNode(value), SELECTORS, err_msg=err_msg, rc=rc)
+
+     __UNUSED_DUMMY__(unusable)
+  end subroutine set_real32
+
+
+  module subroutine set_real64(this, value, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_FloatNode
+     class(YAML_Node), target, intent(inout) :: this
+     real(kind=REAL64), intent(in) :: value
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+     
+     call this%node%set(FloatNode(value), SELECTORS, err_msg=err_msg, rc=rc)
+
+     __UNUSED_DUMMY__(unusable)
+  end subroutine set_real64
+
+
+  module subroutine set_logical_1d(this, values, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_SequenceNode
+     use fy_BoolNode
+     class(YAML_Node), target, intent(inout) :: this
+     logical, intent(in) :: values(:)
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     type(Sequence) :: s
+     integer :: i
+
+     do i = 1, product(shape(values)) ! size(values)
+        call s%push_back(BoolNode(values(i)))
+     end do
+
+     call this%node%set(SequenceNode(s), SELECTORS, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_logical_1d
+
+  module subroutine set_integer32_1d(this, values, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_SequenceNode
+     use fy_IntNode
+     class(YAML_Node), target, intent(inout) :: this
+     integer(kind=INT32), intent(in) :: values(:)
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     type(Sequence) :: s
+     integer :: i
+
+     do i = 1, product(shape(values)) ! size(values)
+        call s%push_back(IntNode(values(i)))
+     end do
+
+     call this%node%set(SequenceNode(s), SELECTORS, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_integer32_1d
+
+  module subroutine set_integer64_1d(this, values, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_SequenceNode
+     use fy_IntNode
+     class(YAML_Node), target, intent(inout) :: this
+     integer(kind=INT64), intent(in) :: values(:)
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     type(Sequence) :: s
+     integer :: i
+
+     do i = 1, product(shape(values)) ! size(values)
+        call s%push_back(IntNode(values(i)))
+     end do
+
+     call this%node%set(SequenceNode(s), SELECTORS, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_integer64_1d
+
+  module subroutine set_real32_1d(this, values, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_SequenceNode
+     use fy_FloatNode
+     class(YAML_Node), target, intent(inout) :: this
+     real(kind=REAL32), intent(in) :: values(:)
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     type(Sequence) :: s
+     integer :: i
+
+     do i = 1, product(shape(values)) ! size(values)
+        call s%push_back(FloatNode(values(i)))
+     end do
+
+     call this%node%set(SequenceNode(s), SELECTORS, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_real32_1d
+
+  module subroutine set_real64_1d(this, values, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_SequenceNode
+     use fy_FloatNode
+     class(YAML_Node), target, intent(inout) :: this
+     real(kind=REAL64), intent(in) :: values(:)
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     type(Sequence) :: s
+     integer :: i
+
+     do i = 1, product(shape(values)) ! size(values)
+        call s%push_back(FloatNode(values(i)))
+     end do
+
+     call this%node%set(SequenceNode(s), SELECTORS, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_real64_1d
+
+  module subroutine set_subconfig(this, value, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_BoolNode
+     class(YAML_Node), target, intent(inout) :: this
+     type(YAML_Node), intent(in) :: value
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     call this%node%set(value%node, SELECTORS, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_subconfig
+
+
+
+
+end submodule YAML_Node_implementation

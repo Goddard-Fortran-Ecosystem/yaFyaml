@@ -5,30 +5,30 @@ module fy_ErrorCodes
   enum, bind(c)
      enumerator :: YAFYAML_SUCCESS = 0
      ! Parsing errors
-     enumerator :: YAFYAML_NONSPECIFIC_ERROR
-     enumerator :: YAFYAML_UNEXPECTED_CHARACTER
+     enumerator :: YAFYAML_NONSPECIFIC_ERROR                                  ! 1
+     enumerator :: YAFYAML_UNEXPECTED_CHARACTER          
      enumerator :: YAFYAML_UNEXPECTED_COLON_IN_PLAIN_SCALAR
      enumerator :: YAFYAML_UNEXPECTED_MAPPING_KEY
-     enumerator :: YAFYAML_END_OF_STREAM_INSIDE_QUOTES
+     enumerator :: YAFYAML_END_OF_STREAM_INSIDE_QUOTES                        ! 5
      enumerator :: YAFYAML_UNEXPECTED_DOCUMENT_SEPARATOR
      enumerator :: YAFYAML_UNKNOWN_ESCAPE_CHARACTER_IN_DOUBLE_QUOTED_SCALAR
      enumerator :: YAFYAML_MISSING_COLON_WHILE_SCANNING_A_SIMPLE_KEY
      enumerator :: YAFYAML_ILLEGAL_VALUE_IN_MAPPING
-     enumerator :: YAFYAML_ILLEGAL_SEQUENCE_ENTRY
+     enumerator :: YAFYAML_ILLEGAL_SEQUENCE_ENTRY                             ! 10
      enumerator :: YAFYAML_IMPOSSIBLE_COMBINATION
      enumerator :: YAFYAML_PARSER_ERROR
      enumerator :: YAFYAML_NON_ALPHANUMERIC_CHARACTER
      ! Configuration usage errors
      enumerator :: YAFYAML_SELECTOR_NOT_FOUND
-     enumerator :: YAFYAML_INT32_OVERLFLOW
+     enumerator :: YAFYAML_INT32_OVERLFLOW                                    ! 15
      enumerator :: YAFYAML_TYPE_MISMATCH
      enumerator :: YAFYAML_INVALID_SEQUENCE_INDEX
      enumerator :: YAFYAML_SEQUENCE_INDEX_OUT_OF_BOUNDS
      enumerator :: YAFYAML_INVALID_MAPPING_KEY
-     enumerator :: YAFYAML_MAPPING_KEY_NOT_FOUND
+     enumerator :: YAFYAML_MAPPING_KEY_NOT_FOUND                              ! 20
      enumerator :: YAFYAML_NOT_A_COLLECTION
      enumerator :: YAFYAML_NOT_A_MAPPING
-
+     enumerator :: YAFYAML_MISSING_SELECTOR
   end enum
 
 contains
@@ -86,6 +86,8 @@ contains
          message = 'Selector applied to a non-collection.'
       case (YAFYAML_NOT_A_MAPPING)
          message = 'Can only construct iterator for mappings.'
+      case (YAFYAML_MISSING_SELECTOR)
+         message = 'set() method requires at least one selector.  None provided.'
       case default
          message = 'Unkown error code'
       end select

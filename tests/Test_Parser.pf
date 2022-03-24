@@ -1,6 +1,6 @@
 module Test_Parser
    use funit
-   use fy_Configuration
+   use fy_YAML_Node
    use fy_EscapedTextStream
    use fy_Parser
    implicit none
@@ -10,7 +10,7 @@ contains
    @test
    subroutine test_single_scalar()
       type(Parser) :: p
-      type(Configuration) :: cfg
+      type(YAML_Node) :: cfg
       character(:), allocatable :: scalar
 
       p = Parser()
@@ -30,7 +30,7 @@ contains
    @test
    subroutine test_single_flow_sequence()
       type(Parser) :: p
-      type(Configuration) :: cfg
+      type(YAML_Node) :: cfg
       logical :: flag
 
       p = Parser()
@@ -38,8 +38,10 @@ contains
 
       flag = cfg%of(1)
       @assert_that(flag, is(true()))
+
       flag = cfg%of(2)
       @assert_that(flag, is(false()))
+
       flag = cfg%of(3)
       @assert_that(flag, is(true()))
 
@@ -48,12 +50,11 @@ contains
    @test
    subroutine test_single_flow_mapping()
       type(Parser) :: p
-      type(Configuration) :: cfg
+      type(YAML_Node) :: cfg
       logical :: flag
 
       p = Parser()
       cfg = p%load(EscapedTextStream("---\n {a: true, b: false}\n..."))
-
       flag = cfg%at("a")
       @assert_that(flag, is(equal_to(.true.)))
 
@@ -67,7 +68,7 @@ contains
    @test
    subroutine test_single_block_sequence()
       type(Parser) :: p
-      type(Configuration) :: cfg
+      type(YAML_Node) :: cfg
       logical :: flag
 
       p = Parser()
@@ -87,8 +88,8 @@ contains
    @test
    subroutine test_nested_block_sequence()
       type(Parser) :: p
-      type(Configuration) :: cfg
-      type(Configuration) :: sub
+      type(YAML_Node) :: cfg
+      type(YAML_Node) :: sub
 
       integer :: i, n
 
@@ -122,8 +123,8 @@ contains
    @test
    subroutine test_nested_block_mapping_sequence()
       type(Parser) :: p
-      type(Configuration) :: cfg
-      type(Configuration) :: sub
+      type(YAML_Node) :: cfg
+      type(YAML_Node) :: sub
       integer :: n
 
       p = Parser()
@@ -148,8 +149,8 @@ contains
    @test
    subroutine test_nested_mapping_block_flow()
       type(Parser) :: p
-      type(Configuration) :: cfg
-      type(Configuration) :: sub
+      type(YAML_Node) :: cfg
+      type(YAML_Node) :: sub
 
       integer :: v1, v2
 
@@ -168,7 +169,7 @@ contains
    @test
    subroutine test_pflogger_reproducer()
       type(Parser) :: p
-      type(Configuration) :: cfg
+      type(YAML_Node) :: cfg
 
       p = Parser()
       cfg = p%load(EscapedTextStream("format: --- \n"))
@@ -179,7 +180,7 @@ contains
    @test
    subroutine test_pflogger_reproducer2()
       type(Parser) :: p
-      type(Configuration) :: cfg
+      type(YAML_Node) :: cfg
 
       p = Parser()
       cfg = p%load(EscapedTextStream( &
@@ -192,8 +193,8 @@ contains
 !   @test
    subroutine test_simple_anchor()
       type(Parser) :: p
-      type(Configuration) :: cfg
-      type(Configuration) :: sub
+      type(YAML_Node) :: cfg
+      type(YAML_Node) :: sub
 
       integer :: i_a, i_b
 
@@ -217,7 +218,7 @@ contains
    @test
    subroutine test_quoted_integer()
       type(Parser) :: p
-      type(Configuration) :: cfg
+      type(YAML_Node) :: cfg
 
       character(:), allocatable :: s
 
@@ -239,7 +240,7 @@ contains
    @test
    subroutine test_pflogger_reproducer3
       type(Parser) :: p
-      type(Configuration) :: cfg
+      type(YAML_Node) :: cfg
       integer :: unit
 
       p = Parser()

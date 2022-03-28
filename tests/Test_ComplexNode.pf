@@ -18,82 +18,76 @@ contains
   @test
    subroutine test_deepcopy_1()
       class(AbstractNode), target, allocatable :: a, b
-      type(Mapping), pointer :: m
+      type(newMapping), pointer :: m
       type(IntNode) :: inode
       type(StringNode) :: snode
       
-      allocate(a, source=MappingNode())
-      m => to_mapping(a)
+      allocate(a, source=newMappingNode())
+      m => to_newmapping(a)
       inode = IntNode(1)
       snode = StringNode('cat')
       call m%insert(snode, inode)
 
       b = a
 
-      m => to_mapping(b)
+      m => to_newmapping(b)
 
       @assert_that(m%size(), is(1_INT64))
 
-      deallocate(b)
-
-      
    end subroutine test_deepcopy_1
 
    @test
    subroutine test_deepcopy_2()
       class(AbstractNode), target, allocatable :: a, b, c
-      type(Mapping), pointer :: ma, mb, mc
-      type(MappingNode) :: mn
+      type(newMapping), pointer :: ma, mb, mc
+      type(newMappingNode) :: mn
       
-      a = MappingNode()
-      ma => to_mapping(a)
+      a = newMappingNode()
+      ma => to_newmapping(a)
       call ma%insert(StringNode('cat'), IntNode(1))
 
-      b = MappingNode()
-      mb => to_mapping(b)
+      b = newMappingNode()
+      mb => to_newmapping(b)
 !!$      call ma%insert(StringNode('cat'), IntNode(1))
 !!$      call ma%insert(IntNode(2), IntNode(1))
       call mb%insert(IntNode(2), a)
 
       
 !!$      c = a
-!!$      mc => to_mapping(c)
+!!$      mc => to_newmapping(c)
 !!$      @assert_that(mc%size(), is(1_INT64))
 
       call mb%clear()
-      deallocate(b)
-      deallocate(a)
-
 
    end subroutine test_deepcopy_2
 
    @test
    subroutine test_deepcopy_3()
       class(AbstractNode), target, allocatable :: a, b
-      type(Mapping), pointer :: m
+      type(newMapping), pointer :: m
       class(AbstractNode), allocatable :: key
       
-      a = MappingNode()
-      m => to_mapping(a)
+      a = newMappingNode()
+      m => to_newmapping(a)
 
       key = StringNode('mapping')
-      call m%insert(key, MappingNode())
+      call m%insert(key, newMappingNode())
 
       @assert_that(m%size(), is(1_INT64))
       
    end subroutine test_deepcopy_3
 
 
-   @test
-   subroutine test_copy_pair()
-      type(MappingPair) :: p1, p2
-
-      class(AbstractNode), allocatable :: k, v
-      k = StringNode('dog')
-      v = IntNode(3)
-      p2 = MappingPair(k,v)
-
-      p1 = p2
-   end subroutine test_copy_pair
+!!$   @test
+!!$   subroutine test_copy_pair()
+!!$      type(newMappingPair) :: p1, p2
+!!$
+!!$      class(AbstractNode), allocatable :: k, v
+!!$      k = StringNode('dog')
+!!$      v = IntNode(3)
+!!$      p2 = newMappingPair(k,v)
+!!$
+!!$      p1 = p2
+!!$   end subroutine test_copy_pair
 
 end module Test_ComplexNode

@@ -1,3 +1,6 @@
+#define HERE if(depth == 1) print*,__FILE__,__LINE__,depth
+
+
 !!! The Parser imports a sequence of tokens and constructs an object
 !!! that is a subclass of AbstractNode. I naively expect this to be
 !!! rather simple compared to the Lexer, but reading suggests that it
@@ -12,9 +15,9 @@ module fy_newParser
 
    use fy_AbstractNode
    use fy_StringNodeMap
-   use fy_MappingNode
+   use fy_newMappingNode
    use fy_SequenceNode
-   use fy_Mapping
+   use fy_newMapping
    use fy_Sequence
    use fy_StringNode
    use fy_IntNode
@@ -111,13 +114,14 @@ contains
    end function load_from_file
 
    function top(this, lexr) result(node)
-      class(AbstractNode), allocatable :: node
+      class(AbstractNode), target, allocatable :: node
       class(newParser), intent(inout) :: this
       type(Lexer), intent(inout) :: lexr
 
       class(AbstractToken), allocatable :: token
       logical :: done
-
+      type(newMapping), pointer :: map
+      type(sequence), pointer :: seq
       done = .false.
 
       do
@@ -136,27 +140,27 @@ contains
             node = this%interpret(token)
             done = .true.
          type is (FlowSequenceStartToken)
-            node = SequenceNode(this%process_sequence(lexr))
+            node = SequenceNode()
+            seq => to_sequence(node)
+            call this%process_sequence(lexr, seq)
             done = .true.
          type is (BlockSequenceStartToken)
-            node = SequenceNode(this%process_sequence(lexr))
+            print*,__FILE__,__LINE__,'top block sequence'
+            node = SequenceNode()
+            seq => to_sequence(node)
+            call this%process_sequence(lexr, seq)
+            print*,__FILE__,__LINE__,'top node', node
             done = .true.
          type is (BlockMappingStartToken)
-            print*,__FILE__,__LINE__, 'top calling process_mapping'
-            associate (map => this%process_mapping(lexr))
-              print*,__FILE__,__LINE__, 'top'
-              node = MappingNode(map)
-              print*,__FILE__,__LINE__, node
-            end associate
+            node = newMappingNode()
+            map => to_newmapping(node)
+            call this%process_mapping(lexr, map)
             done = .true.
          type is (FlowMappingStartToken)
-            print*,__FILE__,__LINE__, 'top calling process_mapping'
-            associate (map => this%process_mapping(lexr))
-              print*,__FILE__,__LINE__, 'top'
-              node = MappingNode(map)
-              print*,__FILE__,__LINE__, node
-            end associate
-            done = .true.
+            node = newMappingNode()
+            map => to_newmapping(node)
+            call this%process_mapping(lexr, map)
+            done = .true. 
          class default
             error stop 'unsupported token type in top'
          end select
@@ -167,15 +171,21 @@ contains
    end function top
 
 
-   recursive function process_sequence(this, lexr) result(seq)
-      type(Sequence) :: seq
+   recursive subroutine process_sequence(this, lexr, seq)
       class(newParser), target, intent(inout) :: this
       type(Lexer), intent(inout) :: lexr 
+      type(sequence), intent(inout) :: seq
 
       class(AbstractToken), allocatable :: token
       logical :: expect_another
       character(:), allocatable :: anchor
+      type(newMapping), pointer :: map
+      class(AbstractNode), pointer :: subnode
+      type(Sequence), pointer :: subseq
 
+      integer :: depth = 0
+
+      depth = depth + 1
       expect_another = .false.
 
       do
@@ -193,10 +203,20 @@ contains
          type is (ScalarToken)
             call seq%push_back(this%interpret(token))
          type is (BlockSequenceStartToken)
-            call seq%push_back(SequenceNode(this%process_sequence(lexr)))
+            HERE
+            call seq%push_back(SequenceNode())
+            subnode => seq%back()
+            HERE
+            subseq => to_sequence(subnode)
+            call this%process_sequence(lexr, subseq)
+            HERE
+            HERE, 'subseq: ', subnode
          type is (FlowSequenceStartToken)
-            call seq%push_back(SequenceNode(this%process_sequence(lexr)))
-
+            HERE
+            call seq%push_back(SequenceNode())
+            subnode => seq%back()
+            subseq => to_sequence(subnode)
+            call this%process_sequence(lexr, subseq)
          type is (FlowNextEntryToken)
             expect_another = .true.
          type is (BlockNextEntryToken)
@@ -214,11 +234,17 @@ contains
             exit
 
          type is (FlowMappingStartToken)
-            print*,__FILE__,__LINE__, 'seq calling process_mapping'
-            call seq%push_back(MappingNode(this%process_mapping(lexr)))
+!!$            call seq%push_back(MappingNode(this%process_mapping(lexr)))
+            call seq%push_back(newMappingNode())
+            subnode => seq%back()
+            map => to_newmapping(subnode)
+            call this%process_mapping(lexr, map)
          type is (BlockMappingStartToken)
-            print*,__FILE__,__LINE__, 'seq calling process_mapping'
-            call seq%push_back(MappingNode(this%process_mapping(lexr)))
+            call seq%push_back(newMappingNode())
+            subnode => seq%back()
+            map => to_newmapping(subnode)
+            call this%process_mapping(lexr, map)
+!!$            call seq%push_back(newMappingNode(this%process_mapping(lexr)))
          class default
             error stop 'illegal token encountered A'
          end select
@@ -229,15 +255,17 @@ contains
          end if
 
       end do
+      HERE,'end of process_sequence()', SequenceNode(seq)
+      depth = depth - 1
 
-      print*,__FILE__,__LINE__, 'result sequence is size: ', seq%size()
-
-   end function process_sequence
+   end subroutine process_sequence
 
 
-#define HERE print*,__FILE__,__LINE__,depth
-   recursive function process_mapping(this, lexr) result(map)
-      type(Mapping) :: map
+!!$   recursive function process_mapping(this, lexr) result(map)
+!!$      type(newMapping) :: map
+
+   recursive subroutine process_mapping(this, lexr, map)
+      type(newMapping), intent(inout) :: map
       class(newParser), target, intent(inout) :: this
       type(Lexer), intent(inout) :: lexr
 
@@ -245,18 +273,14 @@ contains
 
       depth = depth + 1
 
-      HERE
+      map = newMapping()
       do
-
          associate (token => lexr%get_token())
-
            select type (token)
            type is (ScalarToken)
               ! no-op
            type is (KeyToken)
-              HERE
               call process_map_key(this, lexr, map)
-              HERE, MappingNode(map)
            type is (FlowNextEntryToken)
               ! no-op
            type is (FlowMappingEndToken)
@@ -266,40 +290,39 @@ contains
            class default
               error stop 'illegal token encountered B'
            end select
-           HERE
          end associate
 
       end do
 
-      HERE, MappingNode(map)
       depth = depth - 1
-   end function process_mapping
+!!$   end function process_mapping
+   end subroutine process_mapping
 
    recursive subroutine process_map_key(this, lexr, map)
       class(newParser), intent(inout) :: this
       type(Lexer), intent(inout) :: lexr
-      type(Mapping), intent(inout) :: map
+      type(newMapping), intent(inout) :: map
 
       character(:), allocatable :: anchor, alias
       character(:), allocatable :: key_str
-      type(Mapping), pointer :: anchor_mapping
+      type(newMapping), pointer :: anchor_mapping
       class(AbstractToken), allocatable :: token_2, token_3, token_4
 
-      type(sequence), save :: keys
+      type(sequence), save :: keys, values
       integer :: depth = 0
+      class(AbstractNode), allocatable :: val
+      class(AbstractNode), pointer :: curr_key
+      class(AbstractNode), pointer :: curr_value
 
       depth = depth + 1
-      HERE, MappingNode(map)
 
       associate (token => lexr%get_token())
         call keys%push_back(get_key(this, token, key_str))
-          HERE, "key is ", key_str
           associate (value_token => lexr%get_token())
             if (value_token%get_id() /= VALUE_INDICATOR) then
                error stop 'expected ValueToken'
             end if
           end associate
-          HERE
           token_2 = lexr%get_token()
           
           ! Possible anchor or alias?
@@ -313,7 +336,7 @@ contains
              if (this%anchors%count(alias) > 0) then
                 if (key_str == MERGE_KEY) then
                    !TODO - should throw exception if not mapping ...
-                   anchor_mapping => to_mapping(this%anchors%of(alias))
+                   anchor_mapping => to_newmapping(this%anchors%of(alias))
                    call merge(map, anchor_mapping)
                 else
                    call map%insert(keys%back(), this%anchors%of(alias))
@@ -326,29 +349,22 @@ contains
           class default
              token_3 = token_2
           end select
-          HERE, key_str
-          associate(curr_key => keys%back())
-            HERE, key_str, ' ', curr_key, '; size: ',keys%size()
-            associate (value => process_value(this, keys%back(), token_3, lexr))
-              
-              HERE, key_str, ' ', curr_key
-              call map%insert(keys%back(), value)
-              HERE, key_str, ' ', curr_key
-            end associate
-          HERE, MappingNode(map)
+          curr_key => keys%back()
+          call process_value(this, keys%back(), token_3, lexr, values)
+          curr_key => keys%back()
+          curr_value => values%back()
 
-          
-          HERE
+            call map%insert(keys%back(), curr_value)
+
+          curr_key => keys%back()
           if (allocated(anchor)) then
              call this%anchors%insert(anchor, map%of(curr_key))
           end if
-          HERE
-          end associate
 
-       call keys%pop_back()
+          call keys%pop_back()
+          call values%pop_back()
      end associate
 
-      HERE, MappingNode(map)
       depth = depth - 1
 
    contains
@@ -356,10 +372,10 @@ contains
       subroutine merge(m1, m2)
          use fy_String
          use gftl_UnlimitedVector
-         type(Mapping), intent(inout) :: m1
-         type(Mapping), intent(in) :: m2
+         type(newMapping), intent(inout) :: m1
+         type(newMapping), intent(in) :: m2
 
-         type (MappingIterator) :: iter
+         type (newMappingIterator) :: iter
 
          class(AbstractNode), pointer :: key, value
 
@@ -394,41 +410,54 @@ contains
    end function get_key
 
 
-   recursive function process_value(this, key, token, lexr) result(subnode)
-      class(AbstractNode), allocatable :: subnode
+   recursive subroutine process_value(this, key, token, lexr, values)
       class(NewParser), intent(inout) :: this
       class(AbstractNode), intent(in) :: key
       class(AbstractToken), intent(in) :: token
       type(Lexer), intent(inout) :: lexr
-      integer :: depth =1 
+      type(sequence), intent(inout) :: values
 
+      type(newMapping), pointer :: map
+      type(sequence), pointer :: seq
+      integer :: depth =0
+
+      class(AbstractNode), pointer :: subnode
+
+      depth = depth + 1
+      HERE
       select type(token)
       type is (ScalarToken)
-         subnode = this%interpret(token)
+         call values%push_back(this%interpret(token))
       type is (FlowSequenceStartToken)
-         subnode = SequenceNode(this%process_sequence(lexr))
+         call values%push_back(SequenceNode())
+         subnode => values%back()
+         seq => to_sequence(subnode)
+         call this%process_sequence(lexr, seq)
       type is (BlockSequenceStartToken)
-         subnode = SequenceNode(this%process_sequence(lexr))
+         call values%push_back(SequenceNode())
+         subnode => values%back()
+         seq => to_sequence(subnode)
+         call this%process_sequence(lexr, seq)
       type is (FlowMappingStartToken)
-         HERE, 'value calling process_mapping'
-         associate(map => this%process_mapping(lexr))
-           HERE
-           subnode = MappingNode(map)
-         end associate
-         HERE, subnode
+         call values%push_back(newMappingNode())
+         subnode => values%back()
+         map => to_newmapping(subnode)
+         call this%process_mapping(lexr, map)
+         subnode => values%back()
       type is (BlockMappingStartToken)
-         HERE,'value calling process_mapping'
-         associate(map => this%process_mapping(lexr))
-           subnode = MappingNode(map)
-         end associate
-         HERE
+         call values%push_back(newMappingNode())
+         subnode => values%back()
+         map => to_newmapping(subnode)
+         call this%process_mapping(lexr, map)
       class default
          error stop 'illegal token encountered C'
       end select
 
-      HERE, subnode
+      subnode => values%back()
+      HERE, 'subnode: ', subnode
+      depth = depth - 1
       return
-   end function process_value
+   end subroutine process_value
 
 
 

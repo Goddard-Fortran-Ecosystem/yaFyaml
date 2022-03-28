@@ -10,9 +10,11 @@ module fy_Nodes
    
    use fy_SequenceNode
    use fy_MappingNode
+   use fy_newMappingNode
 
    use fy_Sequence
    use fy_Mapping
+   use fy_newMapping
    implicit none
    public
    
@@ -52,7 +54,7 @@ contains
       integer(kind=INT64) :: i64
 
       i64 = to_int(this)
-      print*,__FILE__,__LINE__, i64, huge(i32)
+
       if (abs(i64) <= huge(i32)) then
          i32 = i64
       else

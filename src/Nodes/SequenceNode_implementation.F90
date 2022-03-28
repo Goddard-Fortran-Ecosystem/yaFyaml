@@ -1,6 +1,7 @@
 submodule (fy_SequenceNode) SequenceNode_implementation
    use fy_AbstractNode
    use fy_MappingNode
+   use fy_newMappingNode
    implicit none
 
 
@@ -52,7 +53,7 @@ contains
          s_b => to_sequence(to)
          call clone(s_a, s_b)
       class default
-         error stop "Should not be happen."
+         error stop "Should not happen."
       end select
 
    end subroutine clone_sequence_node
@@ -83,6 +84,13 @@ contains
               subobject => to%back()                                                                                                   
               select type (qq => subobject)                                                                                           
               type is (MappingNode) ! guaranteed                                                                                      
+                 call clone(q, qq)                                                                                                    
+              end select                                                                                                              
+           type is (newMappingNode)                                                                                                      
+              call to%push_back(newMappingNode())                                                                                         
+              subobject => to%back()                                                                                                   
+              select type (qq => subobject)                                                                                           
+              type is (newMappingNode) ! guaranteed                                                                                      
                  call clone(q, qq)                                                                                                    
               end select                                                                                                              
            class default ! scalar                                                                                                     

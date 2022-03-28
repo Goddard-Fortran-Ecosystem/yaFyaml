@@ -34,6 +34,8 @@ add_library (yafyaml
   Nodes/SequenceNode_implementation.F90
   Nodes/MappingNode.F90
   Nodes/MappingNode_implementation.F90
+  Nodes/newMappingNode.F90
+  Nodes/newMappingNode_implementation.F90
   Nodes/BoolNode.F90
   Nodes/BoolNode_implementation.F90
   Nodes/IntNode.F90
@@ -44,6 +46,7 @@ add_library (yafyaml
   Nodes/StringNode_implementation.F90
   Nodes/Sequence.F90
   Nodes/Mapping.F90
+  Nodes/newMapping.F90
   Nodes/Nodes.F90
   # package
   yafyaml.F90

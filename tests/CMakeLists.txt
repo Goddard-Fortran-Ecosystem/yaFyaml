@@ -3,8 +3,7 @@ set (pf_tests
   Test_File.pf
   Test_Reader.pf
   Test_Lexer.pf
-  Test_Parser.pf
-  Test_UnlimitedUtilities.pf
+  Test_newParser.pf
   Test_JSONSchema.pf
   Test_CoreSchema.pf
 
@@ -17,6 +16,9 @@ set (pf_tests
 
   Test_ComplexNode.pf
 
+  Test_Node_Set.pf
+  # deprecated
+  Test_Parser.pf
   Test_YAML_Node_Set.pf
   )
 

@@ -32,7 +32,7 @@ module fy_Tokens
 
 
   type, abstract :: AbstractToken
-!!$     private
+     private
      character(:), allocatable :: id
    contains
      procedure :: get_id

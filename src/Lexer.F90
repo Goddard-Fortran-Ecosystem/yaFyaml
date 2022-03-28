@@ -56,6 +56,7 @@ module fy_Lexer
    contains
      ! public access
      procedure :: get_token
+     procedure :: skip_token
 
      procedure :: pop_token
      procedure :: need_more_tokens
@@ -186,8 +187,21 @@ contains
        token = NullToken()
     end if
     __RETURN__(YAFYAML_SUCCESS)
-
+     __UNUSED_DUMMY__(unusable)
   end function get_token
+
+  subroutine skip_token(this, unusable, rc)
+     class(Lexer), intent(inout) :: this
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     integer, optional, intent(out) :: rc
+
+     integer :: status
+     class(AbstractToken), allocatable :: token
+
+     token = this%get_token(__RC__)
+     __RETURN__(YAFYAML_SUCCESS)
+     __UNUSED_DUMMY__(unusable)
+  end subroutine skip_token
 
   logical function need_more_tokens(this, unusable, rc)
     class(Lexer), intent(inout) :: this
@@ -949,6 +963,7 @@ contains
        if ((style /= '"') .and. (ch == "'") .and. (this%peek(offset=1) == "'")) then
           text = text // "'"
           call this%forward(offset=2)
+          
        elseif ((style == '"' .and. (ch == "'")) .or. (style == "'" .and. scan(ch,'"'//BACKSLASH) > 0)) then
           text = text // ch
           call this%forward()

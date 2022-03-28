@@ -183,19 +183,19 @@ contains
               type is (SequenceNode) ! guaranteed                                                                                     
                  call clone(q, qq)                                                                                                    
               end select                                                                                                              
-           type is (MappingNode)                                                                                                      
-              call to%insert(key, MappingNode())                                                                                       
-              subobject => to%of(key)                                                                                                  
-              select type (qq => subobject)                                                                                           
-              type is (MappingNode) ! guaranteed                                                                                      
-                 call clone(q, qq)                                                                                                    
-              end select                                                                                                              
-           class default ! scalar                                                                                                     
-              call to%insert(key, val)                                                                                                 
-           end select                                                                                                                 
-           call iter%next()                                                                                                           
-        end do                                                                                                                        
-      end associate                                                                                                                   
+           type is (MappingNode)
+              call to%insert(key, MappingNode())
+              subobject => to%of(key)
+              select type (qq => subobject)
+              type is (MappingNode) ! guaranteed
+                 call clone(q, qq)              
+              end select
+           class default ! scalar
+              call to%insert(key, val)
+           end select
+           call iter%next()
+        end do
+      end associate
    end subroutine clone_mapping
 
 

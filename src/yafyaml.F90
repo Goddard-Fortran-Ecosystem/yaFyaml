@@ -4,6 +4,7 @@ module yafyaml
 !!$  use fy_YAML_Node, only: Configuration => YAML_Node
 !!$  use fy_YAML_Node, only: ConfigurationIterator => YAML_NodeIterator
   use fy_Parser
+  use fy_newParser
   use fy_ErrorCodes
   use fy_Nodes
   use fy_String

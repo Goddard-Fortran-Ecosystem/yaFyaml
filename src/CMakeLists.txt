@@ -7,7 +7,6 @@ add_library (yafyaml
   StringNodeMap.F90
 
   String.F90
-  UnlimitedUtilities.F90
   Tokens.F90
   TokenVector.F90
   AbstractTextStream.F90
@@ -16,15 +15,12 @@ add_library (yafyaml
   FileStream.F90
   Reader.F90
   Lexer.F90
-  Parser.F90
+  newParser.F90
   AbstractSchema.F90
   FailsafeSchema.F90
   JSONSchema.F90
   CoreSchema.F90
 
-  YAML_Node.F90
-  YAML_Node_implementation.F90
-  YAML_NodeIterator_implementation.F90
   KeywordEnforcer.F90
   ErrorCodes.F90
   SimpleKey.F90
@@ -51,6 +47,13 @@ add_library (yafyaml
   Nodes/Nodes.F90
   # package
   yafyaml.F90
+
+  #deprecated
+  Parser.F90
+  YAML_Node.F90
+  YAML_Node_implementation.F90
+  YAML_NodeIterator_implementation.F90
+
   )
 
 add_library(YAFYAML::yafyaml ALIAS yafyaml)

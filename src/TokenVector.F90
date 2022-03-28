@@ -1,14 +1,11 @@
 module fy_TokenVector
-  use fy_Tokens
-#define _type class(AbstractToken)
-#define _allocatable
-#define _vector TokenVector
-#define _iterator TokenVectorIterator
-#include "templates/vector.inc"
+   use fy_Tokens
 
-#undef _iterator
-#undef _vector
-#undef _allocatable
-#undef _type
-  
+#define T AbstractToken
+#define T_polymorphic
+#define Vector TokenVector
+#define VectorIterator TokenVectorIterator
+
+#include "vector/template.inc"
+
 end module fy_TokenVector

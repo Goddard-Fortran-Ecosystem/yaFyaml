@@ -5,6 +5,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- YAML_Node is now an abstract type.  Semantics are slightly changed
+  as a consequence, but most interfaces are unaffected.
+  Main object should now be declared as `class(YAML_Node), allocatable ::`
+
+
 ## [1.0-beta6] 2022-03-24
 
 ### Added

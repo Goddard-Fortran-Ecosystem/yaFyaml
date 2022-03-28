@@ -7,6 +7,8 @@ module fy_StringNode
    use fy_ErrorCodes
    use fy_ErrorHandling
    use fy_keywordEnforcer
+   use, intrinsic :: iso_fortran_env, only: INT32, INT64
+   use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
    private
 
@@ -14,14 +16,15 @@ module fy_StringNode
    public :: to_string
 
    type, extends(BaseNode) :: StringNode
-      private
+!!$      private
       character(:), allocatable :: value
    contains
       procedure, nopass :: is_string
       procedure, nopass :: is_scalar
-      procedure, pass(this) :: assign_to_string
       procedure :: less_than
       procedure :: write_node_formatted
+
+      procedure :: clear
    end type StringNode
 
    interface
@@ -55,13 +58,6 @@ contains
    end function new_StringNode
 
 
-   subroutine assign_to_string(string, this)
-      character(:), allocatable, intent(inout) :: string
-      class(StringNode), intent(in) :: this
-
-      string = this%value
-
-   end subroutine assign_to_string
       
    function to_string(this, unusable, err_msg, rc) result(ptr)
       character(:), pointer :: ptr
@@ -93,5 +89,9 @@ contains
       
    end subroutine write_node_formatted
 
+   subroutine clear(this)
+      class(StringNode), intent(inout) :: this
+      if (allocated(this%value)) deallocate(this%value)
+   end subroutine clear
 
 end module fy_StringNode

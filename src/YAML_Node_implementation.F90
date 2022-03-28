@@ -245,36 +245,42 @@ contains
 
 
    module subroutine assign_to_logical(flag, this)
+      use fy_Nodes, only: assignment(=)
       logical, intent(out) :: flag
       class(YAML_Node), intent(in) :: this
       flag = this%node
    end subroutine assign_to_logical
 
    module subroutine assign_to_string(string, this)
+      use fy_Nodes, only: assignment(=)
       character(:), allocatable, intent(out) :: string
       class(YAML_Node), intent(in) :: this
       string = this%node
    end subroutine assign_to_string
 
    module subroutine assign_to_integer32(i32, this)
+      use fy_Nodes, only: assignment(=)
       integer(kind=INT32), intent(out) :: i32
       class(YAML_Node), intent(in) :: this
       i32 = this%node
    end subroutine assign_to_integer32
 
    module subroutine assign_to_integer64(i64, this)
+      use fy_Nodes, only: assignment(=)
       integer(kind=INT64), intent(out) :: i64
       class(YAML_Node), intent(in) :: this
       i64 = this%node
    end subroutine assign_to_integer64
 
    module subroutine assign_to_real32(r32, this)
+      use fy_Nodes, only: assignment(=)
       real(kind=REAL32), intent(out) :: r32
       class(YAML_Node), intent(in) :: this
       r32 = this%node
    end subroutine assign_to_real32
 
    module subroutine assign_to_real64(r64, this)
+      use fy_Nodes, only: assignment(=)
       real(kind=REAL64), intent(out) :: r64
       class(YAML_Node), intent(in) :: this
       r64 = this%node

@@ -6,6 +6,8 @@ module fy_BoolNode
    use fy_ErrorCodes
    use fy_ErrorHandling
    use fy_keywordEnforcer
+   use, intrinsic :: iso_fortran_env, only: INT32, INT64
+   use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
    private
 
@@ -18,10 +20,11 @@ module fy_BoolNode
    contains
       procedure, nopass :: is_bool
       procedure, nopass :: is_scalar
-      procedure, pass(this) :: assign_to_logical
       procedure :: less_than
       procedure :: write_node_formatted
 !!$      procedure :: clone
+
+      procedure :: clear
    end type BoolNode
 
    interface
@@ -55,13 +58,6 @@ contains
       logical, intent(in) :: flag
       node%value = flag
    end function new_BoolNode
-
-   subroutine assign_to_logical(flag, this)
-      logical, intent(inout) :: flag
-      class(BoolNode), intent(in) :: this
-      flag = this%value
-   end subroutine assign_to_logical
-      
 
 
    function to_bool(this, unusable, err_msg, rc) result(ptr)
@@ -106,5 +102,11 @@ contains
 !!$
 !!$      other = this
 !!$   end subroutine clone
+
+
+   subroutine clear(this)
+      class(BoolNode), intent(inout) :: this
+      __UNUSED_DUMMY__(this)
+   end subroutine clear
 
 end module fy_BoolNode

@@ -7,6 +7,8 @@ module fy_SequenceNode
    use fy_ErrorCodes
    use fy_ErrorHandling
    use fy_keywordEnforcer
+   use, intrinsic :: iso_fortran_env, only: INT32, INT64
+   use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
    private
 
@@ -23,6 +25,8 @@ module fy_SequenceNode
       procedure, nopass :: is_sequence
       procedure :: less_than
       procedure :: write_node_formatted
+
+      procedure :: clear
    end type SequenceNode
 
    type(Sequence), target :: DEFAULT_SEQUENCE
@@ -69,17 +73,10 @@ contains
       type(SequenceNode) :: node
       type(sequence), intent(in) :: s
 
-      node%value = s
+      call clone(s, node%value)
 
    end function new_SequenceNode
 
-   subroutine assign_to_sequence(s, this)
-      type(Sequence), intent(out) :: s
-      class(SequenceNode), intent(in) :: this
-      
-      s = this%value
-      
-   end subroutine assign_to_sequence
 
 
    function to_sequence(this, unusable, err_msg, rc) result(ptr)
@@ -114,20 +111,18 @@ contains
 
       integer :: i
       class(AbstractNode), pointer :: element
-
+      
       write(unit,'("[ ")', iostat=iostat)
       if (iostat /= 0) return
-      associate (s => this%value)
-        do i = 1, s%size()
-           element => s%of(i)
+        do i = 1, this%value%size()
+           element => this%value%of(i)
            call element%write_node_formatted(unit, iotype, v_list, iostat, iomsg)
            if (iostat /= 0) return
-           if (i < s%size()) then
+           if (i < this%value%size()) then
               write(unit,'(", ")', iostat=iostat)
               if (iostat /= 0) return
            end if
         end do
-      end associate
       write(unit,'(" ]")', iostat=iostat)
       
    end subroutine write_node_formatted
@@ -138,6 +133,33 @@ contains
       size = this%value%size()
    end function size
 
+
+   subroutine assign_to_sequence(s, this)
+      type(Sequence), intent(out) :: s
+      class(SequenceNode), intent(in) :: this
+      
+      s = this%value
+      
+   end subroutine assign_to_sequence
+
+
+   recursive subroutine clear(this)
+      class(SequenceNode), intent(inout) :: this
+
+      type(SequenceIterator) :: iter
+      class(AbstractNode), pointer :: item
+
+        associate (b => this%value%begin(), e=> this%value%end())
+          iter = b
+          do while (iter /= e)
+             item => iter%of()
+             call item%clear()
+             call iter%next()
+          end do
+        end associate
+        call this%value%clear()
+
+   end subroutine clear
 
 end module fy_SequenceNode
 

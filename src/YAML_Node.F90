@@ -145,65 +145,26 @@ module fy_YAML_Node
       generic :: get_key => get_key_real64, get_key_real64_1d
       generic :: get_key => get_key_subconfig
 
-!!$      procedure :: get_value_logical
-!!$      procedure :: get_value_string
-!!$      procedure :: get_value_integer32
-!!$      procedure :: get_value_integer64
-!!$      procedure :: get_value_real32
-!!$      procedure :: get_value_real64
-!!$      procedure :: get_value_logical_1d
-!!$      procedure :: get_value_integer32_1d
-!!$      procedure :: get_value_integer64_1d
-!!$      procedure :: get_value_real32_1d
-!!$      procedure :: get_value_real64_1d
-!!$      procedure :: get_value_subconfig
-!!$      generic :: get_value => get_value_logical, get_value_logical_1d
-!!$      generic :: get_value => get_value_string
-!!$      generic :: get_value => get_value_integer32, get_value_integer32_1d
-!!$      generic :: get_value => get_value_integer64, get_value_integer64_1d
-!!$      generic :: get_value => get_value_real32, get_value_real32_1d
-!!$      generic :: get_value => get_value_real64, get_key_real64_1d
-!!$      generic :: get_value => get_value_subconfig
-!!$
-!!$      procedure :: set_value_logical
-!!$      procedure :: set_value_string
-!!$      procedure :: set_value_integer32
-!!$      procedure :: set_value_integer64
-!!$      procedure :: set_value_real32
-!!$      procedure :: set_value_real64
-!!$      procedure :: set_value_logical_1d
-!!$      procedure :: set_value_integer32_1d
-!!$      procedure :: set_value_integer64_1d
-!!$      procedure :: set_value_real32_1d
-!!$      procedure :: set_value_real64_1d
-!!$      procedure :: set_value_subconfig
-!!$      generic :: set_value => set_value_logical, set_value_logical_1d
-!!$      generic :: set_value => set_value_string
-!!$      generic :: set_value => set_value_integer32, set_value_integer32_1d
-!!$      generic :: set_value => set_value_integer64, set_value_integer64_1d
-!!$      generic :: set_value => set_value_real32, set_value_real32_1d
-!!$      generic :: set_value => set_value_real64, set_key_real64_1d
-!!$      generic :: set_value => set_value_subconfig
-!!$
-!!$      procedure :: insert_value_logical
-!!$      procedure :: insert_value_string
-!!$      procedure :: insert_value_integer32
-!!$      procedure :: insert_value_integer64
-!!$      procedure :: insert_value_real32
-!!$      procedure :: insert_value_real64
-!!$      procedure :: insert_value_logical_1d
-!!$      procedure :: insert_value_integer32_1d
-!!$      procedure :: insert_value_integer64_1d
-!!$      procedure :: insert_value_real32_1d
-!!$      procedure :: insert_value_real64_1d
-!!$      procedure :: insert_value_subconfig
-!!$      generic :: insert_value => insert_value_logical, insert_value_logical_1d
-!!$      generic :: insert_value => insert_value_string
-!!$      generic :: insert_value => insert_value_integer32, insert_value_integer32_1d
-!!$      generic :: insert_value => insert_value_integer64, insert_value_integer64_1d
-!!$      generic :: insert_value => insert_value_real32, insert_value_real32_1d
-!!$      generic :: insert_value => insert_value_real64, insert_key_real64_1d
-!!$      generic :: insert_value => insert_value_subconfig
+      procedure :: get_value_logical
+      procedure :: get_value_string
+      procedure :: get_value_integer32
+      procedure :: get_value_integer64
+      procedure :: get_value_real32
+      procedure :: get_value_real64
+      procedure :: get_value_logical_1d
+      procedure :: get_value_integer32_1d
+      procedure :: get_value_integer64_1d
+      procedure :: get_value_real32_1d
+      procedure :: get_value_real64_1d
+      procedure :: get_value_subconfig
+      generic :: get_value => get_value_logical, get_value_logical_1d
+      generic :: get_value => get_value_string
+      generic :: get_value => get_value_integer32, get_value_integer32_1d
+      generic :: get_value => get_value_integer64, get_value_integer64_1d
+      generic :: get_value => get_value_real32, get_value_real32_1d
+      generic :: get_value => get_value_real64, get_key_real64_1d
+      generic :: get_value => get_value_subconfig
+
 
    end type YAML_NodeIterator
 

@@ -7,6 +7,8 @@ module fy_MappingNode
    use fy_ErrorCodes
    use fy_ErrorHandling
    use fy_keywordEnforcer
+   use, intrinsic :: iso_fortran_env, only: INT32, INT64
+   use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
    private
 
@@ -24,8 +26,11 @@ module fy_MappingNode
       procedure, pass(this) :: assign_to_mapping
       procedure :: less_than
       procedure :: write_node_formatted
-      final :: clear
+!!$      final :: clear
+
+      procedure :: clear
    end type MappingNode
+
 
    type(MappingNode) :: mmm
 
@@ -83,7 +88,10 @@ contains
       type(Mapping), intent(in) :: m
       type(MappingNode) :: node
 
-      node%value = m
+      ! Direct assignment is legal, but some compilers show signs of
+      ! corrupting memory on deep, nested semi-recursive data
+      ! structures.
+      call clone(m, node%value)
 
    end function new_MappingNode
 
@@ -164,8 +172,21 @@ contains
    end function size
 
 
+!!$   recursive subroutine clear(this)
+!!$      type(MappingNode), intent(inout) :: this
+!!$      call this%value%clear()
+!!$   end subroutine clear
+
+   
    recursive subroutine clear(this)
-      type(MappingNode), intent(inout) :: this
+      class(MappingNode), intent(inout) :: this
+
+      type(MappingIterator) :: iter, t_iter
+      class(AbstractNode), pointer :: key, value
+
       call this%value%clear()
+
    end subroutine clear
+
+
 end module fy_MappingNode

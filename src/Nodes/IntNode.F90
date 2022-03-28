@@ -1,12 +1,13 @@
 #include "error_handling.h"
 #include "string_handling.h"
 module fy_IntNode
-   use, intrinsic :: iso_fortran_env, only: INT32, INT64
    use fy_AbstractNode
    use fy_BaseNode
    use fy_ErrorCodes
    use fy_ErrorHandling
    use fy_keywordEnforcer
+   use, intrinsic :: iso_fortran_env, only: INT32, INT64
+   use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
    private
 
@@ -19,10 +20,10 @@ module fy_IntNode
    contains
       procedure, nopass :: is_int
       procedure, nopass :: is_scalar
-      procedure, pass(this) :: assign_to_integer32
-      procedure, pass(this) :: assign_to_integer64
       procedure :: less_than
       procedure :: write_node_formatted
+
+      procedure :: clear
    end type IntNode
 
    interface
@@ -61,27 +62,6 @@ contains
       node%value = i64
    end function new_IntNode_i64
 
-   subroutine assign_to_integer32(i32, this)
-      integer(kind=INT32), intent(inout) :: i32
-      class(IntNode), intent(in) :: this
-
-      if (abs(this%value) <= huge(1_INT32)) then
-         i32 = this%value
-      else
-         ! unchanged
-         i32 = -huge(1_INT32)
-      end if
-   end subroutine assign_to_integer32
-      
-
-   subroutine assign_to_integer64(i64, this)
-      integer(kind=INT64), intent(inout) :: i64
-      class(IntNode), intent(in) :: this
-
-      i64 = this%value
-
-   end subroutine assign_to_integer64
-
 
    function to_int(this, unusable, err_msg, rc) result(ptr)
       integer(kind=INT64), pointer :: ptr
@@ -112,5 +92,10 @@ contains
       write(unit,'(i0)',iostat=iostat) this%value
       
    end subroutine write_node_formatted
+
+   subroutine clear(this)
+      class(IntNode), intent(inout) :: this
+      __UNUSED_DUMMY__(this)
+   end subroutine clear
 
 end module fy_IntNode

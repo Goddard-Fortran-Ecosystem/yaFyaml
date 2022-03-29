@@ -122,9 +122,11 @@ contains
       logical :: done
       type(newMapping), pointer :: map
       type(sequence), pointer :: seq
+
       done = .false.
 
       do
+
          token = lexr%get_token()
 
          select type (token)
@@ -145,11 +147,9 @@ contains
             call this%process_sequence(lexr, seq)
             done = .true.
          type is (BlockSequenceStartToken)
-            print*,__FILE__,__LINE__,'top block sequence'
             node = SequenceNode()
             seq => to_sequence(node)
             call this%process_sequence(lexr, seq)
-            print*,__FILE__,__LINE__,'top node', node
             done = .true.
          type is (BlockMappingStartToken)
             node = newMappingNode()
@@ -164,6 +164,7 @@ contains
          class default
             error stop 'unsupported token type in top'
          end select
+         deallocate(token)
       end do
 
       if (.not. done) error stop 'not done'
@@ -176,7 +177,7 @@ contains
       type(Lexer), intent(inout) :: lexr 
       type(sequence), intent(inout) :: seq
 
-      class(AbstractToken), allocatable :: token
+      class(AbstractToken), allocatable :: token, token_2
       logical :: expect_another
       character(:), allocatable :: anchor
       type(newMapping), pointer :: map
@@ -189,11 +190,15 @@ contains
       expect_another = .false.
 
       do
+
+
          token = lexr%get_token()
+
 
          select type(q => token)
          type is (AnchorToken)
             anchor = q%value
+            deallocate(token)
             token = lexr%get_token()
          type is (AliasToken)
             error stop 'improper AliasToken'
@@ -203,16 +208,11 @@ contains
          type is (ScalarToken)
             call seq%push_back(this%interpret(token))
          type is (BlockSequenceStartToken)
-            HERE
             call seq%push_back(SequenceNode())
             subnode => seq%back()
-            HERE
             subseq => to_sequence(subnode)
             call this%process_sequence(lexr, subseq)
-            HERE
-            HERE, 'subseq: ', subnode
          type is (FlowSequenceStartToken)
-            HERE
             call seq%push_back(SequenceNode())
             subnode => seq%back()
             subseq => to_sequence(subnode)
@@ -232,9 +232,7 @@ contains
          type is (BlockEndToken)
             ! TODO must match block/flow 
             exit
-
          type is (FlowMappingStartToken)
-!!$            call seq%push_back(MappingNode(this%process_mapping(lexr)))
             call seq%push_back(newMappingNode())
             subnode => seq%back()
             map => to_newmapping(subnode)
@@ -244,10 +242,10 @@ contains
             subnode => seq%back()
             map => to_newmapping(subnode)
             call this%process_mapping(lexr, map)
-!!$            call seq%push_back(newMappingNode(this%process_mapping(lexr)))
          class default
             error stop 'illegal token encountered A'
          end select
+         deallocate(token)
 
          if (allocated(anchor)) then
             call this%anchors%insert(anchor, seq%back())
@@ -255,7 +253,6 @@ contains
          end if
 
       end do
-!!$      HERE,'end of process_sequence()', SequenceNode(seq)
       depth = depth - 1
 
    end subroutine process_sequence
@@ -359,6 +356,7 @@ contains
           curr_key => keys%back()
           if (allocated(anchor)) then
              call this%anchors%insert(anchor, map%of(curr_key))
+             deallocate(anchor)
           end if
 
           call keys%pop_back()
@@ -424,7 +422,6 @@ contains
       class(AbstractNode), pointer :: subnode
 
       depth = depth + 1
-      HERE
       select type(token)
       type is (ScalarToken)
          call values%push_back(this%interpret(token))
@@ -454,7 +451,6 @@ contains
       end select
 
       subnode => values%back()
-      HERE, 'subnode: ', subnode
       depth = depth - 1
       return
    end subroutine process_value

@@ -338,7 +338,6 @@ contains
       logical :: was_found
       logical :: is_safe
 
-      print*,__FILE__,__LINE__, this
       ptr => this%at(SELECTORS, found=was_found, err_msg=err_msg, __RC__)
 
       __ASSERT2__(was_found, YAFYAML_SELECTOR_NOT_FOUND)

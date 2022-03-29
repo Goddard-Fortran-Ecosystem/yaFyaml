@@ -3,7 +3,7 @@ module fy_Sequence
 
 #define T AbstractNode
 #define T_polymorphic
-!!$#define T_Free(x) call x%clear()
+#define T_Free(x) call x%clear()
 #define Vector Sequence
 #define VectorIterator SequenceIterator
 

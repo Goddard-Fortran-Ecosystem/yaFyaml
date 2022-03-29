@@ -26,7 +26,7 @@ module fy_newMappingNode
       procedure, pass(this) :: assign_to_mapping
       procedure :: less_than
       procedure :: write_node_formatted
-!!$      final :: clear
+!!$      final :: clear_final
 
       procedure :: clear
    end type newMappingNode
@@ -177,10 +177,14 @@ contains
 !!$      call this%value%clear()
 !!$   end subroutine clear
 
+   subroutine clear_final(this)
+      type(newMappingNode), intent(inout) :: this
+      call this%clear()
+   end subroutine clear_final
    
    recursive subroutine clear(this)
       class(newMappingNode), intent(inout) :: this
-
+      
       type(newMappingIterator) :: iter, t_iter
       class(AbstractNode), pointer :: key, value
 

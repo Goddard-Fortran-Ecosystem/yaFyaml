@@ -26,6 +26,7 @@ module fy_SequenceNode
       procedure :: less_than
       procedure :: write_node_formatted
 
+      final :: clear_final
       procedure :: clear
    end type SequenceNode
 
@@ -142,6 +143,11 @@ contains
       
    end subroutine assign_to_sequence
 
+
+   recursive subroutine clear_final(this)
+      type(SequenceNode), intent(inout) :: this
+      call this%clear()
+   end subroutine clear_final
 
    recursive subroutine clear(this)
       class(SequenceNode), intent(inout) :: this

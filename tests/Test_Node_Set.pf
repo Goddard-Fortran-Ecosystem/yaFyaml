@@ -1,0 +1,217 @@
+module Test_Node_Set
+   use funit
+   use yafyaml
+   implicit none
+
+contains
+
+   @test
+   subroutine test_set_in_sequence()
+      class(AbstractNode), allocatable :: node
+
+      integer :: status
+      logical :: flag
+      type(sequence) :: s
+
+      call s%push_back(IntNode(1))
+      node = SequenceNode(s)
+
+      call node%set(.true., 1, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+
+      call node%get(flag, 1, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+
+      @assert_that(flag, is(true()))
+      
+   end subroutine test_set_in_sequence
+
+   @test
+   subroutine test_set_in_mapping()
+      class(AbstractNode), allocatable :: node
+
+      integer :: status
+      logical :: flag
+      type(newmapping) :: m
+
+      call m%insert(StringNode('a'), IntNode(1))
+      node = newMappingNode(m)
+
+      call node%set(.true., 'a', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+
+      call node%get(flag, 'a', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+
+      @assert_that(flag, is(true()))
+      
+   end subroutine test_set_in_mapping
+
+
+   @test
+   subroutine test_set_deep_int()
+      class(AbstractNode), allocatable :: node
+
+      integer :: status
+      type(newmapping) :: m
+      type(sequence) :: s
+      integer :: i
+
+      call m%insert(StringNode('a'), IntNode(1))
+      call s%push_back(IntNode(1))
+      call s%push_back(StringNode('null'))
+      call s%push_back(FloatNode(3.14159))
+      call m%insert(StringNode('b'), SequenceNode(s))
+
+      node = newMappingNode(m)
+
+      
+      call node%set(3, 'b', 2, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+
+      call node%get(i, 'b', 2, rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+
+      @assert_that(i, is(3))
+      
+   end subroutine test_set_deep_int
+
+
+   @test
+   subroutine test_set_overload()
+      use, intrinsic :: iso_fortran_env
+      class(AbstractNode), allocatable :: node
+
+      integer :: status
+      logical :: flag
+      integer(kind=INT32) :: i32
+      integer(kind=INT64) :: i64
+      real(kind=REAL32) :: r32
+      real(kind=REAL64) :: r64
+      character(len=:), allocatable :: str
+      type(sequence) :: s
+      
+      call s%push_back(IntNode(1_INT32))
+      node = SequenceNode(s)
+
+      call node%set(.true., 1, rc=status)
+      call node%get(flag, 1, rc=status)
+      @assert_that(flag, is(true()))
+
+      call node%set(2_INT32, 1, rc=status)
+      call node%get(i32, 1, rc=status)
+      @assert_that(i32, is(2_INT32))
+      
+      call node%set(3_INT64, 1, rc=status)
+      call node%get(i64, 1, rc=status)
+      @assert_that(i64, is(3_INT64))
+
+      call node%set(4._REAL32, 1, rc=status)
+      call node%get(r32, 1, rc=status)
+      @assert_that(r32, is(4._REAL32))
+
+      call node%set(5._REAL64, 1, rc=status)
+      call node%get(r64, 1, rc=status)
+      @assert_that(r64, is(5._REAL64))
+
+      call node%set('abcd', 1, rc=status)
+      call node%get(str, 1, rc=status)
+      @assertEqual('abcd', str)
+
+   end subroutine test_set_overload
+
+   @test
+   ! Verify that set() with a new key acts as insert() for the
+   ! relevant mapping.  This is probably the most important/common use
+   ! case.
+   subroutine test_set_as_insert()
+      use, intrinsic :: iso_fortran_env
+      class(AbstractNode), allocatable, target :: node
+      integer :: status
+      integer :: i
+      real :: x
+      type(newmapping) :: m
+
+      ! Clumsy steps to avoid deep copies that break compilers.
+      call m%insert(StringNode('a'), IntNode(1))
+      call m%insert(StringNode('b'), newMappingNode())
+      allocate(node, source=newMappingNode(m))
+
+      call node%set(3, 'b', String('newkey'), rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      
+      call node%get(i, 'b', 'newkey', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(i, is(3))
+      call node%set(5., 'b', String('anothernewkey'), rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+
+     call node%get(x, 'b', String('anothernewkey'), rc=status)
+     @assert_that(status, is(YAFYAML_SUCCESS))
+     @assert_that(x, is(5.))
+
+  end subroutine test_set_as_insert
+
+  @test
+  subroutine test_set_1d()
+      class(AbstractNode), allocatable :: node
+
+      integer :: status
+      logical, allocatable :: flags(:)
+      real, allocatable :: x(:)
+      type(newmapping) :: m
+
+      call m%insert(StringNode('a'), IntNode(1))
+      node = newMappingNode(m)
+
+      call node%set([.true.,.false.,.true.], 'a', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+
+      call node%get(flags, 'a', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(flags, is (equal_to([.true., .false., .true.])))
+
+      call node%set([1.,2.,3.,4.], 'a', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+
+      call node%get(x, 'a', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(x, is (equal_to([1.,2.,3.,4.])))
+  end subroutine test_set_1d
+
+  ! Insert a mapping into an existing mapping.
+  @test
+  subroutine test_set_mapping()
+      class(AbstractNode), allocatable :: node
+
+      integer :: status
+      type(newmapping) :: m1
+      type(newmapping), pointer :: m2
+      type(newMappingNode), target :: mnode
+      class(AbstractNode), allocatable :: subnode1
+      integer :: i
+      real :: x
+
+      call m1%insert(StringNode('a'), IntNode(1))
+      node = newMappingNode(m1)
+
+      mnode = newMappingNode()
+      m2 => to_newmapping(mnode)
+      call m2%insert(StringNode('zero'), IntNode(0))
+      call m2%insert(StringNode('pi'), FloatNode(3.14159))
+      subnode1 = mnode
+      call node%set(subnode1, 'b', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+
+      call node%get(i, 'b', 'zero', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(i, is(0))
+
+      call node%get(x, 'b','pi', rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      @assert_that(x, is(3.14159))
+
+  end subroutine test_set_mapping
+
+end module Test_Node_Set
+

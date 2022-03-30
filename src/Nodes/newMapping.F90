@@ -28,7 +28,7 @@ module fy_newMapping
 
 
    type :: newMappingIterator
-!      private
+      private
       type(newMapping), pointer :: reference
       integer :: i
    contains
@@ -152,7 +152,7 @@ contains
       iter%i = this%size() + 1
    end function end_mapping
 
-   subroutine clear_mapping(this)
+   recursive subroutine clear_mapping(this)
       class(newMapping), intent(inout) :: this
       call this%keys%clear()
       call this%values%clear()

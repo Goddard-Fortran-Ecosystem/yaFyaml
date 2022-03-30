@@ -26,7 +26,7 @@ module fy_newMappingNode
       procedure, pass(this) :: assign_to_mapping
       procedure :: less_than
       procedure :: write_node_formatted
-!!$      final :: clear_final
+      final :: clear_final
 
       procedure :: clear
    end type newMappingNode
@@ -172,12 +172,7 @@ contains
    end function size
 
 
-!!$   recursive subroutine clear(this)
-!!$      type(newMappingNode), intent(inout) :: this
-!!$      call this%value%clear()
-!!$   end subroutine clear
-
-   subroutine clear_final(this)
+   recursive subroutine clear_final(this)
       type(newMappingNode), intent(inout) :: this
       call this%clear()
    end subroutine clear_final

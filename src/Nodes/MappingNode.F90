@@ -26,7 +26,7 @@ module fy_MappingNode
       procedure, pass(this) :: assign_to_mapping
       procedure :: less_than
       procedure :: write_node_formatted
-!!$      final :: clear
+      final :: clear_final
 
       procedure :: clear
    end type MappingNode
@@ -178,6 +178,11 @@ contains
 !!$   end subroutine clear
 
    
+   recursive subroutine clear_final(this)
+      type(MappingNode), intent(inout) :: this
+      call this%clear()
+   end subroutine clear_final
+
    recursive subroutine clear(this)
       class(MappingNode), intent(inout) :: this
 

@@ -32,10 +32,10 @@ contains
 
       integer :: status
       logical :: flag
-      type(newmapping) :: m
+      type(Mapping) :: m
 
       call m%insert(StringNode('a'), IntNode(1))
-      node = newMappingNode(m)
+      node = MappingNode(m)
 
       call node%set(.true., 'a', rc=status)
       @assert_that(status, is(YAFYAML_SUCCESS))
@@ -53,7 +53,7 @@ contains
       class(AbstractNode), allocatable :: node
 
       integer :: status
-      type(newmapping) :: m
+      type(Mapping) :: m
       type(sequence) :: s
       integer :: i
 
@@ -63,7 +63,7 @@ contains
       call s%push_back(FloatNode(3.14159))
       call m%insert(StringNode('b'), SequenceNode(s))
 
-      node = newMappingNode(m)
+      node = MappingNode(m)
 
       
       call node%set(3, 'b', 2, rc=status)
@@ -130,12 +130,12 @@ contains
       integer :: status
       integer :: i
       real :: x
-      type(newmapping) :: m
+      type(Mapping) :: m
 
       ! Clumsy steps to avoid deep copies that break compilers.
       call m%insert(StringNode('a'), IntNode(1))
-      call m%insert(StringNode('b'), newMappingNode())
-      allocate(node, source=newMappingNode(m))
+      call m%insert(StringNode('b'), MappingNode())
+      allocate(node, source=MappingNode(m))
 
       call node%set(3, 'b', String('newkey'), rc=status)
       @assert_that(status, is(YAFYAML_SUCCESS))
@@ -159,10 +159,10 @@ contains
       integer :: status
       logical, allocatable :: flags(:)
       real, allocatable :: x(:)
-      type(newmapping) :: m
+      type(Mapping) :: m
 
       call m%insert(StringNode('a'), IntNode(1))
-      node = newMappingNode(m)
+      node = MappingNode(m)
 
       call node%set([.true.,.false.,.true.], 'a', rc=status)
       @assert_that(status, is(YAFYAML_SUCCESS))
@@ -185,18 +185,18 @@ contains
       class(AbstractNode), allocatable :: node
 
       integer :: status
-      type(newmapping) :: m1
-      type(newmapping), pointer :: m2
-      type(newMappingNode), target :: mnode
+      type(Mapping) :: m1
+      type(Mapping), pointer :: m2
+      type(MappingNode), target :: mnode
       class(AbstractNode), allocatable :: subnode1
       integer :: i
       real :: x
 
       call m1%insert(StringNode('a'), IntNode(1))
-      node = newMappingNode(m1)
+      node = MappingNode(m1)
 
-      mnode = newMappingNode()
-      m2 => to_newmapping(mnode)
+      mnode = MappingNode()
+      m2 => to_mapping(mnode)
       call m2%insert(StringNode('zero'), IntNode(0))
       call m2%insert(StringNode('pi'), FloatNode(3.14159))
       subnode1 = mnode

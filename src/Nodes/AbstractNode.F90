@@ -5,6 +5,9 @@ module fy_AbstractNode
    private
 
    public :: AbstractNode
+   public :: NodeIterator
+   public :: operator(==)
+   public :: operator(/=)
 
    type, abstract :: AbstractNode
    contains
@@ -89,7 +92,51 @@ module fy_AbstractNode
 
       procedure(I_clear), deferred :: clear
 
+      procedure(I_begin), deferred :: begin
+      procedure(I_begin), deferred :: end
    end type AbstractNode
+
+
+   type, abstract :: NodeIterator
+      private
+   contains
+      procedure(I_is_iter), deferred :: is_valid
+      procedure(I_is_iter), deferred :: is_sequence_iterator
+      procedure(I_is_iter), deferred :: is_mapping_iterator
+
+      procedure(I_next), deferred :: next
+
+      procedure(I_equal), deferred :: equal_to
+      generic :: operator(==) => equal_to
+      procedure(I_equal), deferred :: not_equal_to
+      generic :: operator(/=) => not_equal_to
+
+      ! Throws exception if mapping iterator
+!!$      procedure, deferred :: as_node
+!!$      procedure :: as_string
+      procedure(I_as_bool), deferred :: as_bool
+!!$      procedure :: as_int
+!!$      procedure :: as_float
+
+      generic :: as => as_bool
+      ! Throws exception if sequence iterator
+!!$      procedure :: as_node_node_pair
+!!$      procedure :: first_as_node
+!!$      procedure :: first_as_string
+!!$      procedure :: first_as_bool
+!!$      procedure :: first_as_int
+!!$      procedure :: first_as_float
+
+      ! Throws exception if sequence iterator
+!!$      procedure :: second_as_node
+!!$      procedure :: second_as_string
+!!$      procedure :: second_as_bool
+!!$      procedure :: second_as_int
+!!$      procedure :: second_as_float
+   end type NodeIterator
+
+
+
 
 #define SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9
 #define OPT_SELECTORS s2, s3, s4, s5, s6, s7, s8, s9
@@ -526,6 +573,58 @@ module fy_AbstractNode
          class(AbstractNode), intent(inout) :: this
       end subroutine I_clear
 
+      ! Throws exception if node is scalar.
+      function I_begin(this, unusable, rc) result(iter)
+         use fy_KeywordEnforcer
+         import AbstractNode
+         import NodeIterator
+         class(NodeIterator), allocatable :: iter
+         class(AbstractNode), target, intent(in) :: this
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         integer, optional, intent(out) :: rc
+      end function I_begin
+
    end interface
+
+   abstract interface
+
+      logical function I_is_iter(this)
+         import NodeIterator
+         class(NodeIterator), intent(in) :: this
+      end function I_is_iter
+
+      subroutine I_next(this)
+         import NodeIterator
+         class(NodeIterator), intent(inout) :: this
+      end subroutine I_next
+
+      function I_as_bool(this, bool, unusable, err_msg, rc) result(ptr)
+         use fy_KeywordEnforcer
+         use fy_types, only: bool_t
+         import NodeIterator
+         logical, pointer :: ptr
+         class(NodeIterator), intent(in) :: this
+         type(bool_t), intent(in) :: bool
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end function I_as_bool
+
+      logical function I_equal(a, b)
+         import NodeIterator
+         class(NodeIterator), intent(in) :: a
+         class(NodeIterator), intent(in) :: b
+      end function I_equal
+
+   end interface
+
+
+contains
+
+
+   subroutine next(this)
+      class(NodeIterator), intent(inout) :: this
+   end subroutine next
+
 
 end module fy_AbstractNode

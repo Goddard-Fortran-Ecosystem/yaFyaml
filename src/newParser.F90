@@ -15,9 +15,9 @@ module fy_newParser
 
    use fy_AbstractNode
    use fy_StringNodeMap
-   use fy_newMappingNode
+   use fy_mappingNode
    use fy_SequenceNode
-   use fy_newMapping
+   use fy_mapping
    use fy_Sequence
    use fy_StringNode
    use fy_IntNode
@@ -43,6 +43,7 @@ module fy_newParser
       generic   :: load => load_from_file, load_from_stream
       procedure :: top
       procedure :: process_sequence
+      procedure :: process_sequencen
       procedure :: process_mapping
       procedure :: interpret
    end type newParser
@@ -120,7 +121,7 @@ contains
 
       class(AbstractToken), allocatable :: token
       logical :: done
-      type(newMapping), pointer :: map
+      type(mapping), pointer :: map
       type(sequence), pointer :: seq
 
       done = .false.
@@ -152,13 +153,13 @@ contains
             call this%process_sequence(lexr, seq)
             done = .true.
          type is (BlockMappingStartToken)
-            node = newMappingNode()
-            map => to_newmapping(node)
+            node = mappingNode()
+            map => to_mapping(node)
             call this%process_mapping(lexr, map)
             done = .true.
          type is (FlowMappingStartToken)
-            node = newMappingNode()
-            map => to_newmapping(node)
+            node = mappingNode()
+            map => to_mapping(node)
             call this%process_mapping(lexr, map)
             done = .true. 
          class default
@@ -180,7 +181,7 @@ contains
       class(AbstractToken), allocatable :: token, token_2
       logical :: expect_another
       character(:), allocatable :: anchor
-      type(newMapping), pointer :: map
+      type(mapping), pointer :: map
       class(AbstractNode), pointer :: subnode
       type(Sequence), pointer :: subseq
 
@@ -233,14 +234,14 @@ contains
             ! TODO must match block/flow 
             exit
          type is (FlowMappingStartToken)
-            call seq%push_back(newMappingNode())
+            call seq%push_back(mappingNode())
             subnode => seq%back()
-            map => to_newmapping(subnode)
+            map => to_mapping(subnode)
             call this%process_mapping(lexr, map)
          type is (BlockMappingStartToken)
-            call seq%push_back(newMappingNode())
+            call seq%push_back(mappingNode())
             subnode => seq%back()
-            map => to_newmapping(subnode)
+            map => to_mapping(subnode)
             call this%process_mapping(lexr, map)
          class default
             error stop 'illegal token encountered A'
@@ -257,12 +258,96 @@ contains
 
    end subroutine process_sequence
 
+   recursive subroutine process_sequencen(this, lexr, snode)
+      class(newParser), target, intent(inout) :: this
+      type(Lexer), intent(inout) :: lexr 
+      type(SequenceNode), target, intent(inout) :: snode
 
-!!$   recursive function process_mapping(this, lexr) result(map)
-!!$      type(newMapping) :: map
+      class(AbstractToken), allocatable :: token, token_2
+      logical :: expect_another
+      character(:), allocatable :: anchor
+      type(mapping), pointer :: map
+      class(AbstractNode), pointer :: subnode
+      type(Sequence), pointer :: seq
+      type(Sequence), pointer :: subseq
+
+      integer :: depth = 0
+
+      depth = depth + 1
+
+      seq => to_sequence(snode)
+
+      expect_another = .false.
+      do
+
+         token = lexr%get_token()
+
+         select type(q => token)
+         type is (AnchorToken)
+            anchor = q%value
+            deallocate(token)
+            token = lexr%get_token()
+         type is (AliasToken)
+            error stop 'improper AliasToken'
+         end select
+
+         select type (token)
+         type is (ScalarToken)
+            call seq%push_back(this%interpret(token))
+         type is (BlockSequenceStartToken)
+            call seq%push_back(SequenceNode())
+            subnode => seq%back()
+            subseq => to_sequence(subnode)
+            call this%process_sequence(lexr, subseq)
+         type is (FlowSequenceStartToken)
+            call seq%push_back(SequenceNode())
+            subnode => seq%back()
+            subseq => to_sequence(subnode)
+            call this%process_sequence(lexr, subseq)
+         type is (FlowNextEntryToken)
+            expect_another = .true.
+         type is (BlockNextEntryToken)
+            expect_another = .true.
+         type is (FlowSequenceEndToken)
+            ! TODO must match block/flow 
+  !           if (expect_another) then
+  !              __ASSERT__("dangling comma in flow sequence", expect_another)
+  !           else
+  !              exit
+  !           end if
+            exit
+         type is (BlockEndToken)
+            ! TODO must match block/flow 
+            exit
+         type is (FlowMappingStartToken)
+            call seq%push_back(mappingNode())
+            subnode => seq%back()
+            map => to_mapping(subnode)
+            call this%process_mapping(lexr, map)
+         type is (BlockMappingStartToken)
+            call seq%push_back(mappingNode())
+            subnode => seq%back()
+            map => to_mapping(subnode)
+            call this%process_mapping(lexr, map)
+         class default
+            error stop 'illegal token encountered A'
+         end select
+         deallocate(token)
+
+         if (allocated(anchor)) then
+            call this%anchors%insert(anchor, seq%back())
+            deallocate(anchor)
+         end if
+
+      end do
+      depth = depth - 1
+
+   end subroutine process_sequencen
+
+
 
    recursive subroutine process_mapping(this, lexr, map)
-      type(newMapping), intent(inout) :: map
+      type(mapping), intent(inout) :: map
       class(newParser), target, intent(inout) :: this
       type(Lexer), intent(inout) :: lexr
 
@@ -270,7 +355,7 @@ contains
 
       depth = depth + 1
 
-      map = newMapping()
+      map = mapping()
       do
          associate (token => lexr%get_token())
            select type (token)
@@ -292,17 +377,16 @@ contains
       end do
 
       depth = depth - 1
-!!$   end function process_mapping
    end subroutine process_mapping
 
    recursive subroutine process_map_key(this, lexr, map)
       class(newParser), intent(inout) :: this
       type(Lexer), intent(inout) :: lexr
-      type(newMapping), intent(inout) :: map
+      type(mapping), intent(inout) :: map
 
       character(:), allocatable :: anchor, alias
       character(:), allocatable :: key_str
-      type(newMapping), pointer :: anchor_mapping
+      type(mapping), pointer :: anchor_mapping
       class(AbstractToken), allocatable :: token_2, token_3, token_4
 
       type(sequence), save :: keys, values
@@ -333,7 +417,7 @@ contains
              if (this%anchors%count(alias) > 0) then
                 if (key_str == MERGE_KEY) then
                    !TODO - should throw exception if not mapping ...
-                   anchor_mapping => to_newmapping(this%anchors%of(alias))
+                   anchor_mapping => to_mapping(this%anchors%of(alias))
                    call merge(map, anchor_mapping)
                 else
                    call map%insert(keys%back(), this%anchors%of(alias))
@@ -370,10 +454,10 @@ contains
       subroutine merge(m1, m2)
          use fy_String
          use gftl_UnlimitedVector
-         type(newMapping), intent(inout) :: m1
-         type(newMapping), intent(in) :: m2
+         type(mapping), intent(inout) :: m1
+         type(mapping), intent(in) :: m2
 
-         type (newMappingIterator) :: iter
+         type (mappingIterator) :: iter
 
          class(AbstractNode), pointer :: key, value
 
@@ -415,7 +499,7 @@ contains
       type(Lexer), intent(inout) :: lexr
       type(sequence), intent(inout) :: values
 
-      type(newMapping), pointer :: map
+      type(mapping), pointer :: map
       type(sequence), pointer :: seq
       integer :: depth =0
 
@@ -436,15 +520,15 @@ contains
          seq => to_sequence(subnode)
          call this%process_sequence(lexr, seq)
       type is (FlowMappingStartToken)
-         call values%push_back(newMappingNode())
+         call values%push_back(mappingNode())
          subnode => values%back()
-         map => to_newmapping(subnode)
+         map => to_mapping(subnode)
          call this%process_mapping(lexr, map)
          subnode => values%back()
       type is (BlockMappingStartToken)
-         call values%push_back(newMappingNode())
+         call values%push_back(mappingNode())
          subnode => values%back()
-         map => to_newmapping(subnode)
+         map => to_mapping(subnode)
          call this%process_mapping(lexr, map)
       class default
          error stop 'illegal token encountered C'

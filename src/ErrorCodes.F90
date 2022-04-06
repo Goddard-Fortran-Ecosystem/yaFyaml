@@ -18,7 +18,7 @@ module fy_ErrorCodes
      enumerator :: YAFYAML_IMPOSSIBLE_COMBINATION
      enumerator :: YAFYAML_PARSER_ERROR
      enumerator :: YAFYAML_NON_ALPHANUMERIC_CHARACTER
-     ! Configuration usage errors
+     ! Node usage errors
      enumerator :: YAFYAML_SELECTOR_NOT_FOUND
      enumerator :: YAFYAML_INT32_OVERLFLOW                                    ! 15
      enumerator :: YAFYAML_TYPE_MISMATCH
@@ -29,6 +29,8 @@ module fy_ErrorCodes
      enumerator :: YAFYAML_NOT_A_COLLECTION
      enumerator :: YAFYAML_NOT_A_MAPPING
      enumerator :: YAFYAML_MISSING_SELECTOR
+     ! Iterator errors
+     enumerator :: YAFYAML_INVALID_ITERATOR
   end enum
 
 contains
@@ -88,6 +90,8 @@ contains
          message = 'Can only construct iterator for mappings.'
       case (YAFYAML_MISSING_SELECTOR)
          message = 'set() method requires at least one selector.  None provided.'
+      case (YAFYAML_INVALID_ITERATOR)
+         message = 'Cannot iterate on scalar node.'
       case default
          message = 'Unkown error code'
       end select

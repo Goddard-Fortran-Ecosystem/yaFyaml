@@ -29,10 +29,25 @@ module fy_newMappingNode
       final :: clear_final
 
       procedure :: clear
+
+      procedure :: begin => begin_mapping
+      procedure :: end   => end_mapping
    end type newMappingNode
 
 
-   type(newMappingNode) :: mmm
+   type, extends(NodeIterator) :: newMappingNodeIterator
+      private
+      type(MappingIterator) :: map_iter
+   contains
+      procedure :: is_valid => true
+      procedure :: is_sequence_iterator => false
+      procedure :: is_mapping_iterator => true
+
+      procedure :: next => next_mapping
+      
+      procedure :: as_bool
+
+   end type NewMappingNodeIterator
 
    interface
       module function less_than(a,b)
@@ -186,6 +201,60 @@ contains
       call this%value%clear()
 
    end subroutine clear
+
+   function begin_mapping(this, unusable, rc) result(iter)
+      class(NodeIterator), allocatable :: iter
+      class(newMappingNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+
+      iter = newMappingNodeIterator(this%value%begin())
+      
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end function begin_mapping
+
+   function end_mapping(this, unusable, rc) result(iter)
+      class(NodeIterator), allocatable :: iter
+      class(newMappingNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+
+      iter = newMappingNodeIterator(this%value%end())
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end function end_mapping
+   
+   logical function false(this)
+      class(newMappingNodeIterator), intent(in) :: this
+      false = .false.
+      __UNUSED_DUMMY__(this)
+   end function false
+
+   logical function true(this)
+      class(newMappingNodeIterator), intent(in) :: this
+      true = .true.
+      __UNUSED_DUMMY__(this)
+   end function true
+
+   subroutine next_mapping(this)
+      class(newMappingNodeIterator), intent(inout) :: this
+
+      call this%map_iter%next()
+   end subroutine next_mapping
+
+   function as_bool(this, bool, unusable, err_msg, rc) result(ptr)
+      logical, pointer :: ptr
+      class(newMappingNodeIterator), intent(in) :: this
+      type(bool_t), intent(in) :: bool
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      class(AbstractNode), pointer :: node_ptr
+
+      __FAIL__(YAFYAML_INVALID_ITERATOR)
+   end function as_bool
 
 
 end module fy_newMappingNode

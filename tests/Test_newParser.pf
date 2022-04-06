@@ -252,5 +252,19 @@ end subroutine test_nested_block_sequence
 
    end subroutine test_pflogger_reproducer3
 
+
+   @test
+   subroutine test_nested_hard_1()
+      type(newParser) :: p
+      class(AbstractNode), target, allocatable :: node
+      class(AbstractNode), pointer :: sub
+      integer :: n
+
+      p = newParser()
+      node = p%load(EscapedTextStream("---\n cat: [1 2] \n dog: [3, 4, [5, [6, 7], 8]] \n ..."))
+
+   end subroutine test_nested_hard_1
+
+
 end module Test_NewParser
 

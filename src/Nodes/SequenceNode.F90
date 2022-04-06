@@ -7,6 +7,7 @@ module fy_SequenceNode
    use fy_ErrorCodes
    use fy_ErrorHandling
    use fy_keywordEnforcer
+   use fy_Types
    use, intrinsic :: iso_fortran_env, only: INT32, INT64
    use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
@@ -15,6 +16,10 @@ module fy_SequenceNode
    public :: SequenceNode
    public :: to_sequence
    public :: clone
+
+   public :: SequenceNodeIterator
+   public :: operator(==)
+   public :: operator(/=)
    
    type, extends(BaseNode) :: SequenceNode
       private
@@ -28,7 +33,27 @@ module fy_SequenceNode
 
       final :: clear_final
       procedure :: clear
+
+      procedure :: begin => begin_sequence
+      procedure :: end   => end_sequence
    end type SequenceNode
+
+
+   type, extends(NodeIterator) :: SequenceNodeIterator
+      private
+      type(SequenceIterator) :: seq_iter
+   contains
+      procedure :: is_valid => true
+      procedure :: is_sequence_iterator => true
+      procedure :: is_mapping_iterator => false
+
+      procedure :: next => next_sequence
+      procedure :: equal_to
+      procedure :: not_equal_to
+
+      procedure :: as_bool
+   end type SequenceNodeIterator
+
 
    type(Sequence), target :: DEFAULT_SEQUENCE
 
@@ -60,6 +85,14 @@ module fy_SequenceNode
          type(Sequence), target, intent(in) :: from
          type(Sequence), target, intent(out) :: to
       end subroutine clone_sequence
+      module function as_bool(this, bool, unusable, err_msg, rc) result(ptr)
+         logical, pointer :: ptr
+         class(SequenceNodeIterator), intent(in) :: this
+         type(bool_t), intent(in) :: bool
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end function as_bool
    end interface
 
 contains
@@ -166,6 +199,67 @@ contains
         call this%value%clear()
 
    end subroutine clear
+
+   function begin_sequence(this, unusable, rc) result(iter)
+      class(NodeIterator), allocatable :: iter
+      class(SequenceNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+
+      iter = SequenceNodeIterator(this%value%begin())
+      
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end function begin_sequence
+
+   function end_sequence(this, unusable, rc) result(iter)
+      class(NodeIterator), allocatable :: iter
+      class(SequenceNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+
+      iter = SequenceNodeIterator(this%value%end())
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end function end_sequence
+
+   subroutine next_sequence(this)
+      class(SequenceNodeIterator), intent(inout) :: this
+      call this%seq_iter%next()
+   end subroutine next_sequence
+
+
+
+   logical function false(this)
+      class(SequenceNodeIterator), intent(in) :: this
+      false = .false.
+      __UNUSED_DUMMY__(this)
+   end function false
+
+   logical function true(this)
+      class(SequenceNodeIterator), intent(in) :: this
+      true = .true.
+      __UNUSED_DUMMY__(this)
+   end function true
+
+   logical function equal_to(a,b)
+      class(SequenceNodeIterator), intent(in) :: a
+      class(NodeIterator), intent(in) :: b
+
+      select type (b)
+      type is (SequenceNodeIterator)
+         equal_to = a%seq_iter == b%seq_iter
+      class default
+         equal_to = .false.
+      end select
+   end function equal_to
+
+   logical function not_equal_to(a,b)
+      class(SequenceNodeIterator), intent(in) :: a
+      class(NodeIterator), intent(in) :: b
+
+      not_equal_to = .not. (a == b)
+   end function not_equal_to
 
 end module fy_SequenceNode
 

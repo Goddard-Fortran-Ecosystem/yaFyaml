@@ -1,7 +1,8 @@
+#include "error_handling.h"
+#include "string_handling.h"
 submodule (fy_SequenceNode) SequenceNode_implementation
    use fy_AbstractNode
    use fy_MappingNode
-   use fy_newMappingNode
    implicit none
 
 
@@ -86,13 +87,6 @@ contains
               type is (MappingNode) ! guaranteed                                                                                      
                  call clone(q, qq)                                                                                                    
               end select                                                                                                              
-           type is (newMappingNode)                                                                                                      
-              call to%push_back(newMappingNode())                                                                                         
-              subobject => to%back()                                                                                                   
-              select type (qq => subobject)                                                                                           
-              type is (newMappingNode) ! guaranteed                                                                                      
-                 call clone(q, qq)                                                                                                    
-              end select                                                                                                              
            class default ! scalar                                                                                                     
               call to%push_back(item)                                                                                                  
            end select                                                                                                                 
@@ -100,6 +94,45 @@ contains
         end do                                                                                                                        
       end associate                                                                                                                   
    end subroutine clone_sequence
+
+   module function as_bool(this, bool, unusable, err_msg, rc) result(ptr)
+      use fy_BoolNode
+      logical, pointer :: ptr
+      class(SequenceNodeIterator), intent(in) :: this
+      type(bool_t), intent(in) :: bool
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      class(AbstractNode), pointer :: node_ptr
+      integer :: status
+
+
+      select type (node_ptr)
+      type is (BoolNode)
+         ptr => to_bool(this%seq_iter%of(), err_msg=err_msg, rc=rc)
+         __VERIFY2__(err_msg, status)
+      class default
+         ptr => null()
+         __FAIL2__(YAFYAML_TYPE_MISMATCH)
+      end select
+
+      __RETURN__(YAFYAML_SUCCESS)
+   end function as_bool
+
+   logical function false(this)
+      class(SequenceNodeIterator), intent(in) :: this
+      false = .false.
+      __UNUSED_DUMMY__(this)
+   end function false
+
+   logical function true(this)
+      class(SequenceNodeIterator), intent(in) :: this
+      true = .true.
+      __UNUSED_DUMMY__(this)
+   end function true
+
+
 
 end submodule SequenceNode_implementation
    

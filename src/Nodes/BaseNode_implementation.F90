@@ -4,14 +4,12 @@ submodule (fy_BaseNode) BaseNode_implementation
    use fy_KeywordEnforcer
    use fy_SequenceNode
    use fy_MappingNode
-   use fy_newMappingNode
    use fy_IntNode
    use fy_StringNode
    use fy_FloatNode
    use fy_BoolNode
    use fy_Sequence
    use fy_Mapping
-   use fy_newMapping
    use gFTL2_UnlimitedVector
 
    use fy_String
@@ -95,16 +93,6 @@ contains
               endif
            type is (MappingNode)
               call get_mapping_item(to_mapping(config), iter%of(), found_, rc=status)
-              if (status /= YAFYAML_SUCCESS) then
-                 if (present(found)) then
-                    found = found_
-                    __RETURN__(YAFYAML_SUCCESS)
-                 else
-                    __FAIL2__(status)
-                 end if
-              endif
-           type is (newMappingNode)
-              call get_newmapping_item(to_newmapping(config), iter%of(), found_, rc=status)
               if (status /= YAFYAML_SUCCESS) then
                  if (present(found)) then
                     found = found_
@@ -202,33 +190,6 @@ contains
             
       end subroutine get_mapping_item
 
-      ! While a mapping may have keys that are any subclass of AbstractNode.
-      subroutine get_newmapping_item(m, selector, found, rc)
-         type(newMapping), target, intent(in) :: m
-         class(AbstractNode), intent(in) :: selector
-         logical, intent(out) :: found
-         integer, intent(out) :: rc
-
-         integer :: status
-
-         if (m%count(selector) == 0) then
-            found = .false.
-            rc = YAFYAML_SELECTOR_NOT_FOUND
-            next_config => null()
-            return
-         end if
-
-         next_config => m%at(selector, rc=status)
-
-         if (status == 0) then
-            found = .true.
-            rc = YAFYAML_SUCCESS
-         else  ! should not be possible
-            found = .false.
-            rc = YAFYAML_SELECTOR_NOT_FOUND
-         end if
-            
-      end subroutine get_newmapping_item
    end function at_vector_selector
 
    ! Error conditions
@@ -890,7 +851,6 @@ contains
       use fy_KeywordEnforcer
       use fy_SequenceNode
       use fy_MappingNode
-      use fy_newMappingNode
       class(BaseNode), target, intent(inout) :: this
       class(AbstractNode), intent(in) :: node
       class(*), optional, intent(in) :: SELECTORS
@@ -916,7 +876,6 @@ contains
       use fy_KeywordEnforcer
       use fy_SequenceNode, only: clone
       use fy_MappingNode, only: clone
-      use fy_newMappingNode, only: clone
       class(BaseNode), target, intent(inout) :: this
       class(AbstractNode), intent(in) :: node
       type(Sequence), target, intent(in) :: selectors_seq
@@ -937,7 +896,6 @@ contains
       Type(Sequence) :: parent_selectors
       type(Sequence), pointer :: seq
       type(Mapping), pointer :: map
-      type(newMapping), pointer :: newmap
       type(SequenceNode), pointer :: p_seq
       type(MappingNode), pointer :: p_map
 
@@ -985,26 +943,6 @@ contains
          class default
             call map%set(last_selector, node)
          end select
-      type is (newMappingNode)
-         newmap => to_newmapping(q, err_msg=err_msg, rc=status)
-         __VERIFY2__(err_msg, status)
-
-         ! If node is a nested type (sequence or mapping) then some
-         ! compilers fail to correctly do a deep copy, so we must
-         ! proceed in an indirect fashion.
-         select type (qq => node)
-         type is (SequenceNode)
-            call newmap%set(last_selector, SequenceNode())
-            new_node => newmap%at(last_selector)
-            call clone(from=qq, to=new_node)
-         type is (newMappingNode)
-            call newmap%set(last_selector, newMappingNode())
-            new_node => newmap%at(last_selector)
-            call clone(from=qq, to=new_node)
-         class default
-            call newmap%set(last_selector, node)
-         end select
-         
       class default
          ! Not the ideal error code.  May need a new one
          __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)

@@ -7,6 +7,7 @@ module fy_MappingNode
    use fy_ErrorCodes
    use fy_ErrorHandling
    use fy_keywordEnforcer
+   use fy_Types
    use, intrinsic :: iso_fortran_env, only: INT32, INT64
    use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
@@ -15,6 +16,7 @@ module fy_MappingNode
    public :: MappingNode
    public :: to_mapping
    public :: clone
+   public :: MappingIterator
 
    type, extends(BaseNode) :: MappingNode
       ! TODO undo private debugging
@@ -29,10 +31,28 @@ module fy_MappingNode
       final :: clear_final
 
       procedure :: clear
+
+      procedure :: begin => begin_mapping
+      procedure :: end   => end_mapping
+
    end type MappingNode
 
+   type, extends(NodeIterator) :: MappingNodeIterator
+      private
+      type(MappingIterator) :: map_iter
+   contains
+      procedure :: is_valid => true
+      procedure :: is_sequence_iterator => false
+      procedure :: is_mapping_iterator => true
 
-   type(MappingNode) :: mmm
+      procedure :: next => next_mapping
+
+      procedure :: equal_to
+      procedure :: not_equal_to
+      
+      procedure :: as_bool
+
+   end type MappingNodeIterator
 
    interface
       module function less_than(a,b)
@@ -193,5 +213,78 @@ contains
 
    end subroutine clear
 
+
+   function begin_mapping(this, unusable, rc) result(iter)
+      class(NodeIterator), allocatable :: iter
+      class(MappingNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+
+      iter = MappingNodeIterator(this%value%begin())
+      
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end function begin_mapping
+
+   function end_mapping(this, unusable, rc) result(iter)
+      class(NodeIterator), allocatable :: iter
+      class(MappingNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+
+      iter = MappingNodeIterator(this%value%end())
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end function end_mapping
+   
+   logical function false(this)
+      class(MappingNodeIterator), intent(in) :: this
+      false = .false.
+      __UNUSED_DUMMY__(this)
+   end function false
+
+   logical function true(this)
+      class(MappingNodeIterator), intent(in) :: this
+      true = .true.
+      __UNUSED_DUMMY__(this)
+   end function true
+
+   subroutine next_mapping(this)
+      class(MappingNodeIterator), intent(inout) :: this
+
+      call this%map_iter%next()
+   end subroutine next_mapping
+
+   function as_bool(this, bool, unusable, err_msg, rc) result(ptr)
+      logical, pointer :: ptr
+      class(MappingNodeIterator), intent(in) :: this
+      type(bool_t), intent(in) :: bool
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      class(AbstractNode), pointer :: node_ptr
+
+      __FAIL__(YAFYAML_INVALID_ITERATOR)
+   end function as_bool
+
+   logical function equal_to(a,b)
+      class(MappingNodeIterator), intent(in) :: a
+      class(NodeIterator), intent(in) :: b
+
+      select type (b)
+      type is (MappingNodeIterator)
+         equal_to = a%map_iter == b%map_iter
+      class default
+         equal_to = .false.
+      end select
+   end function equal_to
+
+   logical function not_equal_to(a,b)
+      class(MappingNodeIterator), intent(in) :: a
+      class(NodeIterator), intent(in) :: b
+
+      not_equal_to = .not. (a == b)
+   end function not_equal_to
 
 end module fy_MappingNode

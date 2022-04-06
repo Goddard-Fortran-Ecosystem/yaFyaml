@@ -1,0 +1,32 @@
+module Test_Iterators
+   use funit
+   use yafyaml
+
+contains
+
+   ! The default iterator only knows that the values
+   ! of a sequence are subtypes of AbstractNode.
+   @test
+   subroutine test_simple_sequence_iterator()
+      type(SequenceNode), target :: node
+      class(NodeIterator), allocatable :: iter
+      integer :: counter
+
+      type(sequence), pointer :: s
+
+      s => to_sequence(node)
+      call s%push_back(IntNode(3))
+      call s%push_back(BoolNode(.true.))
+      
+      associate (b => node%begin(), e => node%end())
+        iter = b
+        counter = 0
+        do while (iter /= e)
+           counter = counter + 1
+           call iter%next()
+        end do
+      end associate
+
+      @assert_that(counter, is(2))
+   end subroutine test_simple_sequence_iterator
+end module Test_Iterators

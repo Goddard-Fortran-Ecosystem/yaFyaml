@@ -6,6 +6,7 @@ module fy_FloatNode
    use fy_ErrorCodes
    use fy_ErrorHandling
    use fy_keywordEnforcer
+   use fy_NullIterator
    use, intrinsic :: iso_fortran_env, only: INT32, INT64
    use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
@@ -24,6 +25,9 @@ module fy_FloatNode
       procedure :: write_node_formatted
 
       procedure :: clear
+
+      procedure :: begin
+      procedure :: end
    end type FloatNode
 
    interface
@@ -99,4 +103,27 @@ contains
       __UNUSED_DUMMY__(this)
    end subroutine clear
 
+   function begin(this, unusable, rc) result(iter)
+      class(NodeIterator), allocatable :: iter
+      class(FloatNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+
+      iter = NullIterator()
+      
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end function begin
+
+   function end(this, unusable, rc) result(iter)
+      class(NodeIterator), allocatable :: iter
+      class(FloatNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+
+      iter = NullIterator()
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end function end
+   
 end module fy_FloatNode

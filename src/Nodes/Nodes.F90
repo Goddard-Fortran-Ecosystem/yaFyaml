@@ -10,11 +10,9 @@ module fy_Nodes
    
    use fy_SequenceNode
    use fy_MappingNode
-   use fy_newMappingNode
 
    use fy_Sequence
    use fy_Mapping
-   use fy_newMapping
    implicit none
    public
    

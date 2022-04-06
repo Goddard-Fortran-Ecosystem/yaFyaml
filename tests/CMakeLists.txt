@@ -20,6 +20,8 @@ set (pf_tests
   # deprecated
   Test_Parser.pf
   Test_YAML_Node_Set.pf
+
+  Test_Iterators.pf
   )
 
 

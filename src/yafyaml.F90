@@ -13,6 +13,7 @@ module yafyaml
   use fy_AbstractTextStream
   use fy_TextStream
   use fy_EscapedTextStream
+  use fy_types, only: YAML_STRING, YAML_BOOL, YAML_INT, YAML_FLOAT
 
   ! These should be private
 !!$  use fy_Abstractfile

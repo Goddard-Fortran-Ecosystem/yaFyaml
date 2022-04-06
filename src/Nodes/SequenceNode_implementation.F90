@@ -97,41 +97,21 @@ contains
 
    module function as_bool(this, bool, unusable, err_msg, rc) result(ptr)
       use fy_BoolNode
+      use fy_keywordenforcer, only: KE => KeywordEnforcer
       logical, pointer :: ptr
       class(SequenceNodeIterator), intent(in) :: this
       type(bool_t), intent(in) :: bool
-      class(KeywordEnforcer), optional, intent(in) :: unusable
+      class(KE), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: node_ptr
       integer :: status
 
-
-      select type (node_ptr)
-      type is (BoolNode)
-         ptr => to_bool(this%seq_iter%of(), err_msg=err_msg, rc=rc)
-         __VERIFY2__(err_msg, status)
-      class default
-         ptr => null()
-         __FAIL2__(YAFYAML_TYPE_MISMATCH)
-      end select
+      ptr => to_bool(this%seq_iter%of(), err_msg=err_msg, rc=status)
+      __VERIFY2__(err_msg, status)
 
       __RETURN__(YAFYAML_SUCCESS)
    end function as_bool
-
-   logical function false(this)
-      class(SequenceNodeIterator), intent(in) :: this
-      false = .false.
-      __UNUSED_DUMMY__(this)
-   end function false
-
-   logical function true(this)
-      class(SequenceNodeIterator), intent(in) :: this
-      true = .true.
-      __UNUSED_DUMMY__(this)
-   end function true
-
 
 
 end submodule SequenceNode_implementation

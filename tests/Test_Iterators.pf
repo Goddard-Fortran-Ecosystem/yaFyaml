@@ -1,7 +1,8 @@
 module Test_Iterators
    use funit
    use yafyaml
-
+   implicit none
+   
 contains
 
    ! The default iterator only knows that the values
@@ -11,13 +12,12 @@ contains
       type(SequenceNode), target :: node
       class(NodeIterator), allocatable :: iter
       integer :: counter
-
       type(sequence), pointer :: s
 
       s => to_sequence(node)
       call s%push_back(IntNode(3))
       call s%push_back(BoolNode(.true.))
-      
+
       associate (b => node%begin(), e => node%end())
         iter = b
         counter = 0
@@ -29,4 +29,55 @@ contains
 
       @assert_that(counter, is(2))
    end subroutine test_simple_sequence_iterator
+
+   @test
+   subroutine test_simple_mapping_iterator()
+      type(MappingNode), target :: node
+      class(NodeIterator), allocatable :: iter
+      integer :: counter
+      type(Mapping), pointer :: m
+
+      m => to_mapping(node)
+      call node%set(.true., 'cat')
+      call node%set(.false., 'dog')
+      call node%set(.true., 'spider')
+
+      associate (b => node%begin(), e => node%end())
+        iter = b
+        counter = 0
+        do while (iter /= e)
+           counter = counter + 1
+           call iter%next()
+        end do
+      end associate
+
+      @assert_that(counter, is(3))
+   end subroutine test_simple_mapping_iterator
+
+
+   @test
+   subroutine test_sequence_iter_as_bool()
+      type(SequenceNode), target :: node
+      class(NodeIterator), allocatable :: iter
+      type(sequence), pointer :: s
+      logical, pointer :: flag
+
+      s => to_sequence(node)
+      call s%push_back(BoolNode(.false.))
+      call s%push_back(BoolNode(.true.))
+      
+      associate (b => node%begin(), e => node%end())
+        iter = b
+        flag => iter%as(YAML_BOOL)
+        @assert_that(flag, is(false()))
+
+        call iter%next()
+        flag => iter%as(YAML_BOOL)
+        @assert_that(flag, is(true()))
+
+      end associate
+
+   end subroutine test_sequence_iter_as_bool
+
+
 end module Test_Iterators

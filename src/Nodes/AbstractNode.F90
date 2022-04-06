@@ -6,8 +6,6 @@ module fy_AbstractNode
 
    public :: AbstractNode
    public :: NodeIterator
-   public :: operator(==)
-   public :: operator(/=)
 
    type, abstract :: AbstractNode
    contains

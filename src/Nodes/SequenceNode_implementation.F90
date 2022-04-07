@@ -1,7 +1,7 @@
 #include "error_handling.h"
 #include "string_handling.h"
 submodule (fy_SequenceNode) SequenceNode_implementation
-   use fy_AbstractNode
+   use fy_YAML_Node
    use fy_MappingNode
    implicit none
 
@@ -14,7 +14,7 @@ contains
    module function less_than(a, b)
       logical :: less_than
       class(SequenceNode), intent(in) :: a
-      class(AbstractNode), intent(in) :: b
+      class(YAML_Node), intent(in) :: b
 
       integer :: i, na, nb
 
@@ -44,7 +44,7 @@ contains
 
    recursive module subroutine clone_sequence_node(from, to)
       type(SequenceNode), target, intent(in) :: from
-      class(AbstractNode), target, intent(out) :: to
+      class(YAML_Node), target, intent(out) :: to
 
       type(sequence), pointer :: s_a, s_b
 
@@ -65,8 +65,8 @@ contains
       type(Sequence), target, intent(out) :: to
 
       type(SequenceIterator) :: iter
-      class(AbstractNode), pointer :: item
-      class(AbstractNode), pointer :: subobject
+      class(YAML_Node), pointer :: item
+      class(YAML_Node), pointer :: subobject
 
       associate (beg => from%begin(), e => from%end())                                                                                      
         iter = beg                                                                                                                    
@@ -97,7 +97,7 @@ contains
 
    module function at(this, unusable, err_msg, rc) result(ptr)
       use fy_keywordenforcer, only: KE => KeywordEnforcer
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       class(SequenceNodeIterator), intent(in) :: this
       class(KE), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg

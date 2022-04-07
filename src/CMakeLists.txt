@@ -1,6 +1,4 @@
 add_library (yafyaml
-  analyze.F90
-  
   ArrayWrapper.F90
   AbstractFile.F90
   File.F90
@@ -15,7 +13,7 @@ add_library (yafyaml
   FileStream.F90
   Reader.F90
   Lexer.F90
-  newParser.F90
+  Parser.F90
   AbstractSchema.F90
   FailsafeSchema.F90
   JSONSchema.F90
@@ -27,15 +25,13 @@ add_library (yafyaml
   ErrorHandling.F90
   IntegerSimpleKeyMap.F90
 
-  Nodes/AbstractNode.F90
+  Nodes/YAML_Node.F90
   Nodes/BaseNode.F90
   Nodes/BaseNode_implementation.F90
   Nodes/SequenceNode.F90
   Nodes/SequenceNode_implementation.F90
   Nodes/MappingNode.F90
   Nodes/MappingNode_implementation.F90
-#  Nodes/newMappingNode.F90
-#  Nodes/newMappingNode_implementation.F90
   Nodes/BoolNode.F90
   Nodes/BoolNode_implementation.F90
   Nodes/IntNode.F90
@@ -46,19 +42,12 @@ add_library (yafyaml
   Nodes/StringNode_implementation.F90
   Nodes/Sequence.F90
   Nodes/Mapping.F90
-#  Nodes/newMapping.F90
   Nodes/NullIterator.F90
   Nodes/Nodes.F90
-#  Nodes/Types.F90
   
   # package
   yafyaml.F90
 
-  #deprecated
-#  Parser.F90
-#  YAML_Node.F90
-#  YAML_Node_implementation.F90
-#  YAML_NodeIterator_implementation.F90
 
   )
 

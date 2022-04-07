@@ -23,7 +23,7 @@ contains
 #define OPT_SELECTORS s2, s3, s4, s5, s6, s7, s8, s9
 
    module function at_multi_selector(this, SELECTORS, unusable, found, err_msg, rc) result(ptr)
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       class(BaseNode), target, intent(in) :: this
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -54,7 +54,7 @@ contains
    end function
 
    function at_vector_selector(this, v, unusable, found, err_msg, rc) result(ptr)
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       class(BaseNode), target, intent(in) :: this
       type(Sequence), intent(in) :: v
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -63,7 +63,7 @@ contains
       integer, optional, intent(out) :: rc
 
 
-      class(AbstractNode), pointer :: config, next_config
+      class(YAML_Node), pointer :: config, next_config
       class(*), pointer :: selector
       
       integer :: status
@@ -129,7 +129,7 @@ contains
       ! selector for sequence must be some kind of integer
       subroutine get_sequence_item(s, selector, found, rc)
          type(Sequence), target, intent(in) :: s
-         class(AbstractNode), intent(in) :: selector
+         class(YAML_Node), intent(in) :: selector
          logical, intent(out) :: found
          integer, intent(out) :: rc
 
@@ -162,10 +162,10 @@ contains
          end select
       end subroutine get_sequence_item
       
-      ! While a mapping may have keys that are any subclass of AbstractNode.
+      ! While a mapping may have keys that are any subclass of YAML_Node.
       subroutine get_mapping_item(m, selector, found, rc)
          type(Mapping), target, intent(in) :: m
-         class(AbstractNode), intent(in) :: selector
+         class(YAML_Node), intent(in) :: selector
          logical, intent(out) :: found
          integer, intent(out) :: rc
 
@@ -205,7 +205,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       logical, pointer :: bool_ptr
       logical :: was_found
@@ -231,7 +231,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       logical :: tmp
       integer :: i
@@ -269,7 +269,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       logical :: was_found
 
@@ -293,7 +293,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       integer(kind=INT64), pointer :: safe_value
       logical :: was_found
@@ -327,7 +327,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       integer(kind=INT32) :: tmp
       integer :: i
@@ -365,7 +365,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       integer(kind=INT64), pointer :: safe_value
       logical :: was_found
@@ -393,7 +393,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       integer(kind=INT64) :: tmp
       integer :: i
@@ -434,7 +434,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       real(kind=REAL64), pointer :: safe_value
       real(kind=REAL32) :: pos_inf, neg_inf
@@ -478,7 +478,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       real(kind=REAL32) :: tmp
       integer :: i
@@ -516,7 +516,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       real(kind=REAL64), pointer :: safe_value
       logical :: was_found
@@ -544,7 +544,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       real(kind=REAL64) :: tmp
       integer :: i
@@ -852,7 +852,7 @@ contains
       use fy_SequenceNode
       use fy_MappingNode
       class(BaseNode), target, intent(inout) :: this
-      class(AbstractNode), intent(in) :: node
+      class(YAML_Node), intent(in) :: node
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
@@ -877,22 +877,22 @@ contains
       use fy_SequenceNode, only: clone
       use fy_MappingNode, only: clone
       class(BaseNode), target, intent(inout) :: this
-      class(AbstractNode), intent(in) :: node
+      class(YAML_Node), intent(in) :: node
       type(Sequence), target, intent(in) :: selectors_seq
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       logical, pointer :: bool_ptr
       logical :: was_found
       type(UnlimitedVector) :: v
       integer(kind=INT64), pointer :: i
 
-      class(AbstractNode), pointer :: parent_node
-      class(AbstractNode), pointer :: last_selector
-      class(AbstractNode), pointer :: new_node
+      class(YAML_Node), pointer :: parent_node
+      class(YAML_Node), pointer :: last_selector
+      class(YAML_Node), pointer :: new_node
       Type(Sequence) :: parent_selectors
       type(Sequence), pointer :: seq
       type(Mapping), pointer :: map
@@ -962,7 +962,7 @@ contains
 
       logical :: was_found
       integer :: status
-      class(AbstractNode), pointer :: node_ptr
+      class(YAML_Node), pointer :: node_ptr
 
       node_ptr => this%at(SELECTORS, found=was_found, rc=status)
       has = was_found

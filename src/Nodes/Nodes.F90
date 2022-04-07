@@ -1,5 +1,5 @@
 module fy_Nodes
-   use fy_AbstractNode
+   use fy_YAML_Node
    use fy_BaseNode
    use fy_BoolNode
    use fy_StringNode
@@ -25,7 +25,7 @@ contains
 
    subroutine assign_to_logical(flag, this)
       logical, intent(out) :: flag
-      class(AbstractNode), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
 
       flag = to_bool(this)
 
@@ -34,7 +34,7 @@ contains
    
    subroutine assign_to_String(str, this)
       character(:), allocatable, intent(out) :: str
-      class(AbstractNode), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
 
       str = to_string(this)
 
@@ -44,7 +44,7 @@ contains
    subroutine assign_to_integer32(i32, this)
       use, intrinsic :: iso_fortran_env, only: INT32, INT64
       integer(kind=INT32), intent(out) :: i32
-      class(AbstractNode), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
       integer(kind=INT64) :: i64
 
       i64 = to_int(this)
@@ -60,7 +60,7 @@ contains
    subroutine assign_to_integer64(i64, this)
       use, intrinsic :: iso_fortran_env, only: INT64
       integer(kind=INT64), intent(out) :: i64
-      class(AbstractNode), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
 
       i64 = to_int(this)
 
@@ -70,7 +70,7 @@ contains
    subroutine assign_to_real32(r32, this)
       use, intrinsic :: iso_fortran_env, only: REAL32
       real(kind=REAL32), intent(out) :: r32
-      class(AbstractNode), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
 
       call this%get_real32(r32)
 
@@ -79,7 +79,7 @@ contains
    subroutine assign_to_real64(r64, this)
       use, intrinsic :: iso_fortran_env, only: REAL64
       real(kind=REAL64), intent(out) :: r64
-      class(AbstractNode), intent(in) :: this
+      class(YAML_Node), intent(in) :: this
 
       r64 = to_float(this)
 

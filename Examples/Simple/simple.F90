@@ -4,7 +4,7 @@ program main
    use gftl_StringIntegerMap
    implicit none
 
-   type(newParser) :: p
+   type(Parser) :: p
    class(AbstractNode), allocatable :: node
    class(AbstractNode), pointer :: subnode
 
@@ -20,7 +20,7 @@ program main
    integer :: status
    
 
-   p = newParser('core')
+   p = Parser('core')
    ! TODO should a return code
    node = p%load('simple.yaml')
 

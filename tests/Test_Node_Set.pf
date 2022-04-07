@@ -7,7 +7,7 @@ contains
 
    @test
    subroutine test_set_in_sequence()
-      class(AbstractNode), allocatable :: node
+      class(YAML_Node), allocatable :: node
 
       integer :: status
       logical :: flag
@@ -28,7 +28,7 @@ contains
 
    @test
    subroutine test_set_in_mapping()
-      class(AbstractNode), allocatable :: node
+      class(YAML_Node), allocatable :: node
 
       integer :: status
       logical :: flag
@@ -50,7 +50,7 @@ contains
 
    @test
    subroutine test_set_deep_int()
-      class(AbstractNode), allocatable :: node
+      class(YAML_Node), allocatable :: node
 
       integer :: status
       type(Mapping) :: m
@@ -80,7 +80,7 @@ contains
    @test
    subroutine test_set_overload()
       use, intrinsic :: iso_fortran_env
-      class(AbstractNode), allocatable :: node
+      class(YAML_Node), allocatable :: node
 
       integer :: status
       logical :: flag
@@ -126,7 +126,7 @@ contains
    ! case.
    subroutine test_set_as_insert()
       use, intrinsic :: iso_fortran_env
-      class(AbstractNode), allocatable, target :: node
+      class(YAML_Node), allocatable, target :: node
       integer :: status
       integer :: i
       real :: x
@@ -154,7 +154,7 @@ contains
 
   @test
   subroutine test_set_1d()
-      class(AbstractNode), allocatable :: node
+      class(YAML_Node), allocatable :: node
 
       integer :: status
       logical, allocatable :: flags(:)
@@ -182,13 +182,13 @@ contains
   ! Insert a mapping into an existing mapping.
   @test
   subroutine test_set_mapping()
-      class(AbstractNode), allocatable :: node
+      class(YAML_Node), allocatable :: node
 
       integer :: status
       type(Mapping) :: m1
       type(Mapping), pointer :: m2
       type(MappingNode), target :: mnode
-      class(AbstractNode), allocatable :: subnode1
+      class(YAML_Node), allocatable :: subnode1
       integer :: i
       real :: x
 

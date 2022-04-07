@@ -2,8 +2,8 @@ program main
    use, intrinsic :: iso_fortran_env, only: OUTPUT_UNIT
    use yaFyaml
 
-   type(newParser) :: p
-   class(AbstractNode), allocatable :: node
+   type(Parser) :: p
+   class(YAML_Node), allocatable :: node
 
    character(:), allocatable :: filename
    integer :: n
@@ -14,7 +14,7 @@ program main
    allocate(character(len=n) :: filename)
    call get_command_argument(1, value=filename, status=status)
 
-   p = newParser()
+   p = Parser()
    node = p%load(FileStream(filename))
 
    write(OUTPUT_UNIT,'(DT)') node

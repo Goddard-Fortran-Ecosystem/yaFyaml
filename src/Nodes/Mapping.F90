@@ -1,12 +1,12 @@
 module fy_Mapping
-   use fy_AbstractNode
+   use fy_YAML_Node
 
-#define Key AbstractNode
+#define Key YAML_Node
 #define Key_polymorphic
 #define Key_LT(lhs,rhs) lhs < rhs
 #define Key_EQ(lhs,rhs) .not.(lhs<rhs .or. rhs<lhs)
 #define Key_Free(x) call x%clear()
-#define T AbstractNode
+#define T YAML_Node
 #define T_polymorphic
 #define T_Free(x) call x%clear()
 

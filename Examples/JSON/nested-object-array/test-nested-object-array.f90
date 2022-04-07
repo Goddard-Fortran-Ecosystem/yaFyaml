@@ -1,7 +1,6 @@
 program main
   !! Test the reading of a JSON file with a nested array of objects
-  use yafyaml, only : newParser, AbstractNode, YAFYAML_SUCCESS, assignment(=)
-  use gFTL_UnlimitedVector, only : UnlimitedVector
+  use yafyaml, only : Parser, YAML_Node, YAFYAML_SUCCESS, assignment(=)
   implicit none
 
   type vertex
@@ -13,13 +12,13 @@ program main
   end type
 
   type(dag) :: d
-  type(newParser) :: p
-  class(AbstractNode), allocatable :: c
-  class(AbstractNode), pointer :: dag_vertices, dag_vertices_i_depends_on
+  type(Parser) :: p
+  class(YAML_Node), allocatable :: c
+  class(YAML_Node), pointer :: dag_vertices, dag_vertices_i_depends_on
 
   integer :: i, j, status
 
-  p = newParser('core')
+  p = Parser('core')
   c = p%load('nested-object-array.json')
   dag_vertices => c%at('dag', 'vertices', rc=status)
   if (status /= YAFYAML_SUCCESS) error stop "did not find 'dag' 'vertices'"

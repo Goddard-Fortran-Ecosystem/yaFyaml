@@ -10,7 +10,7 @@ contains
 
    @test
    subroutine test_is_float()
-      class(AbstractNode), allocatable :: node
+      class(YAML_Node), allocatable :: node
       type(FloatNode), target :: f_node
       logical :: flag
 
@@ -72,7 +72,7 @@ contains
 
    @test
    subroutine test_casting_succeed()
-      class(AbstractNode), allocatable :: node
+      class(YAML_Node), allocatable :: node
       real(kind=REAL64), pointer :: x_ptr
 
       character(:), allocatable :: err_msg

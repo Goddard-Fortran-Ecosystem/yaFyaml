@@ -6,12 +6,12 @@ program Simple2
    
    implicit none
 
-   type(newParser)           :: p
+   type(Parser)           :: p
    class(AbstractNode), allocatable :: node
    character(:), allocatable :: name
    
    ! Define the parser object and load the file
-   p = newParser('core')
+   p = Parser('core')
    node = p%load(FileStream('simple2.yaml'))
 
    !--------------------------------------------------------

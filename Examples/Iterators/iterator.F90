@@ -8,11 +8,11 @@ program main
    use gFTL_StringIntegerMap
    implicit none
 
-   type(newParser) :: p
+   type(Parser) :: p
    class(AbstractNode), allocatable :: node
    integer :: status
 
-   p = newParser('core')
+   p = Parser('core')
    node = p%load('iterator.yaml')
    write(10,'(dt)', iostat=status) node
 

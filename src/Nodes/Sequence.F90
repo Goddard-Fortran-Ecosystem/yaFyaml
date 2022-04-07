@@ -1,7 +1,7 @@
 module fy_Sequence
-  use fy_AbstractNode
+  use fy_YAML_Node
 
-#define T AbstractNode
+#define T YAML_Node
 #define T_polymorphic
 #define T_Free(x) call x%clear()
 #define T_Copy(x,y) call y%clone(x)

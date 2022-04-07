@@ -1,7 +1,7 @@
 #include "error_handling.h"
 #include "string_handling.h"
 module fy_SequenceNode
-   use fy_AbstractNode
+   use fy_YAML_Node
    use fy_BaseNode
    use fy_Sequence
    use fy_ErrorCodes
@@ -64,7 +64,7 @@ module fy_SequenceNode
          implicit none
          logical :: less_than
          class(SequenceNode), intent(in) :: a
-         class(AbstractNode), intent(in) :: b
+         class(YAML_Node), intent(in) :: b
       end function less_than
    end interface
 
@@ -82,7 +82,7 @@ module fy_SequenceNode
       ! Node methods
       recursive module subroutine clone_sequence_node(from, to)
          type(SequenceNode), target, intent(in) :: from
-         class(AbstractNode), target, intent(out) :: to
+         class(YAML_Node), target, intent(out) :: to
       end subroutine clone_sequence_node
       recursive module subroutine clone_sequence(from, to)
          type(Sequence), target, intent(in) :: from
@@ -91,7 +91,7 @@ module fy_SequenceNode
 
  
       module function at(this, unusable, err_msg, rc) result(ptr)
-         class(AbstractNode), pointer :: ptr
+         class(YAML_Node), pointer :: ptr
          class(SequenceNodeIterator), intent(in) :: this
          class(KeywordEnforcer), optional, intent(in) :: unusable
          STRING_DUMMY, optional, intent(inout) :: err_msg
@@ -120,7 +120,7 @@ contains
 
    function to_sequence(this, unusable, err_msg, rc) result(ptr)
       type(Sequence), pointer :: ptr
-      class(AbstractNode), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
@@ -149,7 +149,7 @@ contains
       character(*), intent(inout) :: iomsg
 
       integer :: i
-      class(AbstractNode), pointer :: element
+      class(YAML_Node), pointer :: element
       
       write(unit,'("[ ")', iostat=iostat)
       if (iostat /= 0) return
@@ -191,7 +191,7 @@ contains
       class(SequenceNode), intent(inout) :: this
 
       type(SequenceIterator) :: iter
-      class(AbstractNode), pointer :: item
+      class(YAML_Node), pointer :: item
 
         associate (b => this%value%begin(), e=> this%value%end())
           iter = b
@@ -267,7 +267,7 @@ contains
    end function not_equal_to
    
    function first(this, unusable, err_msg, rc) result(ptr)
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       class(SequenceNodeIterator), intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg

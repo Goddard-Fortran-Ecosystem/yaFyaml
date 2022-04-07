@@ -2,8 +2,8 @@
 #include "string_handling.h"
 
 module fy_NullIterator
-   use fy_AbstractNode, only: AbstractNode
-   use fy_AbstractNode, only: NodeIterator
+   use fy_YAML_Node, only: YAML_Node
+   use fy_YAML_Node, only: NodeIterator
    use fy_KeywordEnforcer
    use fy_ErrorHandling
    use fy_ErrorCodes
@@ -44,7 +44,7 @@ contains
    end subroutine next
 
    function at(this, unusable, err_msg, rc) result(ptr)
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       class(NullIterator), intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg

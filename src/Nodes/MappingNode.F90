@@ -1,7 +1,7 @@
 #include "error_handling.h"
 #include "string_handling.h"
 module fy_MappingNode
-   use fy_AbstractNode
+   use fy_YAML_Node
    use fy_BaseNode
    use fy_Mapping
    use fy_ErrorCodes
@@ -60,7 +60,7 @@ module fy_MappingNode
          implicit none
          logical :: less_than
          class(MappingNode), intent(in) :: a
-         class(AbstractNode), intent(in) :: b
+         class(YAML_Node), intent(in) :: b
       end function less_than
    end interface
 
@@ -84,7 +84,7 @@ module fy_MappingNode
       ! Node methods
       recursive module subroutine clone_mapping_node(from, to)
          type(MappingNode), target, intent(in) :: from
-         class(AbstractNode), target, intent(out) :: to
+         class(YAML_Node), target, intent(out) :: to
       end subroutine clone_mapping_node
       recursive module subroutine clone_mapping(from, to)
          type(Mapping), target, intent(in) :: from
@@ -93,7 +93,7 @@ module fy_MappingNode
 
       ! Iterator methods
       module function first(this, unusable, err_msg, rc) result(ptr)
-         class(AbstractNode), pointer :: ptr
+         class(YAML_Node), pointer :: ptr
          class(MappingNodeIterator), intent(in) :: this
          class(KeywordEnforcer), optional, intent(in) :: unusable
          STRING_DUMMY, optional, intent(inout) :: err_msg
@@ -101,7 +101,7 @@ module fy_MappingNode
       end function first
 
       module function second(this, unusable, err_msg, rc) result(ptr)
-         class(AbstractNode), pointer :: ptr
+         class(YAML_Node), pointer :: ptr
          class(MappingNodeIterator), intent(in) :: this
          class(KeywordEnforcer), optional, intent(in) :: unusable
          STRING_DUMMY, optional, intent(inout) :: err_msg
@@ -145,7 +145,7 @@ contains
 
    function to_mapping(this, unusable, err_msg, rc) result(ptr)
       type(Mapping), pointer :: ptr
-      class(AbstractNode), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
@@ -173,7 +173,7 @@ contains
       type(MappingIterator) :: iter
       integer :: depth
       character(32) :: fmt
-      class(AbstractNode), pointer :: key, value
+      class(YAML_Node), pointer :: key, value
 
       iostat = 0
       write(unit,'("{")', iostat=iostat)
@@ -226,7 +226,7 @@ contains
       class(MappingNode), intent(inout) :: this
 
       type(MappingIterator) :: iter, t_iter
-      class(AbstractNode), pointer :: key, value
+      class(YAML_Node), pointer :: key, value
 
       call this%value%clear()
 
@@ -275,13 +275,13 @@ contains
    end subroutine next_mapping
 
    function at(this, unusable, err_msg, rc) result(ptr)
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       class(MappingNodeIterator), intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: node_ptr
+      class(YAML_Node), pointer :: node_ptr
 
       ptr => null()
       __FAIL__(YAFYAML_INVALID_ITERATOR)

@@ -1,7 +1,7 @@
 #include "error_handling.h"
 #include "string_handling.h"
 module fy_BaseNode
-   use fy_AbstractNode
+   use fy_YAML_Node
    use, intrinsic :: iso_fortran_env, only: INT32, INT64
    use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
@@ -9,7 +9,7 @@ module fy_BaseNode
 
    public :: BaseNode
 
-   type, abstract, extends(AbstractNode) :: BaseNode
+   type, abstract, extends(YAML_Node) :: BaseNode
       private
    contains
 
@@ -57,7 +57,7 @@ module fy_BaseNode
            & unusable, found, err_msg, rc) result(node_ptr)
          use fy_KeywordEnforcer
          implicit none
-         class(AbstractNode), pointer :: node_ptr
+         class(YAML_Node), pointer :: node_ptr
          class(BaseNode), target, intent(in) :: this
          class(*), optional, intent(in) :: SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -323,7 +323,7 @@ module fy_BaseNode
       module subroutine set_node(this, node, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
          class(BaseNode), target, intent(inout) :: this
-         class(AbstractNode), intent(in) :: node
+         class(YAML_Node), intent(in) :: node
          class(*), optional, intent(in) :: SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          STRING_DUMMY, optional, intent(inout) :: err_msg
@@ -336,7 +336,7 @@ contains
 
 
    function of_multi_selector(this, SELECTORS) result(ptr)
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       class(BaseNode), target, intent(in) :: this
       class(*), optional, intent(in) :: SELECTORS
       ptr => this%at(SELECTORS)

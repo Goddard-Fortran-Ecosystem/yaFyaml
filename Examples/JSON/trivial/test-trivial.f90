@@ -1,12 +1,12 @@
 program main
-   use yafyaml, only : newParser, AbstractNode, assignment(=)
+   use yafyaml, only : Parser, YAML_Node, assignment(=)
    implicit none
 
-   type(newParser) p
-   class(AbstractNode), allocatable :: c
+   type(Parser) p
+   class(YAML_Node), allocatable :: c
    logical :: science = .false.
 
-   p = newParser('core')
+   p = Parser('core')
    c = p%load('trivial.json')
    science = c%at('science') ! this should overwrite science with .true.
 

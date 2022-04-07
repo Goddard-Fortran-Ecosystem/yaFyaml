@@ -2,7 +2,7 @@
 #include "string_handling.h"
 
 module fy_StringNode
-   use fy_AbstractNode
+   use fy_YAML_Node
    use fy_BaseNode
    use fy_ErrorCodes
    use fy_ErrorHandling
@@ -36,7 +36,7 @@ module fy_StringNode
          implicit none
          logical :: less_than
          class(StringNode), intent(in) :: a
-         class(AbstractNode), intent(in) :: b
+         class(YAML_Node), intent(in) :: b
       end function less_than
    end interface
 
@@ -65,7 +65,7 @@ contains
       
    function to_string(this, unusable, err_msg, rc) result(ptr)
       character(:), pointer :: ptr
-      class(AbstractNode), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc

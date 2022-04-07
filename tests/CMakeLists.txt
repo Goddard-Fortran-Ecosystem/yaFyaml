@@ -3,7 +3,7 @@ set (pf_tests
   Test_File.pf
   Test_Reader.pf
   Test_Lexer.pf
-  Test_newParser.pf
+  Test_Parser.pf
   Test_JSONSchema.pf
   Test_CoreSchema.pf
   Test_BoolNode.pf

@@ -10,7 +10,7 @@ contains
 
    @test
    subroutine test_is_string()
-      class(AbstractNode), allocatable :: node
+      class(YAML_Node), allocatable :: node
       type(StringNode), target :: b_node
       logical :: flag
 
@@ -44,7 +44,7 @@ contains
 
    @test
    subroutine test_casting_succeed()
-      class(AbstractNode), allocatable :: node
+      class(YAML_Node), allocatable :: node
       character(:), pointer :: s_ptr
 
       character(:), allocatable :: err_msg

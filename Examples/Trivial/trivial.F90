@@ -2,12 +2,12 @@ program main
    use yafyaml
    implicit none
    
-   type(newParser) :: p
+   type(Parser) :: p
    class(AbstractNode), allocatable :: node
    integer :: prime
    integer :: status
    
-   p = newParser('core')
+   p = Parser('core')
    node = p%load(FileStream('trivial.yaml'))
 
    prime = node%of('prime')

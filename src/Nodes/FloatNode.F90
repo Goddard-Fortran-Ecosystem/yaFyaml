@@ -1,7 +1,7 @@
 #include "error_handling.h"
 #include "string_handling.h"
 module fy_FloatNode
-   use fy_AbstractNode
+   use fy_YAML_Node
    use fy_BaseNode
    use fy_ErrorCodes
    use fy_ErrorHandling
@@ -35,7 +35,7 @@ module fy_FloatNode
          implicit none
          logical :: less_than
          class(FloatNode), intent(in) :: a
-         class(AbstractNode), intent(in) :: b
+         class(YAML_Node), intent(in) :: b
       end function less_than
    end interface
 
@@ -69,7 +69,7 @@ contains
 
    function to_float(this, unusable, err_msg, rc) result(ptr)
       real(kind=REAL64), pointer :: ptr
-      class(AbstractNode), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc

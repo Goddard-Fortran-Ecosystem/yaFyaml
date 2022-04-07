@@ -10,8 +10,8 @@ contains
 
    @test
    subroutine test_is_int()
-      class(AbstractNode), allocatable :: node
-      class(AbstractNode), pointer :: pNode
+      class(YAML_Node), allocatable :: node
+      class(YAML_Node), pointer :: pNode
       type(IntNode), target :: iNode
       logical :: flag
 
@@ -67,7 +67,7 @@ contains
 
    @test
    subroutine test_casting_succeed()
-      class(AbstractNode), allocatable :: node
+      class(YAML_Node), allocatable :: node
       integer(kind=INT64), pointer :: i_ptr
 
       character(:), allocatable :: err_msg
@@ -107,8 +107,8 @@ contains
    ! a concrete class ...
    @test
    subroutine test_at_simple_mapping()
-      class(AbstractNode), pointer :: top
-      class(AbstractNode), pointer :: sub_node
+      class(YAML_Node), pointer :: top
+      class(YAML_Node), pointer :: sub_node
       type(MappingNode), target :: mapping_node
       type(Mapping), pointer :: m
       integer(kind=INT32) :: i32
@@ -138,8 +138,8 @@ contains
       
    @test
    subroutine test_at_simple_mapping_B()
-      class(AbstractNode), pointer :: top
-      class(AbstractNode), pointer :: sub_node
+      class(YAML_Node), pointer :: top
+      class(YAML_Node), pointer :: sub_node
       type(MappingNode), target :: mapping_node
       type(Mapping), pointer :: m
       real(kind=REAL32) :: x32
@@ -167,8 +167,8 @@ contains
       
    @test
    subroutine test_at_simple_mapping_not_found()
-      class(AbstractNode), pointer :: top
-      class(AbstractNode), pointer :: sub_node
+      class(YAML_Node), pointer :: top
+      class(YAML_Node), pointer :: sub_node
       type(MappingNode), target :: mapping_node
       type(Mapping), pointer :: m
       character(100) :: err_msg
@@ -198,8 +198,8 @@ contains
       
    @test
    subroutine test_at_simple_sequence()
-      class(AbstractNode), pointer :: top
-      class(AbstractNode), pointer :: sub_node
+      class(YAML_Node), pointer :: top
+      class(YAML_Node), pointer :: sub_node
       type(SequenceNode), target :: sequence_node
       type(Sequence), pointer :: s
       integer(kind=INT32) :: i32
@@ -229,8 +229,8 @@ contains
    
    @test
    subroutine test_at_sequence_fail_out_of_bounds()
-      class(AbstractNode), pointer :: top
-      class(AbstractNode), pointer :: sub_node
+      class(YAML_Node), pointer :: top
+      class(YAML_Node), pointer :: sub_node
       type(SequenceNode), target :: sequence_node
       type(Sequence), pointer :: s
       integer(kind=INT32) :: i32

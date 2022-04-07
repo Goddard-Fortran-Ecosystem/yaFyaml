@@ -2,18 +2,18 @@
 
 
 !!! The Parser imports a sequence of tokens and constructs an object
-!!! that is a subclass of AbstractNode. I naively expect this to be
+!!! that is a subclass of YAML_Node. I naively expect this to be
 !!! rather simple compared to the Lexer, but reading suggests that it
 !!! should be the opposite.  The difference may in part be that this
 !!! package restricts keys to be simple strings.
 
-module fy_newParser
+module fy_Parser
    use fy_Lexer
    use fy_Tokens
    use fy_Reader
    use fy_AbstractTextStream
 
-   use fy_AbstractNode
+   use fy_YAML_Node
    use fy_StringNodeMap
    use fy_mappingNode
    use fy_SequenceNode
@@ -30,9 +30,9 @@ module fy_newParser
    implicit none
    private
 
-   public :: newParser
+   public :: Parser
 
-   type :: newParser
+   type :: Parser
       private
       class(AbstractSchema), allocatable :: schema
       type (StringNodeMap) :: anchors
@@ -46,28 +46,28 @@ module fy_newParser
       procedure :: process_sequencen
       procedure :: process_mapping
       procedure :: interpret
-   end type newParser
+   end type Parser
 
 
-   interface newParser
+   interface Parser
       module procedure new_Parser_default
       module procedure new_Parser_schema
       module procedure new_Parser_schema_name
-   end interface newParser
+   end interface Parser
 
    character(*), parameter :: MERGE_KEY = '<<'
 
 contains
 
    function new_Parser_default() result(p)
-      type(newParser) :: p
+      type(Parser) :: p
 
-      p = newParser(CoreSchema())
+      p = Parser(CoreSchema())
 
    end function new_Parser_default
 
    function new_Parser_schema(schema) result(p)
-      type(newParser) :: p
+      type(Parser) :: p
       class(AbstractSchema), intent(in) :: schema
 
       p%schema = schema
@@ -76,16 +76,16 @@ contains
    end function new_Parser_schema
 
    function new_Parser_schema_name(schema_name) result(p)
-      type(newParser) :: p
+      type(Parser) :: p
       character(*), intent(in) :: schema_name
 
       select case (schema_name)
       case ('json','JSON')
-         p = newParser(JSONSchema())
+         p = Parser(JSONSchema())
       case ('core','Core')
-         p = newParser(CoreSchema())
+         p = Parser(CoreSchema())
       case ('failsafe','Failsafe')
-         p = newParser(FailsafeSchema())
+         p = Parser(FailsafeSchema())
       case default
          error stop "Unknown schema"
       end select
@@ -93,8 +93,8 @@ contains
    end function new_Parser_schema_name
 
    function load_from_stream(this, stream) result(node)
-      class(AbstractNode), allocatable :: node
-      class(newParser), intent(inout) :: this
+      class(YAML_Node), allocatable :: node
+      class(Parser), intent(inout) :: this
       class(AbstractTextStream), intent(in) :: stream
 
       type(Lexer) :: lexr
@@ -106,8 +106,8 @@ contains
 
 
    function load_from_file(this, fname) result(node)
-      class(AbstractNode), allocatable :: node
-      class(newParser), intent(inout) :: this
+      class(YAML_Node), allocatable :: node
+      class(Parser), intent(inout) :: this
       character(len=*), intent(in) :: fname
 
       node = this%load(FileStream(fname))
@@ -115,8 +115,8 @@ contains
    end function load_from_file
 
    function top(this, lexr) result(node)
-      class(AbstractNode), target, allocatable :: node
-      class(newParser), intent(inout) :: this
+      class(YAML_Node), target, allocatable :: node
+      class(Parser), intent(inout) :: this
       type(Lexer), intent(inout) :: lexr
 
       class(AbstractToken), allocatable :: token
@@ -174,7 +174,7 @@ contains
 
 
    recursive subroutine process_sequence(this, lexr, seq)
-      class(newParser), target, intent(inout) :: this
+      class(Parser), target, intent(inout) :: this
       type(Lexer), intent(inout) :: lexr 
       type(sequence), intent(inout) :: seq
 
@@ -182,7 +182,7 @@ contains
       logical :: expect_another
       character(:), allocatable :: anchor
       type(mapping), pointer :: map
-      class(AbstractNode), pointer :: subnode
+      class(YAML_Node), pointer :: subnode
       type(Sequence), pointer :: subseq
 
       integer :: depth = 0
@@ -259,7 +259,7 @@ contains
    end subroutine process_sequence
 
    recursive subroutine process_sequencen(this, lexr, snode)
-      class(newParser), target, intent(inout) :: this
+      class(Parser), target, intent(inout) :: this
       type(Lexer), intent(inout) :: lexr 
       type(SequenceNode), target, intent(inout) :: snode
 
@@ -267,7 +267,7 @@ contains
       logical :: expect_another
       character(:), allocatable :: anchor
       type(mapping), pointer :: map
-      class(AbstractNode), pointer :: subnode
+      class(YAML_Node), pointer :: subnode
       type(Sequence), pointer :: seq
       type(Sequence), pointer :: subseq
 
@@ -348,7 +348,7 @@ contains
 
    recursive subroutine process_mapping(this, lexr, map)
       type(mapping), intent(inout) :: map
-      class(newParser), target, intent(inout) :: this
+      class(Parser), target, intent(inout) :: this
       type(Lexer), intent(inout) :: lexr
 
       integer :: depth = 0
@@ -380,7 +380,7 @@ contains
    end subroutine process_mapping
 
    recursive subroutine process_map_key(this, lexr, map)
-      class(newParser), intent(inout) :: this
+      class(Parser), intent(inout) :: this
       type(Lexer), intent(inout) :: lexr
       type(mapping), intent(inout) :: map
 
@@ -391,9 +391,9 @@ contains
 
       type(sequence), save :: keys, values
       integer :: depth = 0
-      class(AbstractNode), allocatable :: val
-      class(AbstractNode), pointer :: curr_key
-      class(AbstractNode), pointer :: curr_value
+      class(YAML_Node), allocatable :: val
+      class(YAML_Node), pointer :: curr_key
+      class(YAML_Node), pointer :: curr_value
 
       depth = depth + 1
 
@@ -459,7 +459,7 @@ contains
 
          type (mappingIterator) :: iter
 
-         class(AbstractNode), pointer :: key, value
+         class(YAML_Node), pointer :: key, value
 
          iter = m2%begin()
          do while (iter /= m2%end())
@@ -476,8 +476,8 @@ contains
    end subroutine process_map_key
 
    function get_key(this, token, key_str) result(key)
-      class(AbstractNode), allocatable :: key
-      class(Newparser), intent(in) :: this
+      class(YAML_Node), allocatable :: key
+      class(Parser), intent(in) :: this
       class(AbstractToken), intent(in) :: token
       character(:), allocatable, intent(out) :: key_str
 
@@ -493,8 +493,8 @@ contains
 
 
    recursive subroutine process_value(this, key, token, lexr, values)
-      class(NewParser), intent(inout) :: this
-      class(AbstractNode), intent(in) :: key
+      class(Parser), intent(inout) :: this
+      class(YAML_Node), intent(in) :: key
       class(AbstractToken), intent(in) :: token
       type(Lexer), intent(inout) :: lexr
       type(sequence), intent(inout) :: values
@@ -503,7 +503,7 @@ contains
       type(sequence), pointer :: seq
       integer :: depth =0
 
-      class(AbstractNode), pointer :: subnode
+      class(YAML_Node), pointer :: subnode
 
       depth = depth + 1
       select type(token)
@@ -546,8 +546,8 @@ contains
       use fy_IntNode
       use fy_FloatNode
 
-      class(AbstractNode), allocatable :: value
-      class(newParser), intent(in) :: this
+      class(YAML_Node), allocatable :: value
+      class(Parser), intent(in) :: this
       type(ScalarToken) :: scalar
 
       character(:), allocatable :: text
@@ -571,4 +571,4 @@ contains
 
    end function interpret
 
-end module fy_newParser
+end module fy_Parser

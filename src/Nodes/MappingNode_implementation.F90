@@ -1,3 +1,6 @@
+#include "error_handling.h"
+#include "string_handling.h"
+
 submodule (fy_MappingNode) MappingNode_implementation
    use fy_AbstractNode
    use fy_ErrorCodes
@@ -197,6 +200,36 @@ contains
         end do
       end associate
    end subroutine clone_mapping
+
+   module function first(this, unusable, err_msg, rc) result(ptr)
+      use fy_keywordenforcer, only: KE => KeywordEnforcer
+      class(AbstractNode), pointer :: ptr
+      class(MappingNodeIterator), intent(in) :: this
+      class(KE), optional, intent(in) :: unusable
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      integer :: status
+
+      ptr => this%map_iter%first()
+
+      __RETURN__(YAFYAML_SUCCESS)
+   end function first
+
+   module function second(this, unusable, err_msg, rc) result(ptr)
+      use fy_keywordenforcer, only: KE => KeywordEnforcer
+      class(AbstractNode), pointer :: ptr
+      class(MappingNodeIterator), intent(in) :: this
+      class(KE), optional, intent(in) :: unusable
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      integer :: status
+
+      ptr => this%map_iter%second()
+
+      __RETURN__(YAFYAML_SUCCESS)
+   end function second
 
 
 

@@ -7,7 +7,6 @@ module fy_SequenceNode
    use fy_ErrorCodes
    use fy_ErrorHandling
    use fy_keywordEnforcer
-   use fy_Types
    use, intrinsic :: iso_fortran_env, only: INT32, INT64
    use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
@@ -51,7 +50,10 @@ module fy_SequenceNode
       procedure :: equal_to
       procedure :: not_equal_to
 
-      procedure :: as_bool
+      procedure :: at
+      procedure :: first
+      procedure :: second => first
+
    end type SequenceNodeIterator
 
 
@@ -77,6 +79,7 @@ module fy_SequenceNode
    end interface clone                                                                                                                
 
    interface
+      ! Node methods
       recursive module subroutine clone_sequence_node(from, to)
          type(SequenceNode), target, intent(in) :: from
          class(AbstractNode), target, intent(out) :: to
@@ -85,14 +88,16 @@ module fy_SequenceNode
          type(Sequence), target, intent(in) :: from
          type(Sequence), target, intent(out) :: to
       end subroutine clone_sequence
-      module function as_bool(this, bool, unusable, err_msg, rc) result(ptr)
-         logical, pointer :: ptr
+
+ 
+      module function at(this, unusable, err_msg, rc) result(ptr)
+         class(AbstractNode), pointer :: ptr
          class(SequenceNodeIterator), intent(in) :: this
-         type(bool_t), intent(in) :: bool
          class(KeywordEnforcer), optional, intent(in) :: unusable
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
-      end function as_bool
+      end function at
+
    end interface
 
 contains
@@ -260,6 +265,21 @@ contains
 
       not_equal_to = .not. (a == b)
    end function not_equal_to
+   
+   function first(this, unusable, err_msg, rc) result(ptr)
+      class(AbstractNode), pointer :: ptr
+      class(SequenceNodeIterator), intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      ptr => null()
+      __FAIL__(YAFYAML_INVALID_ITERATOR)
+
+      __UNUSED_DUMMY__(this)
+      __UNUSED_DUMMY__(unusable)
+   end function first
+
 
 end module fy_SequenceNode
 

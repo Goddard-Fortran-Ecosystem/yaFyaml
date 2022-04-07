@@ -109,28 +109,14 @@ module fy_AbstractNode
       procedure(I_equal), deferred :: not_equal_to
       generic :: operator(/=) => not_equal_to
 
-      ! Throws exception if mapping iterator
-!!$      procedure, deferred :: as_node
-!!$      procedure :: as_string
-      procedure(I_as_bool), deferred :: as_bool
-!!$      procedure :: as_int
-!!$      procedure :: as_float
 
-      generic :: as => as_bool
-      ! Throws exception if sequence iterator
-!!$      procedure :: as_node_node_pair
-!!$      procedure :: first_as_node
-!!$      procedure :: first_as_string
-!!$      procedure :: first_as_bool
-!!$      procedure :: first_as_int
-!!$      procedure :: first_as_float
+      ! Sequence
+      procedure(I_at_iter), deferred :: at ! throws exception
 
-      ! Throws exception if sequence iterator
-!!$      procedure :: second_as_node
-!!$      procedure :: second_as_string
-!!$      procedure :: second_as_bool
-!!$      procedure :: second_as_int
-!!$      procedure :: second_as_float
+      ! Mapping
+      procedure(I_at_iter), deferred :: first
+      procedure(I_at_iter), deferred :: second
+      
    end type NodeIterator
 
 
@@ -596,17 +582,16 @@ module fy_AbstractNode
          class(NodeIterator), intent(inout) :: this
       end subroutine I_next
 
-      function I_as_bool(this, bool, unusable, err_msg, rc) result(ptr)
+      function I_at_iter(this, unusable, err_msg, rc) result(ptr)
          use fy_KeywordEnforcer
-         use fy_types, only: bool_t
+         import AbstractNode
          import NodeIterator
-         logical, pointer :: ptr
+         class(AbstractNode), pointer :: ptr
          class(NodeIterator), intent(in) :: this
-         type(bool_t), intent(in) :: bool
          class(KeywordEnforcer), optional, intent(in) :: unusable
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
-      end function I_as_bool
+      end function I_at_iter
 
       logical function I_equal(a, b)
          import NodeIterator

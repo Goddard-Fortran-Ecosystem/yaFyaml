@@ -7,7 +7,6 @@ module fy_MappingNode
    use fy_ErrorCodes
    use fy_ErrorHandling
    use fy_keywordEnforcer
-   use fy_Types
    use, intrinsic :: iso_fortran_env, only: INT32, INT64
    use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
@@ -50,7 +49,9 @@ module fy_MappingNode
       procedure :: equal_to
       procedure :: not_equal_to
       
-      procedure :: as_bool
+      procedure :: at
+      procedure :: first
+      procedure :: second
 
    end type MappingNodeIterator
 
@@ -80,6 +81,7 @@ module fy_MappingNode
    end interface clone
 
    interface
+      ! Node methods
       recursive module subroutine clone_mapping_node(from, to)
          type(MappingNode), target, intent(in) :: from
          class(AbstractNode), target, intent(out) :: to
@@ -88,6 +90,23 @@ module fy_MappingNode
          type(Mapping), target, intent(in) :: from
          type(Mapping), target, intent(out) :: to
       end subroutine clone_mapping
+
+      ! Iterator methods
+      module function first(this, unusable, err_msg, rc) result(ptr)
+         class(AbstractNode), pointer :: ptr
+         class(MappingNodeIterator), intent(in) :: this
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end function first
+
+      module function second(this, unusable, err_msg, rc) result(ptr)
+         class(AbstractNode), pointer :: ptr
+         class(MappingNodeIterator), intent(in) :: this
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end function second
    end interface
 
 
@@ -255,18 +274,21 @@ contains
       call this%map_iter%next()
    end subroutine next_mapping
 
-   function as_bool(this, bool, unusable, err_msg, rc) result(ptr)
-      logical, pointer :: ptr
+   function at(this, unusable, err_msg, rc) result(ptr)
+      class(AbstractNode), pointer :: ptr
       class(MappingNodeIterator), intent(in) :: this
-      type(bool_t), intent(in) :: bool
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       class(AbstractNode), pointer :: node_ptr
 
+      ptr => null()
       __FAIL__(YAFYAML_INVALID_ITERATOR)
-   end function as_bool
+
+      __UNUSED_DUMMY__(this)
+      __UNUSED_DUMMY__(unusable)
+   end function at
 
    logical function equal_to(a,b)
       class(MappingNodeIterator), intent(in) :: a

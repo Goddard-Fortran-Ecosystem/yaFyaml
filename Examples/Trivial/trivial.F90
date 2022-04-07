@@ -2,16 +2,16 @@ program main
    use yafyaml
    implicit none
    
-   type(Parser) :: p
-   type(Configuration) :: config
+   type(newParser) :: p
+   class(AbstractNode), allocatable :: node
    integer :: prime
    integer :: status
    
-   p = Parser('core')
-   config = p%load(FileStream('trivial.yaml'))
+   p = newParser('core')
+   node = p%load(FileStream('trivial.yaml'))
 
-   prime = config%of('prime')
-   prime = config%at('prime',rc=status)
+   prime = node%of('prime')
+   prime = node%at('prime',rc=status)
 
    if (prime == 17) then
       print*,'success'

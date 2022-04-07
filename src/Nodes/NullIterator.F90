@@ -2,11 +2,11 @@
 #include "string_handling.h"
 
 module fy_NullIterator
+   use fy_AbstractNode, only: AbstractNode
    use fy_AbstractNode, only: NodeIterator
    use fy_KeywordEnforcer
    use fy_ErrorHandling
    use fy_ErrorCodes
-   use fy_Types
    implicit none
    private
 
@@ -23,7 +23,10 @@ module fy_NullIterator
       procedure :: equal_to
       procedure :: not_equal_to
 
-      procedure :: as_bool
+      procedure :: at
+      procedure :: first => at
+      procedure :: second => at
+      
    end type NullIterator
 
 contains
@@ -40,10 +43,9 @@ contains
       __UNUSED_DUMMY__(this)
    end subroutine next
 
-   function as_bool(this, bool, unusable, err_msg, rc) result(ptr)
-      logical, pointer :: ptr
+   function at(this, unusable, err_msg, rc) result(ptr)
+      class(AbstractNode), pointer :: ptr
       class(NullIterator), intent(in) :: this
-      type(bool_t), intent(in) :: bool
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
@@ -52,7 +54,7 @@ contains
       __UNUSED_DUMMY__(this)
       __UNUSED_DUMMY__(unusable)
       __FAIL2__(YAFYAML_INVALID_ITERATOR)
-   end function as_bool
+   end function at
 
    logical function equal_to(a,b)
       class(NullIterator), intent(in) :: a

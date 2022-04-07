@@ -68,16 +68,51 @@ contains
       
       associate (b => node%begin(), e => node%end())
         iter = b
-        flag => iter%as(YAML_BOOL)
+        flag => to_bool(iter%at())
         @assert_that(flag, is(false()))
 
         call iter%next()
-        flag => iter%as(YAML_BOOL)
+        flag => to_bool(iter%at())
         @assert_that(flag, is(true()))
 
       end associate
 
    end subroutine test_sequence_iter_as_bool
+
+   @test
+   subroutine test_mapping_iter_as_bool()
+      type(MappingNode), target :: node
+      class(NodeIterator), allocatable :: iter
+      logical, pointer :: flag
+      character(:), pointer :: s
+
+      call node%set(.true., .true.)
+      call node%set(.false.,.false.)
+      call node%set(.true., 'a')
+
+      associate (b => node%begin(), e => node%end())
+
+        iter = b ! node%of('.true.')
+        flag => to_bool(iter%first())
+        @assert_that(flag, is(true()))
+        flag => to_bool(iter%second())
+        @assert_that(flag, is(true()))
+
+        call iter%next() ! node%of('.false.')
+        flag => to_bool(iter%first())
+        @assert_that(flag, is(false()))
+        flag => to_bool(iter%second())
+        @assert_that(flag, is(false()))
+
+
+        call iter%next() ! node%of('a')
+        s => to_string(iter%first())
+        @assertEqual('a', s)
+        flag => to_bool(iter%second())
+        @assert_that(flag, is(true()))
+      end associate
+
+   end subroutine test_mapping_iter_as_bool
 
 
 end module Test_Iterators

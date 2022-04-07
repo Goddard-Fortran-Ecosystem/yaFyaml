@@ -95,23 +95,19 @@ contains
       end associate                                                                                                                   
    end subroutine clone_sequence
 
-   module function as_bool(this, bool, unusable, err_msg, rc) result(ptr)
-      use fy_BoolNode
+   module function at(this, unusable, err_msg, rc) result(ptr)
       use fy_keywordenforcer, only: KE => KeywordEnforcer
-      logical, pointer :: ptr
+      class(AbstractNode), pointer :: ptr
       class(SequenceNodeIterator), intent(in) :: this
-      type(bool_t), intent(in) :: bool
       class(KE), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
       integer :: status
 
-      ptr => to_bool(this%seq_iter%of(), err_msg=err_msg, rc=status)
-      __VERIFY2__(err_msg, status)
-
+      ptr => this%seq_iter%of()
       __RETURN__(YAFYAML_SUCCESS)
-   end function as_bool
+   end function at
 
 
 end submodule SequenceNode_implementation

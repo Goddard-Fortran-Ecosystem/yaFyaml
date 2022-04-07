@@ -342,53 +342,53 @@ contains
       ptr => this%at(SELECTORS)
    end function of_multi_selector
 
-!!$   subroutine assign_to_logical(flag, this)
-!!$      logical, intent(inout) :: flag
-!!$      class(BaseNode), intent(in) :: this
-!!$      __UNUSED_DUMMY__(flag)
-!!$      __UNUSED_DUMMY__(this)
-!!$   end subroutine assign_to_logical
-!!$    
-!!$
-!!$   subroutine assign_to_string(string, this)
-!!$      character(:), allocatable, intent(inout) :: string
-!!$      class(BaseNode), intent(in) :: this
-!!$      __UNUSED_DUMMY__(string)
-!!$   end subroutine assign_to_string
-!!$    
-!!$
-!!$   subroutine assign_to_integer32(i32, this)
-!!$      integer(kind=INT32), intent(inout) :: i32
-!!$      class(BaseNode), intent(in) :: this
-!!$      __UNUSED_DUMMY__(i32)
-!!$      __UNUSED_DUMMY__(this)
-!!$   end subroutine assign_to_integer32
-!!$    
-!!$   
-!!$   subroutine assign_to_integer64(i64, this)
-!!$      integer(kind=INT64), intent(inout) :: i64
-!!$      class(BaseNode), intent(in) :: this
-!!$      __UNUSED_DUMMY__(i64)
-!!$      __UNUSED_DUMMY__(this)
-!!$   end subroutine assign_to_integer64
-!!$    
-!!$   
-!!$   subroutine assign_to_real32(r32, this)
-!!$      use, intrinsic :: ieee_arithmetic, only: IEEE_QUIET_NAN, ieee_value
-!!$      real(kind=REAL32), intent(inout) :: r32
-!!$      class(BaseNode), intent(in) :: this
-!!$      __UNUSED_DUMMY__(r32)
-!!$      __UNUSED_DUMMY__(this)
-!!$   end subroutine assign_to_real32
-!!$    
-!!$   
-!!$   subroutine assign_to_real64(r64, this)
-!!$      use, intrinsic :: ieee_arithmetic, only: IEEE_QUIET_NAN, ieee_value
-!!$      real(kind=REAL64), intent(inout) :: r64
-!!$      class(BaseNode), intent(in) :: this
-!!$      __UNUSED_DUMMY__(r64)
-!!$      __UNUSED_DUMMY__(this)
-!!$   end subroutine assign_to_real64
+   subroutine assign_to_logical(flag, this)
+      logical, intent(inout) :: flag
+      class(BaseNode), intent(in) :: this
+      __UNUSED_DUMMY__(flag)
+      __UNUSED_DUMMY__(this)
+   end subroutine assign_to_logical
+    
+
+   subroutine assign_to_string(string, this)
+      character(:), allocatable, intent(inout) :: string
+      class(BaseNode), intent(in) :: this
+      __UNUSED_DUMMY__(string)
+   end subroutine assign_to_string
+    
+
+   subroutine assign_to_integer32(i32, this)
+      integer(kind=INT32), intent(inout) :: i32
+      class(BaseNode), intent(in) :: this
+      __UNUSED_DUMMY__(i32)
+      __UNUSED_DUMMY__(this)
+   end subroutine assign_to_integer32
+    
+   
+   subroutine assign_to_integer64(i64, this)
+      integer(kind=INT64), intent(inout) :: i64
+      class(BaseNode), intent(in) :: this
+      __UNUSED_DUMMY__(i64)
+      __UNUSED_DUMMY__(this)
+   end subroutine assign_to_integer64
+    
+   
+   subroutine assign_to_real32(r32, this)
+      use, intrinsic :: ieee_arithmetic, only: IEEE_QUIET_NAN, ieee_value
+      real(kind=REAL32), intent(inout) :: r32
+      class(BaseNode), intent(in) :: this
+      __UNUSED_DUMMY__(r32)
+      __UNUSED_DUMMY__(this)
+   end subroutine assign_to_real32
+    
+   
+   subroutine assign_to_real64(r64, this)
+      use, intrinsic :: ieee_arithmetic, only: IEEE_QUIET_NAN, ieee_value
+      real(kind=REAL64), intent(inout) :: r64
+      class(BaseNode), intent(in) :: this
+      __UNUSED_DUMMY__(r64)
+      __UNUSED_DUMMY__(this)
+   end subroutine assign_to_real64
 
    pure logical function is_bool() result(is)
       is = .false.

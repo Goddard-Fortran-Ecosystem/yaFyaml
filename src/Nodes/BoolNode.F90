@@ -23,7 +23,6 @@ module fy_BoolNode
       procedure, nopass :: is_scalar
       procedure :: less_than
       procedure :: write_node_formatted
-!!$      procedure :: clone
 
       procedure :: clear
 
@@ -135,5 +134,5 @@ contains
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end function end
-   
+
 end module fy_BoolNode

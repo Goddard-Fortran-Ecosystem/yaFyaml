@@ -57,19 +57,6 @@ module fy_AbstractNode
       generic :: set => set_real64,    set_real64_1d
       generic :: set => set_node
 
-!!$      procedure(I_assign_to_logical),   pass(this), deferred :: assign_to_logical
-!!$      procedure(I_assign_to_string),    pass(this), deferred :: assign_to_string
-!!$      procedure(I_assign_to_integer32), pass(this), deferred :: assign_to_integer32
-!!$      procedure(I_assign_to_integer64), pass(this), deferred :: assign_to_integer64
-!!$      procedure(I_assign_to_real32),    pass(this), deferred :: assign_to_real32
-!!$      procedure(I_assign_to_real64),    pass(this), deferred :: assign_to_real64
-!!$      generic :: assignment(=) => assign_to_logical
-!!$      generic :: assignment(=) => assign_to_string
-!!$      generic :: assignment(=) => assign_to_integer32
-!!$      generic :: assignment(=) => assign_to_integer64
-!!$      generic :: assignment(=) => assign_to_real32
-!!$      generic :: assignment(=) => assign_to_real64
-
       ! using YAML terminology
       procedure(I_is), deferred, nopass :: is_sequence
       procedure(I_is), deferred, nopass :: is_mapping

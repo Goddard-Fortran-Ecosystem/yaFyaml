@@ -1,6 +1,6 @@
 program main
   !! Test the reading of a JSON file with a nested array of objects
-  use yafyaml, only : newParser, AbstractNode, YAFYAML_SUCCESS, to_int
+  use yafyaml, only : newParser, AbstractNode, YAFYAML_SUCCESS, assignment(=)
   use gFTL_UnlimitedVector, only : UnlimitedVector
   implicit none
 
@@ -36,7 +36,7 @@ program main
         allocate(d%vertices(i)%depends_on(dag_vertices_i_depends_on%size()))
         
         do j = 1,size(d%vertices(i)%depends_on)
-           d%vertices(i)%depends_on(j) = to_int(dag_vertices_i_depends_on%of(j))
+           d%vertices(i)%depends_on(j) = dag_vertices_i_depends_on%of(j)
         end do
      else
         error stop "expected a sequence in dag_vertices_i_depends_on"

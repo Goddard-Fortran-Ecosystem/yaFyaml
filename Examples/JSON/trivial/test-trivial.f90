@@ -1,5 +1,5 @@
 program main
-   use yafyaml, only : newParser, AbstractNode, to_bool
+   use yafyaml, only : newParser, AbstractNode, assignment(=)
    implicit none
 
    type(newParser) p
@@ -8,7 +8,7 @@ program main
 
    p = newParser('core')
    c = p%load('trivial.json')
-   science = to_bool(c%at('science')) ! this should overwrite science with .true.
+   science = c%at('science') ! this should overwrite science with .true.
 
    if (.not. science) error stop "Test failed"
 

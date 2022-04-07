@@ -111,15 +111,13 @@ module fy_AbstractNode
 
 
       ! Sequence
-      procedure(I_at_iter), deferred :: at ! throws exception
+      procedure(I_at_iter), deferred :: at
 
       ! Mapping
       procedure(I_at_iter), deferred :: first
       procedure(I_at_iter), deferred :: second
-      
+
    end type NodeIterator
-
-
 
 
 #define SELECTORS s1, s2, s3, s4, s5, s6, s7, s8, s9

@@ -1,6 +1,6 @@
 program main
   !! Test the reading of a JSON file with a nested array of objects
-  use yafyaml, only : Parser, YAML_Node, FileStream, YAFYAML_SUCCESS
+  use yafyaml, only : newParser, AbstractNode, YAFYAML_SUCCESS, to_int
   use gFTL_UnlimitedVector, only : UnlimitedVector
   implicit none
 
@@ -13,22 +13,22 @@ program main
   end type
 
   type(dag) :: d
-  type(Parser) :: p
-  type(YAML_Node) :: c
-  type(YAML_Node) :: dag_vertices, dag_vertices_i_depends_on
+  type(newParser) :: p
+  class(AbstractNode), allocatable :: c
+  class(AbstractNode), pointer :: dag_vertices, dag_vertices_i_depends_on
 
   integer :: i, j, status
 
-  p = Parser('core')
+  p = newParser('core')
   c = p%load('nested-object-array.json')
-  dag_vertices = c%at('dag', 'vertices', rc=status)
+  dag_vertices => c%at('dag', 'vertices', rc=status)
   if (status /= YAFYAML_SUCCESS) error stop "did not find 'dag' 'vertices'"
 
   allocate(d%vertices(dag_vertices%size()))
 
   do i=1,size(d%vertices)
 
-     dag_vertices_i_depends_on = dag_vertices%at(i, 'depends_on', rc=status)
+     dag_vertices_i_depends_on => dag_vertices%at(i, 'depends_on', rc=status)
      if (status /= YAFYAML_SUCCESS) error stop "did not find 'depends_on'"
      
      if (dag_vertices_i_depends_on%is_sequence()) then
@@ -36,7 +36,7 @@ program main
         allocate(d%vertices(i)%depends_on(dag_vertices_i_depends_on%size()))
         
         do j = 1,size(d%vertices(i)%depends_on)
-           d%vertices(i)%depends_on(j) = dag_vertices_i_depends_on%of(j)
+           d%vertices(i)%depends_on(j) = to_int(dag_vertices_i_depends_on%of(j))
         end do
      else
         error stop "expected a sequence in dag_vertices_i_depends_on"

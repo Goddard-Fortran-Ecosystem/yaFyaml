@@ -6,21 +6,14 @@ set (pf_tests
   Test_newParser.pf
   Test_JSONSchema.pf
   Test_CoreSchema.pf
-
   Test_BoolNode.pf
   Test_IntNode.pf
   Test_StringNode.pf
   Test_FloatNode.pf
   Test_SequenceNode.pf
   Test_MappingNode.pf
-
   Test_ComplexNode.pf
-
   Test_Node_Set.pf
-  # deprecated
-  Test_Parser.pf
-  Test_YAML_Node_Set.pf
-
   Test_Iterators.pf
   )
 

@@ -1,14 +1,14 @@
 program main
-   use yafyaml, only : Parser, YAML_Node, FileStream
+   use yafyaml, only : newParser, AbstractNode, to_bool
    implicit none
 
-   type(Parser) p
-   type(YAML_Node) c
+   type(newParser) p
+   class(AbstractNode), allocatable :: c
    logical :: science = .false.
 
-   p = Parser('core')
+   p = newParser('core')
    c = p%load('trivial.json')
-   science = c%at('science') ! this should overwrite science with .true.
+   science = to_bool(c%at('science')) ! this should overwrite science with .true.
 
    if (.not. science) error stop "Test failed"
 

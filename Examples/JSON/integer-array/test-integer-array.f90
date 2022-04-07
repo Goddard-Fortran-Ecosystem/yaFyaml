@@ -1,12 +1,12 @@
 program main
-   use yafyaml, only : Parser, YAML_Node, FileStream
+   use yafyaml, only : newParser, AbstractNode
    implicit none
 
-   type(Parser) p
-   type(YAML_Node) c
+   type(newParser) p
+   class(AbstractNode), allocatable :: c
    integer, allocatable :: nodes(:)
 
-   p = Parser('core')
+   p = newParser('core')
    c = p%load('integer-array.json')
    call c%get(nodes, 'nodes')
 

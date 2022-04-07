@@ -55,10 +55,10 @@ add_library (yafyaml
   yafyaml.F90
 
   #deprecated
-  Parser.F90
-  YAML_Node.F90
-  YAML_Node_implementation.F90
-  YAML_NodeIterator_implementation.F90
+#  Parser.F90
+#  YAML_Node.F90
+#  YAML_Node_implementation.F90
+#  YAML_NodeIterator_implementation.F90
 
   )
 

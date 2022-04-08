@@ -1,4 +1,4 @@
-module Test_YAML_Node_Set
+module Test_Node_Set
    use funit
    use yafyaml
    implicit none
@@ -7,14 +7,14 @@ contains
 
    @test
    subroutine test_set_in_sequence()
-      type(YAML_Node) :: node
+      class(YAML_Node), allocatable :: node
 
       integer :: status
       logical :: flag
       type(sequence) :: s
 
       call s%push_back(IntNode(1))
-      node = YAML_Node(SequenceNode(s))
+      node = SequenceNode(s)
 
       call node%set(.true., 1, rc=status)
       @assert_that(status, is(YAFYAML_SUCCESS))
@@ -28,14 +28,14 @@ contains
 
    @test
    subroutine test_set_in_mapping()
-      type(YAML_Node) :: node
+      class(YAML_Node), allocatable :: node
 
       integer :: status
       logical :: flag
-      type(mapping) :: m
+      type(Mapping) :: m
 
       call m%insert(StringNode('a'), IntNode(1))
-      node = YAML_Node(MappingNode(m))
+      node = MappingNode(m)
 
       call node%set(.true., 'a', rc=status)
       @assert_that(status, is(YAFYAML_SUCCESS))
@@ -50,10 +50,10 @@ contains
 
    @test
    subroutine test_set_deep_int()
-      type(YAML_Node) :: node
+      class(YAML_Node), allocatable :: node
 
       integer :: status
-      type(mapping) :: m
+      type(Mapping) :: m
       type(sequence) :: s
       integer :: i
 
@@ -63,8 +63,9 @@ contains
       call s%push_back(FloatNode(3.14159))
       call m%insert(StringNode('b'), SequenceNode(s))
 
-      node = YAML_Node(MappingNode(m))
+      node = MappingNode(m)
 
+      
       call node%set(3, 'b', 2, rc=status)
       @assert_that(status, is(YAFYAML_SUCCESS))
 
@@ -79,7 +80,7 @@ contains
    @test
    subroutine test_set_overload()
       use, intrinsic :: iso_fortran_env
-      type(YAML_Node) :: node
+      class(YAML_Node), allocatable :: node
 
       integer :: status
       logical :: flag
@@ -91,7 +92,7 @@ contains
       type(sequence) :: s
       
       call s%push_back(IntNode(1_INT32))
-      node = YAML_Node(SequenceNode(s))
+      node = SequenceNode(s)
 
       call node%set(.true., 1, rc=status)
       call node%get(flag, 1, rc=status)
@@ -125,25 +126,23 @@ contains
    ! case.
    subroutine test_set_as_insert()
       use, intrinsic :: iso_fortran_env
-      type(YAML_Node) :: node
+      class(YAML_Node), allocatable, target :: node
       integer :: status
       integer :: i
       real :: x
-      type(mapping) :: m
+      type(Mapping) :: m
 
       ! Clumsy steps to avoid deep copies that break compilers.
       call m%insert(StringNode('a'), IntNode(1))
       call m%insert(StringNode('b'), MappingNode())
-      node = YAML_Node(MappingNode(m))
-      call node%set(3, 'b', String('newkey'), rc=status)
-!!$      call node%set(3, 'b',  5, rc=status)
-      @assert_that(status, is(YAFYAML_SUCCESS))
+      allocate(node, source=MappingNode(m))
 
+      call node%set(3, 'b', String('newkey'), rc=status)
+      @assert_that(status, is(YAFYAML_SUCCESS))
+      
       call node%get(i, 'b', 'newkey', rc=status)
-!!$      call node%get(i, 'b', 5, rc=status)
       @assert_that(status, is(YAFYAML_SUCCESS))
       @assert_that(i, is(3))
-
       call node%set(5., 'b', String('anothernewkey'), rc=status)
       @assert_that(status, is(YAFYAML_SUCCESS))
 
@@ -155,15 +154,15 @@ contains
 
   @test
   subroutine test_set_1d()
-      type(YAML_Node) :: node
+      class(YAML_Node), allocatable :: node
 
       integer :: status
       logical, allocatable :: flags(:)
       real, allocatable :: x(:)
-      type(mapping) :: m
+      type(Mapping) :: m
 
       call m%insert(StringNode('a'), IntNode(1))
-      node = YAML_Node(MappingNode(m))
+      node = MappingNode(m)
 
       call node%set([.true.,.false.,.true.], 'a', rc=status)
       @assert_that(status, is(YAFYAML_SUCCESS))
@@ -183,24 +182,24 @@ contains
   ! Insert a mapping into an existing mapping.
   @test
   subroutine test_set_mapping()
-      type(YAML_Node) :: node
+      class(YAML_Node), allocatable :: node
 
       integer :: status
-      type(mapping) :: m1
-      type(mapping), pointer :: m2
+      type(Mapping) :: m1
+      type(Mapping), pointer :: m2
       type(MappingNode), target :: mnode
-      type(YAML_Node) :: subnode1
+      class(YAML_Node), allocatable :: subnode1
       integer :: i
       real :: x
 
       call m1%insert(StringNode('a'), IntNode(1))
-      node = YAML_Node(MappingNode(m1))
+      node = MappingNode(m1)
 
       mnode = MappingNode()
       m2 => to_mapping(mnode)
       call m2%insert(StringNode('zero'), IntNode(0))
       call m2%insert(StringNode('pi'), FloatNode(3.14159))
-      subnode1 = YAML_Node(mnode)
+      subnode1 = mnode
       call node%set(subnode1, 'b', rc=status)
       @assert_that(status, is(YAFYAML_SUCCESS))
 
@@ -211,6 +210,8 @@ contains
       call node%get(x, 'b','pi', rc=status)
       @assert_that(status, is(YAFYAML_SUCCESS))
       @assert_that(x, is(3.14159))
+
   end subroutine test_set_mapping
 
-end module Test_YAML_Node_Set
+end module Test_Node_Set
+

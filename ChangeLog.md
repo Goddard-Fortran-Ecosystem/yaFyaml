@@ -5,6 +5,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0-beta7] 2022-04-08
+
+
+### Changed
+
+- YAML_Node is now an abstract type.  Semantics are slightly changed
+  as a consequence, but most interfaces are unaffected.
+  Main object should now be declared as `class(YAML_Node), allocatable ::`
+  
+- Iteration on MappingNode and SequenceNode objects is now done with abstract NodeIterator.
+  The concrete subclasses: MappingNodeIterator SequenceNodeIterator
+  have methods for both vector and map iterators but return an optional error if used in the
+  wrong case. Also they produce null() pointer results if used in the wrong case.
+  
+### Added
+
+- Test for reproducer of ifort issue encountered in pFlogger upstream.
+	  
+
+
 ## [1.0-beta6] 2022-03-24
 
 ### Added

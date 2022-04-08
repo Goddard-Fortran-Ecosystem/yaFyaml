@@ -1,11 +1,14 @@
 #include "error_handling.h"
 #include "string_handling.h"
 module fy_BoolNode
-   use fy_AbstractNode
+   use fy_YAML_Node
    use fy_BaseNode
    use fy_ErrorCodes
    use fy_ErrorHandling
    use fy_keywordEnforcer
+   use fy_NullIterator
+   use, intrinsic :: iso_fortran_env, only: INT32, INT64
+   use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
    private
 
@@ -18,10 +21,13 @@ module fy_BoolNode
    contains
       procedure, nopass :: is_bool
       procedure, nopass :: is_scalar
-      procedure, pass(this) :: assign_to_logical
       procedure :: less_than
       procedure :: write_node_formatted
-!!$      procedure :: clone
+
+      procedure :: clear
+
+      procedure :: begin
+      procedure :: end
    end type BoolNode
 
    interface
@@ -29,7 +35,7 @@ module fy_BoolNode
          implicit none
          logical :: less_than
          class(BoolNode), intent(in) :: a
-         class(AbstractNode), intent(in) :: b
+         class(YAML_Node), intent(in) :: b
       end function less_than
    end interface
 
@@ -56,17 +62,10 @@ contains
       node%value = flag
    end function new_BoolNode
 
-   subroutine assign_to_logical(flag, this)
-      logical, intent(inout) :: flag
-      class(BoolNode), intent(in) :: this
-      flag = this%value
-   end subroutine assign_to_logical
-      
-
 
    function to_bool(this, unusable, err_msg, rc) result(ptr)
       logical, pointer :: ptr
-      class(AbstractNode), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
@@ -106,5 +105,34 @@ contains
 !!$
 !!$      other = this
 !!$   end subroutine clone
+
+
+   subroutine clear(this)
+      class(BoolNode), intent(inout) :: this
+      __UNUSED_DUMMY__(this)
+   end subroutine clear
+
+   function begin(this, unusable, rc) result(iter)
+      class(NodeIterator), allocatable :: iter
+      class(BoolNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+
+      iter = NullIterator()
+      
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end function begin
+
+   function end(this, unusable, rc) result(iter)
+      class(NodeIterator), allocatable :: iter
+      class(BoolNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+
+      iter = NullIterator()
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end function end
 
 end module fy_BoolNode

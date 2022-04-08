@@ -99,134 +99,129 @@ contains
    @test
    subroutine test_flow_sequence_end_token()
       type(Lexer) :: lexr
-      class(AbstractToken), allocatable :: token
       character(:), allocatable :: id
 
       lexr = Lexer(Reader(TextStream("]")))
 
-      token = lexr%get_token() ! skip stream start
-      deallocate(token)
-      token = lexr%get_token()
-      id = token%get_id()
+      call lexr%skip_token() ! skip stream start
+      associate (token => lexr%get_token())
+        id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-      @assert_that(id, is(equal_to(']')))
+        @assert_that(id, is(equal_to(']')))
 #endif
+      end associate
 
    end subroutine test_flow_sequence_end_token
 
    @test
    subroutine test_flow_mapping_end_token()
       type(Lexer) :: lexr
-      class(AbstractToken), allocatable :: token
       character(:), allocatable :: id
 
       lexr = Lexer(Reader(TextStream("}")))
 
-      token = lexr%get_token() ! skip stream start
-      deallocate(token)
-      token = lexr%get_token()
-      id = token%get_id()
+      call lexr%skip_token() ! skip stream start
+      associate (token => lexr%get_token())
+        id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-      @assert_that(id, is(equal_to(FLOW_MAPPING_END_INDICATOR)))
+        @assert_that(id, is(equal_to(FLOW_MAPPING_END_INDICATOR)))
 #endif
+      end associate
    end subroutine test_flow_mapping_end_token
 
 
    @test
    subroutine test_flow_next_entry()
       type(Lexer) :: lexr
-      class(AbstractToken), allocatable :: token
       character(:), allocatable :: id
 
       lexr = Lexer(Reader(TextStream(",")))
 
-      token = lexr%get_token() ! skip stream start
-      deallocate(token)
-      token = lexr%get_token()
-      id = token%get_id()
+      call lexr%skip_token() ! skip stream start
+      associate (token => lexr%get_token())
+        id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-      @assert_that(id, is(equal_to(FLOW_NEXT_ENTRY_INDICATOR)))
+        @assert_that(id, is(equal_to(FLOW_NEXT_ENTRY_INDICATOR)))
 #endif
+      end associate
 
    end subroutine test_flow_next_entry
 
    @test
    subroutine test_block_next_entry()
       type(Lexer) :: lexr
-      class(AbstractToken), allocatable :: token
       character(:), allocatable :: id
 
       lexr = Lexer(Reader(TextStream("- a")))
 
-      token = lexr%get_token() ! skip stream start
-      deallocate(token)
-      token = lexr%get_token()
-      id = token%get_id()
-      @assertEqual(id, "<block sequence start>")
-      deallocate(token)
-      token = lexr%get_token()
-      id = token%get_id()
+      call lexr%skip_token() ! skip stream start
+      associate(token => lexr%get_token())
+        id = token%get_id()
+        @assertEqual(id, "<block sequence start>")
+      end associate
+
+      associate(token => lexr%get_token())
+        id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-      @assert_that(id, is(equal_to(BLOCK_NEXT_ENTRY_INDICATOR)))
+        @assert_that(id, is(equal_to(BLOCK_NEXT_ENTRY_INDICATOR)))
 #endif
+      end associate
    end subroutine test_block_next_entry
 
 
    @test
    subroutine test_value()
       type(Lexer) :: lexr
-      class(AbstractToken), allocatable :: token
       character(:), allocatable :: id
 
       lexr = Lexer(Reader(TextStream("a:")))
 
-      token = lexr%get_token() ! skip stream start
-      deallocate(token)
-      token = lexr%get_token() ! document start
-      deallocate(token)
-      token = lexr%get_token()
-      id = token%get_id()
+      call lexr%skip_token() ! skip stream start
+      call lexr%skip_token() ! skip document start
+
+      associate (token => lexr%get_token())
+        id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-      @assert_that(id, is(equal_to(KEY_INDICATOR)))
+        @assert_that(id, is(equal_to(KEY_INDICATOR)))
 #endif
-      deallocate(token)
-      token = lexr%get_token() ! scalar token
-      deallocate(token)
-      token = lexr%get_token()
-      id = token%get_id()
+      end associate
+
+      call lexr%skip_token()
+      associate (token => lexr%get_token()) ! scalar token
+        id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-      @assert_that(id, is(equal_to(VALUE_INDICATOR)))
+        @assert_that(id, is(equal_to(VALUE_INDICATOR)))
 #endif
+      end associate
    end subroutine test_value
 
    @test
    subroutine test_plain_scalar()
       type(Lexer) :: lexr
-      class(AbstractToken), allocatable :: token
       character(:), allocatable :: id
 
       lexr = Lexer(Reader(TextStream("abc d ")))
 
-      token = lexr%get_token() ! skip stream start
-      deallocate(token)
-      token = lexr%get_token()
-      id = token%get_id()
-      @assert_that(id, is(equal_to('<scalar>')))
+      call lexr%skip_token() ! skip stream start
+      associate(token => lexr%get_token()) ! skip stream start
+        id = token%get_id()
+        @assert_that(id, is(equal_to('<scalar>')))
 
-      select type (token)
-      type is (ScalarToken)
-         @assert_that(token%is_plain, is(true()))
+        select type (token)
+        type is (ScalarToken)
+           @assert_that(token%is_plain, is(true()))
 #ifdef __GFORTRAN__
 #else
-         @assert_that(token%value, is(equal_to('abc d')))
+           @assert_that(token%value, is(equal_to('abc d')))
 #endif
-      end select
+        end select
+      end associate
 
    end subroutine test_plain_scalar
 
@@ -234,81 +229,77 @@ contains
    @test
    subroutine test_is_value()
       type(Lexer) :: lexr
-      class(AbstractToken), allocatable :: token
       character(:), allocatable :: id
-
-      ! We must deallocate token before each reassignment because of
-      ! some weird bug in gfortran 10.  Apparently only under Linux.
-      ! Sigh.
 
       ! flow context
       lexr = Lexer(Reader(TextStream("  a : b")))
-      token = lexr%get_token() ! skip stream start
-      deallocate(token)
-      token = lexr%get_token() ! skip block mapping start
-      deallocate(token)
-      token = lexr%get_token() ! skip key 
-      deallocate(token)
-      token = lexr%get_token() ! skip scalar "a"
-      deallocate(token)
-      token = lexr%get_token()
-      id = token%get_id()
+      call lexr%skip_token() ! skip stream start
+      call lexr%skip_token() ! skip block mapping start
+      call lexr%skip_token() ! skip key 
+      call lexr%skip_token() ! skip scalar "a"
+
+      associate( token => lexr%get_token())
+        id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-      @assert_that(id, is(equal_to(':')))
+        @assert_that(id, is(equal_to(':')))
 #endif
+      end associate
+
       ! block context - no space after ":"
       lexr = Lexer(Reader(TextStream("{? a : b}")))
-      deallocate(token)
-      token = lexr%get_token() ! skip stream start
-      deallocate(token)
-      token = lexr%get_token() ! "{"
-      id = token%get_id()
+
+      call lexr%skip_token() ! skip stream start
+      associate (token => lexr%get_token()) ! "{"
+        id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-      @assert_that(id, is(equal_to('{')))
+        @assert_that(id, is(equal_to('{')))
 #endif
-      deallocate(token)
-      token = lexr%get_token() ! key marker
-      id = token%get_id()
+      end associate
+
+      associate (token => lexr%get_token()) ! key marker
+        id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-      @assert_that(id, is(equal_to('?')))
+        @assert_that(id, is(equal_to('?')))
 #endif
-      deallocate(token)
-      token = lexr%get_token() ! a
-      id = token%get_id()
+      end associate
+
+      associate (token => lexr%get_token()) ! a
+        id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-      @assert_that(id, is(equal_to('<scalar>')))
+        @assert_that(id, is(equal_to('<scalar>')))
 #endif
-      deallocate(token)
-      token = lexr%get_token()
-      id = token%get_id()
+      end associate
+
+      associate (token => lexr%get_token()) ! a
+        id = token%get_id()
 #ifdef __GFORTRAN__
 #else
-      @assert_that(id, is(equal_to(':')))
-#endif    
+        @assert_that(id, is(equal_to(':')))
+#endif
+      end associate
 
    end subroutine test_is_value
 
    @test
    subroutine test_is_anchor()
       type(Lexer) :: lexr
-      class(AbstractToken), allocatable :: token
       character(:), allocatable :: id
 
-      lexr = Lexer(Reader(TextStream("&anchor ")))
-      token = lexr%get_token() ! skip stream start
+      lexr = Lexer(Reader(TextStream("&anchor")))
+      call lexr%skip_token() ! skip stream start
 
-      deallocate(token)
-      token = lexr%get_token()
-      id = token%get_id()
+      associate (token => lexr%get_token())
+        id = token%get_id()
+
 #ifdef __GFORTRAN__
 #else
-      @assert_that(id, is(equal_to('<anchor>')))
+        @assert_that(id, is(equal_to('<anchor>')))
 #endif
-      
+      end associate
 
    end subroutine test_is_anchor
 
@@ -316,19 +307,19 @@ contains
    @test
    subroutine test_is_alias()
       type(Lexer) :: lexr
-      class(AbstractToken), allocatable :: token
       character(:), allocatable :: id
 
-      lexr = Lexer(Reader(TextStream("*alias ")))
-      token = lexr%get_token() ! skip stream start
+      lexr = Lexer(Reader(TextStream("*alias")))
+      call lexr%skip_token() ! skip stream start
 
-      deallocate(token)
-      token = lexr%get_token()
-      id = token%get_id()
+      associate(token => lexr%get_token())
+        id = token%get_id()
+
 #ifdef __GFORTRAN__
 #else
-      @assert_that(id, is(equal_to('<alias>')))
+        @assert_that(id, is(equal_to('<alias>')))
 #endif
+      end associate
 
    end subroutine test_is_alias
 

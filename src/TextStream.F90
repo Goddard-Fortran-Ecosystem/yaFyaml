@@ -37,7 +37,6 @@ contains
     integer, intent(in) :: n_characters
 
     integer :: last_idx
-    integer :: i
 
     last_idx = min(this%idx + n_characters, len(this%buffer))
     buffer = this%buffer(this%idx:last_idx)

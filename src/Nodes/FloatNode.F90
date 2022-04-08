@@ -1,12 +1,14 @@
 #include "error_handling.h"
 #include "string_handling.h"
 module fy_FloatNode
-   use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
-   use fy_AbstractNode
+   use fy_YAML_Node
    use fy_BaseNode
    use fy_ErrorCodes
    use fy_ErrorHandling
    use fy_keywordEnforcer
+   use fy_NullIterator
+   use, intrinsic :: iso_fortran_env, only: INT32, INT64
+   use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
    private
 
@@ -19,10 +21,13 @@ module fy_FloatNode
    contains
       procedure, nopass :: is_float
       procedure, nopass :: is_scalar
-      procedure, pass(this) :: assign_to_real32
-      procedure, pass(this) :: assign_to_real64
       procedure :: less_than
       procedure :: write_node_formatted
+
+      procedure :: clear
+
+      procedure :: begin
+      procedure :: end
    end type FloatNode
 
    interface
@@ -30,7 +35,7 @@ module fy_FloatNode
          implicit none
          logical :: less_than
          class(FloatNode), intent(in) :: a
-         class(AbstractNode), intent(in) :: b
+         class(YAML_Node), intent(in) :: b
       end function less_than
    end interface
 
@@ -62,37 +67,9 @@ contains
    end function new_FloatNode_r64
 
 
-   subroutine assign_to_real32(r32, this)
-      use, intrinsic :: ieee_arithmetic, only: ieee_value, &
-           & IEEE_POSITIVE_INF, IEEE_NEGATIVE_INF, IEEE_QUIET_NAN
-      real(kind=REAL32), intent(inout) :: r32
-      class(FloatNode), intent(in) :: this
-
-      if (abs(this%value) <= huge(1._REAL32)) then
-         r32 = this%value
-      elseif (this%value < -huge(1._REAL32)) then
-         r32 = ieee_value(r32,  IEEE_NEGATIVE_INF)
-      elseif (this%value > huge(1._REAL32)) then
-         r32 = ieee_value(r32,  IEEE_POSITIVE_INF)
-      else ! must be NaN
-         r32 = ieee_value(r32,  IEEE_QUIET_NAN)
-      end if
-
-   end subroutine assign_to_real32
-      
-
-   subroutine assign_to_real64(r64, this)
-      real(kind=REAL64), intent(inout) :: r64
-      class(FloatNode), intent(in) :: this
-
-      r64 = this%value
-
-   end subroutine assign_to_real64
-
-
    function to_float(this, unusable, err_msg, rc) result(ptr)
       real(kind=REAL64), pointer :: ptr
-      class(AbstractNode), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
@@ -121,4 +98,32 @@ contains
       
    end subroutine write_node_formatted
 
+   subroutine clear(this)
+      class(FloatNode), intent(inout) :: this
+      __UNUSED_DUMMY__(this)
+   end subroutine clear
+
+   function begin(this, unusable, rc) result(iter)
+      class(NodeIterator), allocatable :: iter
+      class(FloatNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+
+      iter = NullIterator()
+      
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end function begin
+
+   function end(this, unusable, rc) result(iter)
+      class(NodeIterator), allocatable :: iter
+      class(FloatNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+
+      iter = NullIterator()
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end function end
+   
 end module fy_FloatNode

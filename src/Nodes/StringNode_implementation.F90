@@ -1,5 +1,5 @@
 submodule (fy_StringNode) StringNode_implementation
-   use fy_AbstractNode
+   use fy_YAML_Node
    use fy_BoolNode
    use fy_IntNode
    implicit none
@@ -13,7 +13,7 @@ contains
    module function less_than(a, b)
       logical :: less_than
       class(StringNode), intent(in) :: a
-      class(AbstractNode), intent(in) :: b
+      class(YAML_Node), intent(in) :: b
 
       integer :: i, na, nb
 

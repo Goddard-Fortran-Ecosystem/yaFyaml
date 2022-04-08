@@ -9,45 +9,45 @@ program main
    implicit none
 
    type(Parser) :: p
-   type(Configuration) :: config
+   class(AbstractNode), allocatable :: node
    integer :: status
 
    p = Parser('core')
-   config = p%load('iterator.yaml')
-   write(10,'(dt)', iostat=status) config
+   node = p%load('iterator.yaml')
+   write(10,'(dt)', iostat=status) node
 
-   call optimistic(config)  ! no error code checking
-   call pessimistic(config) ! with error code checking
+   call optimistic(node)  ! no error code checking
+   call pessimistic(node) ! with error code checking
 
 contains
    
    ! This procedure does not check any potential errors
    ! but is easier to follow as a result.
-   subroutine optimistic(config)
-      type(Configuration), intent(in) :: config
+   subroutine optimistic(node)
+      class(AbstractNode), intent(in) :: node
 
       integer :: i
       integer :: prime
-      type(Configuration) :: subcfg, subsubcfg
-      type(ConfigurationIterator) :: iter
-      character(:), allocatable :: shape
+      class(AbstractNode), pointer :: subcfg, subsubcfg
+      class(NodeIterator), allocatable :: iter
+      character(:), pointer :: shape
       integer :: n_edges
 
       ! Iterating over a sequence
-      subcfg = config%of('primes')
+      subcfg => node%of('primes')
       do i = 1, subcfg%size()
          prime = subcfg%of(i)
          print*,'prime: ', prime
       end do
       
       ! Iterating over a mapping
-      subcfg = config%of('shapes')
+      subcfg => node%of('shapes')
       associate (b => subcfg%begin(), e => subcfg%end())
         iter = b
         do while (iter /= e)
-           call iter%get_key(shape)
-           call iter%get_value(subsubcfg)
-           call subsubcfg%get(n_edges, 'num_edges')
+           shape => to_string(iter%first())
+           subcfg => iter%second()
+           call subcfg%get(n_edges,'num_edges')
            print*,'Shape: ', shape, ' has ', n_edges, 'sides.'
            call iter%next()
         end do
@@ -57,20 +57,20 @@ contains
 
    
    ! This procedure carefully checks all return codes.
-   subroutine pessimistic(config)
-      type(Configuration), intent(in) :: config
+   subroutine pessimistic(node)
+      class(AbstractNode), intent(in) :: node
 
       integer :: i
       integer :: prime
-      type(Configuration) :: subcfg, subsubcfg
-      type(ConfigurationIterator) :: iter
-      character(:), allocatable :: shape, key
+      class(AbstractNode), pointer :: subcfg, subsubcfg
+      class(NodeIterator), allocatable :: iter
+      character(:), pointer :: shape, key
       integer :: n_edges
-      integer :: status
+      integer :: status, status_b, status_e
       logical :: found
 
       ! Iterating over a sequence
-      subcfg = config%at('primes', rc=status)
+      subcfg => node%at('primes', rc=status)
       if (status /= YAFYAML_SUCCESS) return
 
       do i = 1, subcfg%size()
@@ -80,22 +80,21 @@ contains
       end do
       
       ! Iterating over a mapping
-      subcfg = config%at('shapes', rc=status)
+      subcfg => node%at('shapes', rc=status)
       if (status /= YAFYAML_SUCCESS) return
-      associate (b => subcfg%begin(), e => subcfg%end())
+      associate (b => subcfg%begin(rc=status_b), e => subcfg%end(rc=status_e))
+        if (any([status_b, status_e] /= YAFYAML_SUCCESS)) then
+           print*,'Cannot iterate on this node.'
+        end if
+
         iter = b
         do while (iter /= e)
-
-           call iter%get_key(shape, rc=status)
+           shape => to_string(iter%first(), rc=status)
            if (status/= YAFYAML_SUCCESS) then
               print*,"failed to obtain string for key"
            end if
 
-           call iter%get_value(subsubcfg, rc=status)
-           if (status/= YAFYAML_SUCCESS) then
-              print*,"failed to obtain config for value"
-           end if
-
+           subsubcfg => iter%second()
            if (subsubcfg%has('num_edges')) then
               call subsubcfg%get(n_edges, 'num_edges', rc=status)
               if (status /= YAFYAML_SUCCESS) return

@@ -3,7 +3,7 @@ program main
    use yaFyaml
 
    type(Parser) :: p
-   type(YAML_Node) :: cfg
+   class(YAML_Node), allocatable :: node
 
    character(:), allocatable :: filename
    integer :: n
@@ -15,9 +15,9 @@ program main
    call get_command_argument(1, value=filename, status=status)
 
    p = Parser()
-   cfg = p%load(FileStream(filename))
+   node = p%load(FileStream(filename))
 
-   write(OUTPUT_UNIT,'(DT)') cfg
+   write(OUTPUT_UNIT,'(DT)') node
 
 end program main
     

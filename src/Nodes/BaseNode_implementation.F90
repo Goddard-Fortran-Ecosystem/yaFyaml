@@ -23,7 +23,7 @@ contains
 #define OPT_SELECTORS s2, s3, s4, s5, s6, s7, s8, s9
 
    module function at_multi_selector(this, SELECTORS, unusable, found, err_msg, rc) result(ptr)
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       class(BaseNode), target, intent(in) :: this
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -54,7 +54,7 @@ contains
    end function
 
    function at_vector_selector(this, v, unusable, found, err_msg, rc) result(ptr)
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       class(BaseNode), target, intent(in) :: this
       type(Sequence), intent(in) :: v
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -63,7 +63,7 @@ contains
       integer, optional, intent(out) :: rc
 
 
-      class(AbstractNode), pointer :: config, next_config
+      class(YAML_Node), pointer :: config, next_config
       class(*), pointer :: selector
       
       integer :: status
@@ -129,7 +129,7 @@ contains
       ! selector for sequence must be some kind of integer
       subroutine get_sequence_item(s, selector, found, rc)
          type(Sequence), target, intent(in) :: s
-         class(AbstractNode), intent(in) :: selector
+         class(YAML_Node), intent(in) :: selector
          logical, intent(out) :: found
          integer, intent(out) :: rc
 
@@ -162,10 +162,10 @@ contains
          end select
       end subroutine get_sequence_item
       
-      ! While a mapping may have keys that are any subclass of AbstractNode.
+      ! While a mapping may have keys that are any subclass of YAML_Node.
       subroutine get_mapping_item(m, selector, found, rc)
          type(Mapping), target, intent(in) :: m
-         class(AbstractNode), intent(in) :: selector
+         class(YAML_Node), intent(in) :: selector
          logical, intent(out) :: found
          integer, intent(out) :: rc
 
@@ -205,7 +205,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       logical, pointer :: bool_ptr
       logical :: was_found
@@ -231,7 +231,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       logical :: tmp
       integer :: i
@@ -269,7 +269,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       logical :: was_found
 
@@ -293,7 +293,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       integer(kind=INT64), pointer :: safe_value
       logical :: was_found
@@ -327,7 +327,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       integer(kind=INT32) :: tmp
       integer :: i
@@ -365,7 +365,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       integer(kind=INT64), pointer :: safe_value
       logical :: was_found
@@ -393,7 +393,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       integer(kind=INT64) :: tmp
       integer :: i
@@ -434,7 +434,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       real(kind=REAL64), pointer :: safe_value
       real(kind=REAL32) :: pos_inf, neg_inf
@@ -456,9 +456,9 @@ contains
          pos_inf = ieee_value(value, IEEE_POSITIVE_INF)
          ! if not inf and out of range then is an error
          ! and do not update value.
-         if (safe_value <= neg_inf) then
+         if (safe_value <= -huge(1._REAL32)) then
             value = neg_inf
-         else if (safe_value >= pos_inf) then
+         else if (safe_value >= huge(1._REAL32)) then
             value = pos_inf
          else
             value = safe_value
@@ -478,7 +478,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       real(kind=REAL32) :: tmp
       integer :: i
@@ -516,7 +516,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       real(kind=REAL64), pointer :: safe_value
       logical :: was_found
@@ -544,7 +544,7 @@ contains
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       real(kind=REAL64) :: tmp
       integer :: i
@@ -636,12 +636,223 @@ contains
       end subroutine save_one
   end function selectors
   
+  module subroutine set_logical(this, value, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_BoolNode
+     class(BaseNode), target, intent(inout) :: this
+     logical, intent(in) :: value
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     call this%set(BoolNode(value), SELECTORS, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_logical
+
+
+  module subroutine set_string(this, value, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_StringNode
+     class(BaseNode), target, intent(inout) :: this
+     character(*), intent(in) :: value
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+     
+     call this%set(StringNode(value), SELECTORS, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_string
+
+
+  module subroutine set_integer32(this, value, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_IntNode
+     class(BaseNode), target, intent(inout) :: this
+     integer(kind=INT32), intent(in) :: value
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+     
+     call this%set(IntNode(value), SELECTORS, err_msg=err_msg, rc=rc)
+
+     __UNUSED_DUMMY__(unusable)
+  end subroutine set_integer32
+
+
+  module subroutine set_integer64(this, value, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_IntNode
+     class(BaseNode), target, intent(inout) :: this
+     integer(kind=INT64), intent(in) :: value
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+     
+     call this%set(IntNode(value), SELECTORS, err_msg=err_msg, rc=rc)
+
+     __UNUSED_DUMMY__(unusable)
+  end subroutine set_integer64
+
+
+  module subroutine set_real32(this, value, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_FloatNode
+     class(BaseNode), target, intent(inout) :: this
+     real(kind=REAL32), intent(in) :: value
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+     
+     call this%set(FloatNode(value), SELECTORS, err_msg=err_msg, rc=rc)
+
+     __UNUSED_DUMMY__(unusable)
+  end subroutine set_real32
+
+
+  module subroutine set_real64(this, value, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_FloatNode
+     class(BaseNode), target, intent(inout) :: this
+     real(kind=REAL64), intent(in) :: value
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+     
+     call this%set(FloatNode(value), SELECTORS, err_msg=err_msg, rc=rc)
+
+     __UNUSED_DUMMY__(unusable)
+  end subroutine set_real64
+
+
+  module subroutine set_logical_1d(this, values, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_SequenceNode
+     use fy_BoolNode
+     class(BaseNode), target, intent(inout) :: this
+     logical, intent(in) :: values(:)
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     type(Sequence) :: s
+     integer :: i
+
+     do i = 1, product(shape(values)) ! size(values)
+        call s%push_back(BoolNode(values(i)))
+     end do
+
+     call this%set(SequenceNode(s), SELECTORS, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_logical_1d
+
+  module subroutine set_integer32_1d(this, values, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_SequenceNode
+     use fy_IntNode
+     class(BaseNode), target, intent(inout) :: this
+     integer(kind=INT32), intent(in) :: values(:)
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     type(Sequence) :: s
+     integer :: i
+
+     do i = 1, product(shape(values)) ! size(values)
+        call s%push_back(IntNode(values(i)))
+     end do
+
+     call this%set(SequenceNode(s), SELECTORS, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_integer32_1d
+
+  module subroutine set_integer64_1d(this, values, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_SequenceNode
+     use fy_IntNode
+     class(BaseNode), target, intent(inout) :: this
+     integer(kind=INT64), intent(in) :: values(:)
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     type(Sequence) :: s
+     integer :: i
+
+     do i = 1, product(shape(values)) ! size(values)
+        call s%push_back(IntNode(values(i)))
+     end do
+
+     call this%set(SequenceNode(s), SELECTORS, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_integer64_1d
+
+  module subroutine set_real32_1d(this, values, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_SequenceNode
+     use fy_FloatNode
+     class(BaseNode), target, intent(inout) :: this
+     real(kind=REAL32), intent(in) :: values(:)
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     type(Sequence) :: s
+     integer :: i
+
+     do i = 1, product(shape(values)) ! size(values)
+        call s%push_back(FloatNode(values(i)))
+     end do
+
+     call this%set(SequenceNode(s), SELECTORS, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_real32_1d
+
+  module subroutine set_real64_1d(this, values, SELECTORS, unusable, err_msg, rc)
+     use fy_KeywordEnforcer
+     use fy_SequenceNode
+     use fy_FloatNode
+     class(BaseNode), target, intent(inout) :: this
+     real(kind=REAL64), intent(in) :: values(:)
+     class(*), optional, intent(in) :: SELECTORS
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     STRING_DUMMY, optional, intent(inout) :: err_msg
+     integer, optional, intent(out) :: rc
+
+     type(Sequence) :: s
+     integer :: i
+
+     do i = 1, product(shape(values)) ! size(values)
+        call s%push_back(FloatNode(values(i)))
+     end do
+
+     call this%set(SequenceNode(s), SELECTORS, err_msg=err_msg, rc=rc)
+
+      __UNUSED_DUMMY__(unusable)
+   end subroutine set_real64_1d
+
    module subroutine set_node(this, node, SELECTORS, unusable, err_msg, rc)
       use fy_KeywordEnforcer
       use fy_SequenceNode
       use fy_MappingNode
       class(BaseNode), target, intent(inout) :: this
-      class(AbstractNode), intent(in) :: node
+      class(YAML_Node), intent(in) :: node
       class(*), optional, intent(in) :: SELECTORS
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
@@ -666,22 +877,22 @@ contains
       use fy_SequenceNode, only: clone
       use fy_MappingNode, only: clone
       class(BaseNode), target, intent(inout) :: this
-      class(AbstractNode), intent(in) :: node
+      class(YAML_Node), intent(in) :: node
       type(Sequence), target, intent(in) :: selectors_seq
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
 
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       integer :: status
       logical, pointer :: bool_ptr
       logical :: was_found
       type(UnlimitedVector) :: v
       integer(kind=INT64), pointer :: i
 
-      class(AbstractNode), pointer :: parent_node
-      class(AbstractNode), pointer :: last_selector
-      class(AbstractNode), pointer :: new_node
+      class(YAML_Node), pointer :: parent_node
+      class(YAML_Node), pointer :: last_selector
+      class(YAML_Node), pointer :: new_node
       Type(Sequence) :: parent_selectors
       type(Sequence), pointer :: seq
       type(Mapping), pointer :: map
@@ -732,7 +943,6 @@ contains
          class default
             call map%set(last_selector, node)
          end select
-         
       class default
          ! Not the ideal error code.  May need a new one
          __FAIL2__(YAFYAML_SELECTOR_NOT_FOUND)
@@ -741,9 +951,6 @@ contains
 
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
-   contains
-
-
    end subroutine set_node_p
 
 
@@ -755,7 +962,7 @@ contains
 
       logical :: was_found
       integer :: status
-      class(AbstractNode), pointer :: node_ptr
+      class(YAML_Node), pointer :: node_ptr
 
       node_ptr => this%at(SELECTORS, found=was_found, rc=status)
       has = was_found

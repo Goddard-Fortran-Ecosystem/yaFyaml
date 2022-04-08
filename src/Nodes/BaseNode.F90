@@ -1,7 +1,7 @@
 #include "error_handling.h"
 #include "string_handling.h"
 module fy_BaseNode
-   use fy_AbstractNode
+   use fy_YAML_Node
    use, intrinsic :: iso_fortran_env, only: INT32, INT64
    use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
@@ -9,7 +9,7 @@ module fy_BaseNode
 
    public :: BaseNode
 
-   type, abstract, extends(AbstractNode) :: BaseNode
+   type, abstract, extends(YAML_Node) :: BaseNode
       private
    contains
 
@@ -24,14 +24,18 @@ module fy_BaseNode
       procedure :: get_real32, get_real32_1d
       procedure :: get_real64, get_real64_1d
 
+      procedure :: set_logical
+      procedure :: set_string
+      procedure :: set_integer32
+      procedure :: set_integer64
+      procedure :: set_real32
+      procedure :: set_real64
+      procedure :: set_logical_1d
+      procedure :: set_integer32_1d
+      procedure :: set_integer64_1d
+      procedure :: set_real32_1d
+      procedure :: set_real64_1d
       procedure :: set_node
-
-      procedure, pass(this) :: assign_to_logical
-      procedure, pass(this) :: assign_to_string
-      procedure, pass(this) :: assign_to_integer32
-      procedure, pass(this) :: assign_to_integer64
-      procedure, pass(this) :: assign_to_real32
-      procedure, pass(this) :: assign_to_real64
 
       procedure, nopass :: is_sequence
       procedure, nopass :: is_mapping
@@ -53,7 +57,7 @@ module fy_BaseNode
            & unusable, found, err_msg, rc) result(node_ptr)
          use fy_KeywordEnforcer
          implicit none
-         class(AbstractNode), pointer :: node_ptr
+         class(YAML_Node), pointer :: node_ptr
          class(BaseNode), target, intent(in) :: this
          class(*), optional, intent(in) :: SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -186,10 +190,140 @@ module fy_BaseNode
          integer, optional, intent(out) :: rc
       end subroutine get_real64_1d
 
+      module subroutine set_logical(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         implicit none
+         class(BaseNode), target, intent(inout) :: this
+         logical, intent(in) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_logical
+
+      module subroutine set_string(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         implicit none
+         class(BaseNode), target, intent(inout) :: this
+         character(*), intent(in) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine  set_string
+
+      module subroutine set_integer32(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT32
+         implicit none
+         class(BaseNode), target, intent(inout) :: this
+         integer(kind=INT32), intent(in) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_integer32
+
+      module subroutine set_integer64(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT64
+         implicit none
+         class(BaseNode), target, intent(inout) :: this
+         integer(kind=INT64), intent(in) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_integer64
+
+
+      module subroutine set_real32(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL32
+         implicit none
+         class(BaseNode), target, intent(inout) :: this
+         real(kind=REAL32), intent(in) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_real32
+
+      module subroutine set_real64(this, value, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL64
+         implicit none
+         class(BaseNode), target, intent(inout) :: this
+         real(kind=REAL64), intent(in) :: value
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_real64
+
+      module subroutine set_logical_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         implicit none
+         class(BaseNode), target, intent(inout) :: this
+         logical, intent(in) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_logical_1d
+
+      module subroutine set_integer32_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT32
+         implicit none
+         class(BaseNode), target, intent(inout) :: this
+         integer(kind=INT32), intent(in) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_integer32_1d
+
+      module subroutine set_integer64_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: INT64
+         implicit none
+         class(BaseNode), target, intent(inout) :: this
+         integer(kind=INT64), intent(in) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_integer64_1d
+
+      module subroutine set_real32_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL32
+         implicit none
+         class(BaseNode), target, intent(inout) :: this
+         real(kind=REAL32), intent(in) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_real32_1d
+
+      module subroutine set_real64_1d(this, values, SELECTORS, unusable, err_msg, rc)
+         use fy_KeywordEnforcer
+         use, intrinsic :: iso_fortran_env, only: REAL64
+         implicit none
+         class(BaseNode), target, intent(inout) :: this
+         real(kind=REAL64), intent(in) :: values(:)
+         class(*), optional, intent(in) :: SELECTORS
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end subroutine set_real64_1d
+
       module subroutine set_node(this, node, SELECTORS, unusable, err_msg, rc)
          use fy_KeywordEnforcer
          class(BaseNode), target, intent(inout) :: this
-         class(AbstractNode), intent(in) :: node
+         class(YAML_Node), intent(in) :: node
          class(*), optional, intent(in) :: SELECTORS
          class(KeywordEnforcer), optional, intent(in) :: unusable
          STRING_DUMMY, optional, intent(inout) :: err_msg
@@ -202,7 +336,7 @@ contains
 
 
    function of_multi_selector(this, SELECTORS) result(ptr)
-      class(AbstractNode), pointer :: ptr
+      class(YAML_Node), pointer :: ptr
       class(BaseNode), target, intent(in) :: this
       class(*), optional, intent(in) :: SELECTORS
       ptr => this%at(SELECTORS)

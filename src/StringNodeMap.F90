@@ -1,8 +1,8 @@
 module fy_StringNodeMap
-   use fy_AbstractNode
+   use fy_YAML_Node
 
 #define Key __CHARACTER_DEFERRED
-#define T AbstractNode
+#define T YAML_Node
 #define T_polymorphic
 
 #define Map StringNodeMap

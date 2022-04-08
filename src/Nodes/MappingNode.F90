@@ -1,18 +1,22 @@
 #include "error_handling.h"
 #include "string_handling.h"
 module fy_MappingNode
-   use fy_AbstractNode
+   use fy_YAML_Node
    use fy_BaseNode
    use fy_Mapping
    use fy_ErrorCodes
    use fy_ErrorHandling
    use fy_keywordEnforcer
+   use, intrinsic :: iso_fortran_env, only: INT32, INT64
+   use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
    private
 
    public :: MappingNode
    public :: to_mapping
    public :: clone
+   public :: MappingIterator
+   public :: MappingNodeIterator
 
    type, extends(BaseNode) :: MappingNode
       ! TODO undo private debugging
@@ -24,17 +28,40 @@ module fy_MappingNode
       procedure, pass(this) :: assign_to_mapping
       procedure :: less_than
       procedure :: write_node_formatted
-      final :: clear
+      final :: clear_final
+
+      procedure :: clear
+
+      procedure :: begin => begin_mapping
+      procedure :: end   => end_mapping
+
    end type MappingNode
 
-   type(MappingNode) :: mmm
+   type, extends(NodeIterator) :: MappingNodeIterator
+      private
+      type(MappingIterator) :: map_iter
+   contains
+      procedure :: is_valid => true_
+      procedure :: is_sequence_iterator => false_
+      procedure :: is_mapping_iterator => true_
+
+      procedure :: next => next_mapping
+
+      procedure :: equal_to
+      procedure :: not_equal_to
+      
+      procedure :: at
+      procedure :: first
+      procedure :: second
+
+   end type MappingNodeIterator
 
    interface
       module function less_than(a,b)
          implicit none
          logical :: less_than
          class(MappingNode), intent(in) :: a
-         class(AbstractNode), intent(in) :: b
+         class(YAML_Node), intent(in) :: b
       end function less_than
    end interface
 
@@ -55,14 +82,32 @@ module fy_MappingNode
    end interface clone
 
    interface
+      ! Node methods
       recursive module subroutine clone_mapping_node(from, to)
          type(MappingNode), target, intent(in) :: from
-         class(AbstractNode), target, intent(out) :: to
+         class(YAML_Node), target, intent(out) :: to
       end subroutine clone_mapping_node
       recursive module subroutine clone_mapping(from, to)
          type(Mapping), target, intent(in) :: from
          type(Mapping), target, intent(out) :: to
       end subroutine clone_mapping
+
+      ! Iterator methods
+      module function first(this, unusable, err_msg, rc) result(ptr)
+         class(YAML_Node), pointer :: ptr
+         class(MappingNodeIterator), intent(in) :: this
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end function first
+
+      module function second(this, unusable, err_msg, rc) result(ptr)
+         class(YAML_Node), pointer :: ptr
+         class(MappingNodeIterator), intent(in) :: this
+         class(KeywordEnforcer), optional, intent(in) :: unusable
+         STRING_DUMMY, optional, intent(inout) :: err_msg
+         integer, optional, intent(out) :: rc
+      end function second
    end interface
 
 
@@ -83,7 +128,10 @@ contains
       type(Mapping), intent(in) :: m
       type(MappingNode) :: node
 
-      node%value = m
+      ! Direct assignment is legal, but some compilers show signs of
+      ! corrupting memory on deep, nested semi-recursive data
+      ! structures.
+      call clone(m, node%value)
 
    end function new_MappingNode
 
@@ -98,7 +146,7 @@ contains
 
    function to_mapping(this, unusable, err_msg, rc) result(ptr)
       type(Mapping), pointer :: ptr
-      class(AbstractNode), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
@@ -126,7 +174,7 @@ contains
       type(MappingIterator) :: iter
       integer :: depth
       character(32) :: fmt
-      class(AbstractNode), pointer :: key, value
+      class(YAML_Node), pointer :: key, value
 
       iostat = 0
       write(unit,'("{")', iostat=iostat)
@@ -164,8 +212,102 @@ contains
    end function size
 
 
-   recursive subroutine clear(this)
+!!$   recursive subroutine clear(this)
+!!$      type(MappingNode), intent(inout) :: this
+!!$      call this%value%clear()
+!!$   end subroutine clear
+
+   
+   recursive subroutine clear_final(this)
       type(MappingNode), intent(inout) :: this
+      call this%clear()
+   end subroutine clear_final
+
+   recursive subroutine clear(this)
+      class(MappingNode), intent(inout) :: this
+
+      type(MappingIterator) :: iter, t_iter
+      class(YAML_Node), pointer :: key, value
+
       call this%value%clear()
+
    end subroutine clear
+
+
+   function begin_mapping(this, unusable, rc) result(iter)
+      class(NodeIterator), allocatable :: iter
+      class(MappingNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+
+      iter = MappingNodeIterator(this%value%begin())
+      
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end function begin_mapping
+
+   function end_mapping(this, unusable, rc) result(iter)
+      class(NodeIterator), allocatable :: iter
+      class(MappingNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+
+      iter = MappingNodeIterator(this%value%end())
+
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end function end_mapping
+   
+   logical function false_(this)
+      class(MappingNodeIterator), intent(in) :: this
+      false_ = .false.
+      __UNUSED_DUMMY__(this)
+   end function false_
+
+   logical function true_(this)
+      class(MappingNodeIterator), intent(in) :: this
+      true_ = .true.
+      __UNUSED_DUMMY__(this)
+   end function true_
+
+   subroutine next_mapping(this)
+      class(MappingNodeIterator), intent(inout) :: this
+
+      call this%map_iter%next()
+   end subroutine next_mapping
+
+   function at(this, unusable, err_msg, rc) result(ptr)
+      class(YAML_Node), pointer :: ptr
+      class(MappingNodeIterator), intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      class(YAML_Node), pointer :: node_ptr
+
+      ptr => null()
+      __FAIL__(YAFYAML_INVALID_ITERATOR)
+
+      __UNUSED_DUMMY__(this)
+      __UNUSED_DUMMY__(unusable)
+   end function at
+
+   logical function equal_to(a,b)
+      class(MappingNodeIterator), intent(in) :: a
+      class(NodeIterator), intent(in) :: b
+
+      select type (b)
+      type is (MappingNodeIterator)
+         equal_to = a%map_iter == b%map_iter
+      class default
+         equal_to = .false.
+      end select
+   end function equal_to
+
+   logical function not_equal_to(a,b)
+      class(MappingNodeIterator), intent(in) :: a
+      class(NodeIterator), intent(in) :: b
+      not_equal_to = .not. (a == b)
+   end function not_equal_to
+
 end module fy_MappingNode

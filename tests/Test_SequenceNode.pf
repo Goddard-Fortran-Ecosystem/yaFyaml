@@ -10,7 +10,7 @@ contains
 
    @test
    subroutine test_is_sequence()
-      class(AbstractNode), target, allocatable :: node
+      class(YAML_Node), target, allocatable :: node
       type(SequenceNode), target :: s_node
       logical :: flag
 
@@ -28,7 +28,7 @@ contains
 
    @test
    subroutine test_casting_succeed()
-      class(AbstractNode), target, allocatable :: node
+      class(YAML_Node), target, allocatable :: node
       
       type(Sequence), pointer :: s_ptr
       character(:), allocatable :: err_msg

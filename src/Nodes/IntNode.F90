@@ -1,12 +1,14 @@
 #include "error_handling.h"
 #include "string_handling.h"
 module fy_IntNode
-   use, intrinsic :: iso_fortran_env, only: INT32, INT64
-   use fy_AbstractNode
+   use fy_YAML_Node
    use fy_BaseNode
    use fy_ErrorCodes
    use fy_ErrorHandling
    use fy_keywordEnforcer
+   use fy_NullIterator
+   use, intrinsic :: iso_fortran_env, only: INT32, INT64
+   use, intrinsic :: iso_fortran_env, only: REAL32, REAL64
    implicit none
    private
 
@@ -19,10 +21,13 @@ module fy_IntNode
    contains
       procedure, nopass :: is_int
       procedure, nopass :: is_scalar
-      procedure, pass(this) :: assign_to_integer32
-      procedure, pass(this) :: assign_to_integer64
       procedure :: less_than
       procedure :: write_node_formatted
+
+      procedure :: clear
+
+      procedure :: begin
+      procedure :: end
    end type IntNode
 
    interface
@@ -30,7 +35,7 @@ module fy_IntNode
          implicit none
          logical :: less_than
          class(IntNode), intent(in) :: a
-         class(AbstractNode), intent(in) :: b
+         class(YAML_Node), intent(in) :: b
       end function less_than
    end interface
 
@@ -61,31 +66,10 @@ contains
       node%value = i64
    end function new_IntNode_i64
 
-   subroutine assign_to_integer32(i32, this)
-      integer(kind=INT32), intent(inout) :: i32
-      class(IntNode), intent(in) :: this
-
-      if (abs(this%value) <= huge(1_INT32)) then
-         i32 = this%value
-      else
-         ! unchanged
-         i32 = -huge(1_INT32)
-      end if
-   end subroutine assign_to_integer32
-      
-
-   subroutine assign_to_integer64(i64, this)
-      integer(kind=INT64), intent(inout) :: i64
-      class(IntNode), intent(in) :: this
-
-      i64 = this%value
-
-   end subroutine assign_to_integer64
-
 
    function to_int(this, unusable, err_msg, rc) result(ptr)
       integer(kind=INT64), pointer :: ptr
-      class(AbstractNode), target, intent(in) :: this
+      class(YAML_Node), target, intent(in) :: this
       class(KeywordEnforcer), optional, intent(in) :: unusable
       STRING_DUMMY, optional, intent(inout) :: err_msg
       integer, optional, intent(out) :: rc
@@ -113,4 +97,32 @@ contains
       
    end subroutine write_node_formatted
 
+   subroutine clear(this)
+      class(IntNode), intent(inout) :: this
+      __UNUSED_DUMMY__(this)
+   end subroutine clear
+
+   function begin(this, unusable, rc) result(iter)
+      class(NodeIterator), allocatable :: iter
+      class(IntNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+
+      iter = NullIterator()
+      
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end function begin
+
+   function end(this, unusable, rc) result(iter)
+      class(NodeIterator), allocatable :: iter
+      class(IntNode), target, intent(in) :: this
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+
+      iter = NullIterator()
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end function end
+   
 end module fy_IntNode

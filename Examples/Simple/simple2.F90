@@ -1,31 +1,31 @@
-PROGRAM Simple2
+program Simple2
 
-   USE yaFyaml
-   USE gFTL_IntegerVector
-   USE gftl_StringIntegerMap
+   use yaFyaml
+   use gFTL_IntegerVector
+   use gftl_StringIntegerMap
+   
+   implicit none
 
-   IMPLICIT NONE
-
-   TYPE(Parser)              :: p
-   TYPE(Configuration)       :: config
+   type(Parser)           :: p
+   class(AbstractNode), allocatable :: node
    character(:), allocatable :: name
-
+   
    ! Define the parser object and load the file
    p = Parser('core')
-   config = p%load(FileStream('simple2.yaml'))
+   node = p%load(FileStream('simple2.yaml'))
 
    !--------------------------------------------------------
    ! Test reading a string
    !--------------------------------------------------------
 
    ! Deallocate if allocated for safety's sake
-   IF ( ALLOCATED( name ) ) DEALLOCATE( name )
+   if ( allocated( name ) ) deallocate( name )
 
    ! Read the name from the YAML file
-   name = config%at( 'name' )
+   name = node%at( 'name' )
    print*, '### name is: ', name
 
    ! Deallocate again
-   IF ( ALLOCATED( name ) ) DEALLOCATE( name )
+   if ( allocated( name ) ) deallocate( name )
 
-END PROGRAM Simple2
+end program Simple2

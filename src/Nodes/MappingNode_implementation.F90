@@ -1,5 +1,8 @@
+#include "error_handling.h"
+#include "string_handling.h"
+
 submodule (fy_MappingNode) MappingNode_implementation
-   use fy_AbstractNode
+   use fy_YAML_Node
    use fy_ErrorCodes
    implicit none
 
@@ -12,7 +15,7 @@ contains
    module function less_than(a, b)
       logical :: less_than
       class(MappingNode), intent(in) :: a
-      class(AbstractNode), intent(in) :: b
+      class(YAML_Node), intent(in) :: b
 
       type(MappingIterator) :: iter_a, iter_b
 
@@ -76,7 +79,7 @@ contains
          class(MappingNode), target, intent(in) :: second
          logical, intent(in) :: swap
          
-         class(AbstractNode), pointer :: key_1, value_2
+         class(YAML_Node), pointer :: key_1, value_2
          type(MappingIterator) :: iter_1
          integer :: n1, n2, i
          integer :: status
@@ -142,12 +145,12 @@ contains
       use fy_SequenceNode
       use fy_Sequence
       type(MappingNode), target, intent(in) :: from
-      class(AbstractNode), target, intent(out) :: to
+      class(YAML_Node), target, intent(out) :: to
       
       type(Mapping), pointer :: m_a, m_b
       type(MappingIterator) :: iter
-      class(AbstractNode), pointer :: key, val
-      class(AbstractNode), pointer :: subobject
+      class(YAML_Node), pointer :: key, val
+      class(YAML_Node), pointer :: subobject
 
       m_a => to_mapping(from)
       select type (to)
@@ -167,8 +170,8 @@ contains
       type(Mapping), target, intent(out) :: to
 
       type(MappingIterator) :: iter
-      class(AbstractNode), pointer :: key, val
-      class(AbstractNode), pointer :: subobject
+      class(YAML_Node), pointer :: key, val
+      class(YAML_Node), pointer :: subobject
 
       associate (beg => from%begin(), e => from%end())                                                                                      
         iter = beg                                                                                                                    
@@ -183,20 +186,50 @@ contains
               type is (SequenceNode) ! guaranteed                                                                                     
                  call clone(q, qq)                                                                                                    
               end select                                                                                                              
-           type is (MappingNode)                                                                                                      
-              call to%insert(key, MappingNode())                                                                                       
-              subobject => to%of(key)                                                                                                  
-              select type (qq => subobject)                                                                                           
-              type is (MappingNode) ! guaranteed                                                                                      
-                 call clone(q, qq)                                                                                                    
-              end select                                                                                                              
-           class default ! scalar                                                                                                     
-              call to%insert(key, val)                                                                                                 
-           end select                                                                                                                 
-           call iter%next()                                                                                                           
-        end do                                                                                                                        
-      end associate                                                                                                                   
+           type is (MappingNode)
+              call to%insert(key, MappingNode())
+              subobject => to%of(key)
+              select type (qq => subobject)
+              type is (MappingNode) ! guaranteed
+                 call clone(q, qq)              
+              end select
+           class default ! scalar
+              call to%insert(key, val)
+           end select
+           call iter%next()
+        end do
+      end associate
    end subroutine clone_mapping
+
+   module function first(this, unusable, err_msg, rc) result(ptr)
+      use fy_keywordenforcer, only: KE => KeywordEnforcer
+      class(YAML_Node), pointer :: ptr
+      class(MappingNodeIterator), intent(in) :: this
+      class(KE), optional, intent(in) :: unusable
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      integer :: status
+
+      ptr => this%map_iter%first()
+
+      __RETURN__(YAFYAML_SUCCESS)
+   end function first
+
+   module function second(this, unusable, err_msg, rc) result(ptr)
+      use fy_keywordenforcer, only: KE => KeywordEnforcer
+      class(YAML_Node), pointer :: ptr
+      class(MappingNodeIterator), intent(in) :: this
+      class(KE), optional, intent(in) :: unusable
+      STRING_DUMMY, optional, intent(inout) :: err_msg
+      integer, optional, intent(out) :: rc
+
+      integer :: status
+
+      ptr => this%map_iter%second()
+
+      __RETURN__(YAFYAML_SUCCESS)
+   end function second
 
 
 

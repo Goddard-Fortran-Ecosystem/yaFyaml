@@ -1,5 +1,5 @@
 submodule (fy_BoolNode) BoolNode_implementation
-   use fy_AbstractNode
+   use fy_YAML_Node
    implicit none
 
 
@@ -12,7 +12,7 @@ contains
    module function less_than(a, b)
       logical :: less_than
       class(BoolNode), intent(in) :: a
-      class(AbstractNode), intent(in) :: b
+      class(YAML_Node), intent(in) :: b
 
       select type (b)
       type is (BoolNode)

@@ -56,6 +56,7 @@ module fy_Lexer
    contains
      ! public access
      procedure :: get_token
+     procedure :: skip_token
 
      procedure :: pop_token
      procedure :: need_more_tokens
@@ -162,13 +163,14 @@ contains
 
     logical :: need_more
     integer :: status
-    
+
     do
        need_more = this%need_more_tokens(rc=status)
        if (status /= YAFYAML_SUCCESS) then
           token = NullToken()
           __RETURN__(status)
        end if
+
        if (need_more) then
           call this%lex_tokens(rc=status)
           if (status /= YAFYAML_SUCCESS) token = NullToken()
@@ -184,10 +186,22 @@ contains
     else
        token = NullToken()
     end if
-
     __RETURN__(YAFYAML_SUCCESS)
-
+     __UNUSED_DUMMY__(unusable)
   end function get_token
+
+  subroutine skip_token(this, unusable, rc)
+     class(Lexer), intent(inout) :: this
+     class(KeywordEnforcer), optional, intent(in) :: unusable
+     integer, optional, intent(out) :: rc
+
+     integer :: status
+     class(AbstractToken), allocatable :: token
+
+     token = this%get_token(__RC__)
+     __RETURN__(YAFYAML_SUCCESS)
+     __UNUSED_DUMMY__(unusable)
+  end subroutine skip_token
 
   logical function need_more_tokens(this, unusable, rc)
     class(Lexer), intent(inout) :: this
@@ -197,7 +211,6 @@ contains
     integer :: status
 
     rc = YAFYAML_SUCCESS ! unless
-
     if (this%reached_end_of_stream) then
        need_more_tokens = .false.
     elseif (this%processed_tokens%size() == 0) then
@@ -229,14 +242,14 @@ contains
     integer, optional, intent(out) :: rc
 
     type(SimpleKey), pointer :: possible_key
-    type (IntegerSimpleKeyMapIterator) :: iter
+    type (IntegerSimpleKeyMapIterator) :: iter, iter2
 
     iter = this%possible_simple_keys%begin()
     do while (iter /= this%possible_simple_keys%end())
-       possible_key => iter%value()
+       possible_key => iter%second()
        if ((possible_key%line /= this%line()) .or. (this%index() - possible_key%index > 1024)) then
           __ASSERT__(.not. possible_key%required, YAFYAML_MISSING_COLON_WHILE_SCANNING_A_SIMPLE_KEY)
-          call this%possible_simple_keys%erase(iter)
+          iter = this%possible_simple_keys%erase(iter)
        end if
        call iter%next()
     end do
@@ -270,7 +283,7 @@ contains
     min_token_number = huge(1)
     iter = this%possible_simple_keys%begin()
     do while (iter /= this%possible_simple_keys%end())
-       possible_key => iter%value()
+       possible_key => iter%second()
        if (possible_key%token_number < min_token_number) then
           min_token_number = possible_key%token_number
        end if
@@ -312,9 +325,11 @@ contains
     class(AbstractToken), allocatable :: token
     class(Lexer), intent(inout) :: this
 
+    type(TokenVectorIterator) :: iter
+    
     associate (tokens => this%processed_tokens)
       token = tokens%at(1)
-      call tokens%erase(tokens%begin())
+      iter = tokens%erase(tokens%begin())
     end associate
 
   end function pop_token
@@ -617,19 +632,22 @@ contains
     integer, optional, intent(out) :: rc
     
 
-    type(IntegerSimpleKeyMapIterator) :: iter
+    type(IntegerSimpleKeyMapIterator) :: iter, iter2
+    type(TokenVectorIterator) :: t_iter
     type(SimpleKey) :: key
 
 
     if (this%possible_simple_keys%count(this%current_flow_level) > 0) then
        iter = this%possible_simple_keys%find(this%current_flow_level)
-       key = iter%value()
-       call this%possible_simple_keys%erase(iter)
-       call this%processed_tokens%insert(key%token_number-this%num_tokens_given+1, KeyToken())
+       key = iter%second()
+       iter2 = this%possible_simple_keys%erase(iter)
+       t_iter = this%processed_tokens%begin() + key%token_number-this%num_tokens_given
+       t_iter = this%processed_tokens%insert(t_iter, KeyToken())
        
        if (this%current_flow_level == 0) then
           if (this%add_indentation(key%column)) then
-             call this%processed_tokens%insert(key%token_number-this%num_tokens_given+1, BlockMappingStartToken())
+             t_iter = this%processed_tokens%begin() + key%token_number-this%num_tokens_given
+             t_iter = this%processed_tokens%insert(t_iter, BlockMappingStartToken())
           end if
        end if
        ! simple key cannot be followed immediately by another simple key
@@ -945,6 +963,7 @@ contains
        if ((style /= '"') .and. (ch == "'") .and. (this%peek(offset=1) == "'")) then
           text = text // "'"
           call this%forward(offset=2)
+          
        elseif ((style == '"' .and. (ch == "'")) .or. (style == "'" .and. scan(ch,'"'//BACKSLASH) > 0)) then
           text = text // ch
           call this%forward()
@@ -1001,11 +1020,12 @@ contains
   logical function is_key(this)
     class(Lexer), intent(inout) :: this
 
-    if (this%current_flow_level >0) then
-       is_key = .true.
-    else
+    if (this%current_flow_level == 0) then
        is_key = (scan(this%peek(offset=1), WHITESPACE_CHARS) > 0)
+       return
     end if
+
+    is_key = .true.
     
   end function is_key
 
@@ -1086,8 +1106,6 @@ contains
      class(AbstractToken), allocatable :: token
      integer :: status
 
-     token = NullToken() ! unless
-     
      ! Starting a simple key?
      call this%save_simple_key()
 
@@ -1095,8 +1113,8 @@ contains
      this%allow_simple_key = .false.
 
      ! Add anchor
-     deallocate(token)
      token = this%scan_anchor_or_alias('alias',__RC__)
+     
      call this%processed_tokens%push_back(token)
 
      __RETURN__(YAFYAML_SUCCESS)
@@ -1119,33 +1137,26 @@ contains
      ! Add anchor
      token = this%scan_anchor_or_alias('anchor', __RC__)
      call this%processed_tokens%push_back(token)
-     
+
      __RETURN__(YAFYAML_SUCCESS)
   end subroutine process_anchor
 
 
-  function scan_anchor_or_alias(this, type, unusable, rc) result(token)
+  function scan_anchor_or_alias(this, token_type, unusable, rc) result(token)
      class(AbstractToken), allocatable :: token
      class(Lexer), intent(inout) :: this
-     character(*), intent(in) :: type
+     character(*), intent(in) :: token_type
      class(KeywordEnforcer), optional, intent(in) :: unusable
      integer, optional, intent(out) :: rc
 
      character(1) :: ch
-     character(:), allocatable :: name
      character(:), allocatable :: value
      integer :: length
      integer :: status
 
-     token = NullToken() ! unless ...
      ! Following Python YAML: aliases must be numbers and ASCII
      ! characters.
      ch = this%peek()
-     if (ch == '*') then
-        name = 'alias'
-     else
-        name = 'anchor'
-     end if
 
      call this%forward()
      length = 0
@@ -1160,24 +1171,22 @@ contains
 
      value = this%prefix(n=length)
      call this%forward(offset=length)
-     
-     ch = this%peek()
 
+     ch = this%peek()
      if (scan(ch, C_NULL_CHAR // ' ' // TAB // CR // NL // '?:,]{%@') == 0) then
+        token = NullToken()
         __FAIL__(YAFYAML_UNEXPECTED_CHARACTER)
      end if
 
-     select case (type)
+     select case (token_type)
      case ('anchor')
-        deallocate(token)
         token = AnchorToken(value)
      case ('alias')
-        deallocate(token)
         token = AliasToken(value)
      case default
+        token = NullToken() ! unless ...
         __FAIL__(YAFYAML_NONSPECIFIC_ERROR)
      end select
-
      __RETURN__(YAFYAML_SUCCESS)
   end function scan_anchor_or_alias
 

@@ -5,8 +5,8 @@ program main
    implicit none
 
    type(Parser) :: p
-   type(Configuration) :: config
-   type(Configuration) :: subconfig
+   class(AbstractNode), allocatable :: node
+   class(AbstractNode), pointer :: subnode
 
    real :: x
    character(:), allocatable :: name
@@ -22,9 +22,9 @@ program main
 
    p = Parser('core')
    ! TODO should a return code
-   config = p%load('simple.yaml')
+   node = p%load('simple.yaml')
 
-   x = config%at('x')
+   x = node%at('x')
 
    if (x == 1.234) then
       print*,'success',__LINE__
@@ -35,7 +35,7 @@ program main
    ! TODO:  what about Fred?
 
    flag = .false.
-   flag = config%at('flag')
+   flag = node%at('flag')
 
    if (flag) then
       print*,'success',__LINE__
@@ -43,7 +43,7 @@ program main
       print*,'failure;  expected .true.'
    end if
 
-   call config%get(sequence_a, 'sequence_a')
+   call node%get(sequence_a, 'sequence_a')
 
    if (all (sequence_a == [1,2,3,4])) then
       print*,'success', __LINE__
@@ -51,7 +51,7 @@ program main
       print*,'failure in handling flow sequence;  expected .true.'
    end if
 
-   call config%get(sequence_b, 'sequence_b')
+   call node%get(sequence_b, 'sequence_b')
 
    if (all (sequence_b == [1,2,3,4])) then
       print*,'success', __LINE__
@@ -60,8 +60,8 @@ program main
    end if
 
    ! Flow mapping
-   v1 = config%at('mapping_a', 'v1')
-   v2 = config%at('mapping_a', 'v2')
+   v1 = node%at('mapping_a', 'v1')
+   v2 = node%at('mapping_a', 'v2')
 
    if (v1 == 7 .and. v2 == 8) then
       print*,'success', __LINE__
@@ -74,8 +74,8 @@ program main
    v1 = -1
    v2 = -1
    ! get new values
-   v1 = config%at('mapping_b', 'v1')
-   v2 = config%at('mapping_b', 'v2')
+   v1 = node%at('mapping_b', 'v1')
+   v2 = node%at('mapping_b', 'v2')
 
    if (v1 == 7 .and. v2 == 8) then
       print*,'success', __LINE__
@@ -84,9 +84,9 @@ program main
    end if
 
    v1 = -1
-   call config%get(v1, 'mapping_b', 'v1', rc=status)
+   call node%get(v1, 'mapping_b', 'v1', rc=status)
    v2 = -1
-   call config%get(v2, 'mapping_b', 'v2', rc=status)
+   call node%get(v2, 'mapping_b', 'v2', rc=status)
    if (v1 == 7 .and. v2 == 8 .and. status == YAFYAML_SUCCESS) then
       print*,'success', __LINE__
    else
@@ -95,15 +95,15 @@ program main
 
    ! Handle missing values
    v3 = -1
-   if (config%has('mapping_b','v3')) then
-      call config%get(v3, 'mapping_b', 'v3', rc=status)
+   if (node%has('mapping_b','v3')) then
+      call node%get(v3, 'mapping_b', 'v3', rc=status)
    else
       print*,'expected failure "v3" not found'
    end if
 
 
    ! error if wrong type:
-   call config%get(flag, 'mapping_b', 'v2', rc=status)
+   call node%get(flag, 'mapping_b', 'v2', rc=status)
 
    if (status == YAFYAML_TYPE_MISMATCH) then
       print*,'expected failure (type mismatch)'

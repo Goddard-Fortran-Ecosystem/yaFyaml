@@ -10,7 +10,7 @@ contains
 
    @test
    subroutine test_is_mapping()
-      class(AbstractNode), target, allocatable :: node
+      class(YAML_Node), target, allocatable :: node
       logical :: flag
 
       allocate(node,source=MappingNode())
@@ -24,7 +24,7 @@ contains
 
    @test
    subroutine test_casting_succeed()
-      class(AbstractNode), target, allocatable :: node
+      class(YAML_Node), target, allocatable :: node
       
       type(Mapping), pointer :: m_ptr
       character(:), allocatable :: err_msg
@@ -66,7 +66,7 @@ contains
    @test
    ! map is not less to itself
    subroutine test_less_than_trivial()
-      class(AbstractNode), allocatable, target :: m_node
+      class(YAML_Node), allocatable, target :: m_node
       type(Mapping), pointer :: m
 
       m_node = MappingNode()
@@ -190,7 +190,7 @@ contains
    ! out of order but the values are consistently less.
    @test
    subroutine test_different_order()
-      class(AbstractNode), allocatable :: n1, n2
+      class(YAML_Node), allocatable :: n1, n2
       type(Mapping), pointer :: m1, m2
       logical :: less
 
@@ -224,7 +224,7 @@ contains
    ! This test verifies this logic.
    @test
    subroutine test_less_than_paradox()
-      class(AbstractNode), allocatable :: n1, n2
+      class(YAML_Node), allocatable :: n1, n2
       type(Mapping), pointer :: m1, m2
       logical :: less
       
@@ -250,7 +250,7 @@ contains
    @test
    subroutine test_get_float_not_found()
       use, intrinsic :: ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
-      class(AbstractNode), allocatable :: n
+      class(YAML_Node), allocatable :: n
       type(Mapping), pointer :: m
       real(kind=REAL32) :: x32
       real(kind=REAL64) :: x64

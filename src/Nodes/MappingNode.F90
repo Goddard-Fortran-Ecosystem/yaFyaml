@@ -16,6 +16,7 @@ module fy_MappingNode
    public :: to_mapping
    public :: clone
    public :: MappingIterator
+   public :: MappingNodeIterator
 
    type, extends(BaseNode) :: MappingNode
       ! TODO undo private debugging
@@ -40,9 +41,9 @@ module fy_MappingNode
       private
       type(MappingIterator) :: map_iter
    contains
-      procedure :: is_valid => true
-      procedure :: is_sequence_iterator => false
-      procedure :: is_mapping_iterator => true
+      procedure :: is_valid => true_
+      procedure :: is_sequence_iterator => false_
+      procedure :: is_mapping_iterator => true_
 
       procedure :: next => next_mapping
 
@@ -252,21 +253,22 @@ contains
       integer, optional, intent(out) :: rc
 
       iter = MappingNodeIterator(this%value%end())
+
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end function end_mapping
    
-   logical function false(this)
+   logical function false_(this)
       class(MappingNodeIterator), intent(in) :: this
-      false = .false.
+      false_ = .false.
       __UNUSED_DUMMY__(this)
-   end function false
+   end function false_
 
-   logical function true(this)
+   logical function true_(this)
       class(MappingNodeIterator), intent(in) :: this
-      true = .true.
+      true_ = .true.
       __UNUSED_DUMMY__(this)
-   end function true
+   end function true_
 
    subroutine next_mapping(this)
       class(MappingNodeIterator), intent(inout) :: this
@@ -305,7 +307,6 @@ contains
    logical function not_equal_to(a,b)
       class(MappingNodeIterator), intent(in) :: a
       class(NodeIterator), intent(in) :: b
-
       not_equal_to = .not. (a == b)
    end function not_equal_to
 

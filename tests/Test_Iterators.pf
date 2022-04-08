@@ -79,19 +79,22 @@ contains
 
    end subroutine test_sequence_iter_as_bool
 
+   ! Note that this test hinges on the fact that MappingNode uses an
+   ! _ordered_ map.  Otherwise the sequence is not determined easily.
    @test
    subroutine test_mapping_iter_as_bool()
-      type(MappingNode), target :: node
+      type(MappingNode), target :: mnode
+      class(YAML_Node), allocatable :: node
       class(NodeIterator), allocatable :: iter
       logical, pointer :: flag
       character(:), pointer :: s
 
+      allocate(MappingNode :: node)
       call node%set(.true., .true.)
       call node%set(.false.,.false.)
       call node%set(.true., 'a')
 
       associate (b => node%begin(), e => node%end())
-
         iter = b ! node%of('.true.')
         flag => to_bool(iter%first())
         @assert_that(flag, is(true()))

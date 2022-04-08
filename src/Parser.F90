@@ -192,7 +192,6 @@ contains
 
       do
 
-
          token = lexr%get_token()
 
 

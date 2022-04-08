@@ -90,4 +90,25 @@ contains
       p1 = p2
    end subroutine test_copy_pair
 
+   ! Failing case from pFlogger with ifort 2021.5.0
+   @test
+   subroutine test_pflogger_reproducer4()
+      use fy_Parser
+      use fy_EscapedTextStream
+      class(YAML_Node), target, allocatable :: node
+      type(Mapping), pointer :: m
+      class(NodeIterator), allocatable :: b, e
+      type(Parser) :: p
+
+      p = Parser()
+      node = p%load(EscapedTextStream( &
+           & " B: {A: 3} \n A: 5"))
+
+      ! Note: GFortran needs the extra parens around (b /= e)
+      associate (b => node%begin(), e => node%end())
+        @assert_that((b /= e), is(true()))
+      end associate
+
+   end subroutine test_pflogger_reproducer4
+
 end module Test_ComplexNode

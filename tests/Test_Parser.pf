@@ -151,7 +151,6 @@ end subroutine test_nested_block_sequence
       p = Parser()
       node = p%load(EscapedTextStream("---\n mapping: { v1: 7, v2: 8 } \n..."))
 
-
       sub => node%at('mapping')
 
       call sub%get(v1, 'v1')
@@ -159,6 +158,11 @@ end subroutine test_nested_block_sequence
 
       call sub%get(v2, 'v2')
       @assert_that(v2, is(equal_to(8)))
+
+      ! Reproducer for related issue found in pflogger
+      associate (b => node%begin(), e => node%end())
+        @assert_that((b /= e), is(true()))
+      end associate
 
    end subroutine test_nested_mapping_block_flow
 

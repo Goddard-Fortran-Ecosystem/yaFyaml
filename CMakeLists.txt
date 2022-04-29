@@ -33,7 +33,7 @@ add_subdirectory (src)
 
 enable_testing()
 
-if (NOT TARGET (tests))
+if (NOT TARGET tests)
   add_custom_target(tests
     COMMAND ${CMAKE_CTEST_COMMAND}
     EXCLUDE_FROM_ALL)

@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added gfortran-8 and macos-11 to CI
 
+## [1.0-beta4.1] 2022-04-29
+
+### Fixed
+
+- Error in CMake check for the target "test" that prevents yaFyaml
+  from being bundled with other GFE packages.
+
 ## [1.0-beta2]
 
 ### Added

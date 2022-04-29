@@ -5,6 +5,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0-beta5.1] 2022-04-29
+
+### Fixed
+
+- Error in CMake check for the target "test" that prevents yaFyaml
+  from being bundled with other GFE packages.
+
 ## [1.0-beta5] 2022-03-08
 
 ### Added

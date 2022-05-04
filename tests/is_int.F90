@@ -15,7 +15,7 @@ program main
 contains
    
    subroutine test_is_bool()
-      class(AbstractNode), allocatable :: node
+      class(YAML_Node), allocatable :: node
       logical :: flag
 
       allocate(node,source=BoolNode(.false.))
@@ -29,7 +29,7 @@ contains
    end subroutine test_is_bool
 
    subroutine test_is_mapping()
-      class(AbstractNode), allocatable :: node
+      class(YAML_Node), allocatable :: node
       type(MappingNode), target, allocatable :: m_node
       logical :: flag
 

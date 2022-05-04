@@ -79,6 +79,9 @@ module fy_YAML_Node
 
       procedure(I_begin), deferred :: begin
       procedure(I_begin), deferred :: end
+
+      procedure (I_verify), deferred :: verify
+      procedure (I_clone), deferred :: clone
    end type YAML_Node
 
 
@@ -584,8 +587,18 @@ module fy_YAML_Node
          class(NodeIterator), intent(in) :: b
       end function I_equal
 
-   end interface
+      logical function I_verify(this) result(verify)
+         import YAML_Node
+         class(YAML_Node), target, intent(in) :: this
+      end function I_verify
 
+      subroutine I_clone(to, from)
+         import YAML_Node
+         class(YAML_Node), intent(out) :: to
+         class(YAML_Node), intent(in) :: from
+      end subroutine I_clone
+
+   end interface
 
 contains
 

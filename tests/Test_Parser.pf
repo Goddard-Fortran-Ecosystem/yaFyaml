@@ -2,6 +2,7 @@ module Test_Parser
    use funit
    use fy_Nodes
    use fy_EscapedTextStream
+   use fy_TextStream
    use fy_Parser
    implicit none
 
@@ -151,6 +152,11 @@ end subroutine test_nested_block_sequence
       p = Parser()
       node = p%load(EscapedTextStream("---\n mapping: { v1: 7, v2: 8 } \n..."))
 
+      ! Reproducer for related issue found in pflogger
+      associate (b => node%begin(), e => node%end())
+        @assert_that((b /= e), is(true()))
+      end associate
+
       sub => node%at('mapping')
 
       call sub%get(v1, 'v1')
@@ -159,10 +165,6 @@ end subroutine test_nested_block_sequence
       call sub%get(v2, 'v2')
       @assert_that(v2, is(equal_to(8)))
 
-      ! Reproducer for related issue found in pflogger
-      associate (b => node%begin(), e => node%end())
-        @assert_that((b /= e), is(true()))
-      end associate
 
    end subroutine test_nested_mapping_block_flow
 
@@ -268,6 +270,72 @@ end subroutine test_nested_block_sequence
       node = p%load(EscapedTextStream("---\n cat: [1 2] \n dog: [3, 4, [5, [6, 7], 8]] \n ..."))
 
    end subroutine test_nested_hard_1
+
+
+   @test
+   subroutine test_mapl_reproducer()
+      type(Parser) :: p
+      class(YAML_Node), target, allocatable :: node
+
+      p = Parser()
+      node = p%load(TextStream('{A: {setServices: {sharedObj: libA}}}'))
+      associate (b => node%begin(), e => node%end())
+        @assert_that((b == e), is(false()))
+      end associate
+
+   end subroutine test_mapl_reproducer
+
+   @test
+   subroutine test_pflogger_reproducer4
+      type(Parser) :: p
+      class(YAML_Node), allocatable :: node, node_copy
+      integer :: counter
+      class(NodeIterator), allocatable :: iter
+      character(:), pointer :: name
+      class(YAML_Node), pointer :: subnode, subnode_copy
+      p = Parser()
+
+      node = p%load(EscapedTextStream( &
+           & " A: {format: '---'}\n" // &
+           & " B: {format: '---', datefmt: hello }\n"))
+
+      associate (b => node%begin(), e => node%end())
+        @assert_that((b==e), is(false()))
+        iter = b
+        counter = 0
+        do while (iter /= e)
+           counter = counter + 1
+           subnode => iter%first()
+
+           name => to_string(iter%first())
+           call iter%next()
+        end do
+        @assert_that(counter, is(2))
+      end associate
+
+      node_copy = node
+      call node%set(3,'A','format')
+
+      subnode => node%of('A','format')
+      deallocate(node)
+      subnode_copy => node_copy%of('A', 'format')
+
+      associate (b => node_copy%begin(), e => node_copy%end())
+        @assert_that((b==e), is(false()))
+        iter = b
+        counter = 0
+        do while (iter /= e)
+           counter = counter + 1
+           subnode => iter%first()
+
+           name => to_string(iter%first())
+           call iter%next()
+        end do
+        @assert_that(counter, is(2))
+      end associate
+
+
+   end subroutine test_pflogger_reproducer4
 
 
 end module Test_Parser

@@ -17,7 +17,7 @@ module fy_StringNode
    public :: to_string
 
    type, extends(BaseNode) :: StringNode
-!!$      private
+      private
       character(:), allocatable :: value
    contains
       procedure, nopass :: is_string
@@ -29,6 +29,10 @@ module fy_StringNode
 
       procedure :: begin
       procedure :: end
+
+      procedure :: verify => verify_string
+      procedure :: clone
+
    end type StringNode
 
    interface
@@ -59,6 +63,7 @@ contains
       type(StringNode) :: node
       character(*), intent(in) :: str
       node%value = str
+!!$      node%id = -1
    end function new_StringNode
 
 
@@ -121,5 +126,22 @@ contains
       __UNUSED_DUMMY__(unusable)
    end function end
    
+   logical function verify_string(this) result(verify)
+      class(StringNode), target, intent(in) :: this
+      verify = .true.
+   end function verify_string
+
+   subroutine clone(to, from)
+      class(StringNode), intent(out) :: to
+      class(YAML_Node), intent(in)  :: from
+
+      select type(from)
+      type is (StringNode)
+         to%value = from%value
+      class default
+         error stop "expected string node"
+      end select
+
+   end subroutine clone
 
 end module fy_StringNode

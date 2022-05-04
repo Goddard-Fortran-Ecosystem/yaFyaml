@@ -139,7 +139,7 @@ contains
       type(BoolNode) :: node
       logical :: flag
       integer :: status
-      
+
       node = BoolNode(.true.)
       call node%get(flag, rc=status)
       @assert_that(status, is(YAFYAML_SUCCESS))

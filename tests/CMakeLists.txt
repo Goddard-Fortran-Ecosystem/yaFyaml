@@ -31,9 +31,6 @@ set_target_properties (yafyaml_tests.x PROPERTIES EXCLUDE_FROM_ALL True)
 
 add_dependencies (build-tests yafyaml_tests.x)
 
-add_executable(demo demo.F90)
-target_link_libraries(demo PRIVATE yafyaml)
-
 add_executable(is_int.x is_int.F90)
 target_link_libraries(is_int.x yafyaml)
 

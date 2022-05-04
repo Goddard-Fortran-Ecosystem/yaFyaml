@@ -1,8 +1,6 @@
 program standalone
    use funit
-   use fy_Configuration
-   use fy_EscapedTextStream
-   use fy_Parser
+   use yafyaml
    implicit none
    
    call test_single_scalar()
@@ -12,13 +10,13 @@ contains
 
    subroutine test_single_scalar()
       type(Parser) :: p
-      type(Configuration) :: cfg
+      class(YAML_Node), allocatable :: cfg
       character(:), allocatable :: scalar
 
       p = Parser()
       cfg = p%load(EscapedTextStream("--- a\n..."))
 
-      scalar = cfg
+      scalar = to_string(cfg)
 
 #ifdef __GFORTRAN__
 #else
@@ -29,8 +27,7 @@ contains
 
    subroutine test_simple_anchor()
       type(Parser) :: p
-      type(Configuration) :: cfg
-      type(Configuration) :: sub
+      class(YAML_Node), allocatable :: cfg
 
       integer :: i_a, i_b
 
@@ -42,10 +39,10 @@ contains
            & " B: *anchor \n" // &
            & "..."))
 
-      i_a = cfg%at('A', 'i')
+      i_a = to_int(cfg%at('A', 'i'))
       call assert_that(i_a, is(equal_to(1)))
       
-      i_b = cfg%at('B', 'i')
+      i_b = to_int(cfg%at('B', 'i'))
       call assert_that(i_b, is(equal_to(1)))
 
    end subroutine test_simple_anchor

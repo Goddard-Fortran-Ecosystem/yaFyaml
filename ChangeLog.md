@@ -5,6 +5,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] 2022-05-08
+
+### Fixed
+
+- Found various/improved workarounds for various compiler issues.   Most problems were with GFortran (11.2).  
+  1. Redemontrated that intrinsic FINAL does not work for map containers - needs user code to add RECURSIVE.
+  2. Improved workaround for Parser.  GFortran recursion was doing very weird things with local polymorphic allocatable variables.  Previous workaround was a global stack, but this iteration found that a simple wrapper type suffices to workaround the issue.   Various other compiler workarounds from earlier releases could then be removed - mostly this was unnecessary explicit deep-copies in containers (except when definitely required by Fortran (e.g., Set containers).
+
 ## [1.0-beta8] 2022-04-08
 
 

@@ -14,7 +14,7 @@ module fy_MappingNode
 
    public :: MappingNode
    public :: to_mapping
-   public :: clone
+   public :: clone_mapping
    public :: MappingIterator
    public :: MappingNodeIterator
 
@@ -28,12 +28,17 @@ module fy_MappingNode
       procedure, pass(this) :: assign_to_mapping
       procedure :: less_than
       procedure :: write_node_formatted
+#ifdef __GFORTRAN__
       final :: clear_final
+#endif
 
       procedure :: clear
 
       procedure :: begin => begin_mapping
       procedure :: end   => end_mapping
+
+      procedure :: verify => verify_mapping
+      procedure :: clone
 
    end type MappingNode
 
@@ -57,7 +62,7 @@ module fy_MappingNode
    end type MappingNodeIterator
 
    interface
-      module function less_than(a,b)
+      recursive module function less_than(a,b)
          implicit none
          logical :: less_than
          class(MappingNode), intent(in) :: a
@@ -76,20 +81,11 @@ module fy_MappingNode
 
    ! Workaround for compilers that break during deep copies
                                                                                                                       
-   interface clone
-      module procedure clone_mapping_node
-      module procedure clone_mapping
-   end interface clone
-
    interface
       ! Node methods
-      recursive module subroutine clone_mapping_node(from, to)
-         type(MappingNode), target, intent(in) :: from
-         class(YAML_Node), target, intent(out) :: to
-      end subroutine clone_mapping_node
-      recursive module subroutine clone_mapping(from, to)
-         type(Mapping), target, intent(in) :: from
+      recursive module subroutine clone_mapping(to, from)
          type(Mapping), target, intent(out) :: to
+         type(Mapping), target, intent(in) :: from
       end subroutine clone_mapping
 
       ! Iterator methods
@@ -131,7 +127,7 @@ contains
       ! Direct assignment is legal, but some compilers show signs of
       ! corrupting memory on deep, nested semi-recursive data
       ! structures.
-      call clone(m, node%value)
+      call clone_mapping(to=node%value, from=m)
 
    end function new_MappingNode
 
@@ -172,37 +168,50 @@ contains
       character(*), intent(inout) :: iomsg
 
       type(MappingIterator) :: iter
-      integer :: depth
+      integer, save :: depth = 0
       character(32) :: fmt
       class(YAML_Node), pointer :: key, value
+      integer :: counter
 
+      depth = depth + 1
+      write(10,*) depth, __FILE__,__LINE__
       iostat = 0
       write(unit,'("{")', iostat=iostat)
       if (iostat /= 0) return
       
       associate (m => this%value)
-        iter = m%begin()
-        do while (iter /= m%end())
-
-           key => iter%first()
-           call key%write_node_formatted(unit, iotype, v_list, iostat, iomsg)
-           if (iostat /= 0) return
-           write(unit,'(": ")', iostat=iostat)
-           if (iostat /= 0) return
-
-           value => iter%second()
-           call value%write_node_formatted(unit, iotype, v_list, iostat, iomsg)
-           if (iostat /= 0) return
-
-           call iter%next()
-           if (iter /= m%end()) then
-              write(unit,'(", ")', iostat=iostat)
-              if (iostat /= 0) return
-           end if
-        end do
+        associate ( b => m%begin(), e => m%end() )
+          iter = b
+          counter = 0
+          write(10,*) depth, counter, __FILE__,__LINE__
+          do while (iter /= e)
+             counter = counter + 1
+             write(10,*) depth, counter, __FILE__,__LINE__
+             key => iter%first()
+             block
+               use fy_stringNode
+               write(10,*) depth, counter, __FILE__,__LINE__, to_string(key)
+             end block
+             call key%write_node_formatted(unit, iotype, v_list, iostat, iomsg)
+             if (iostat /= 0) return
+             write(unit,'(": ")', iostat=iostat)
+             if (iostat /= 0) return
+             
+             value => iter%second()
+             call value%write_node_formatted(unit, iotype, v_list, iostat, iomsg)
+             if (iostat /= 0) return
+             
+             call iter%next()
+             if (iter /= m%end()) then
+                write(unit,'(", ")', iostat=iostat)
+                if (iostat /= 0) return
+             end if
+          end do
+        end associate
       end associate
       write(unit,'(" }")', iostat=iostat)
       if (iostat /= 0) return
+      depth = depth - 1
    end subroutine write_node_formatted
 
 
@@ -210,12 +219,6 @@ contains
       class(MappingNode), intent(in) :: this
       size = this%value%size()
    end function size
-
-
-!!$   recursive subroutine clear(this)
-!!$      type(MappingNode), intent(inout) :: this
-!!$      call this%value%clear()
-!!$   end subroutine clear
 
    
    recursive subroutine clear_final(this)
@@ -225,9 +228,6 @@ contains
 
    recursive subroutine clear(this)
       class(MappingNode), intent(inout) :: this
-
-      type(MappingIterator) :: iter, t_iter
-      class(YAML_Node), pointer :: key, value
 
       call this%value%clear()
 
@@ -309,5 +309,23 @@ contains
       class(NodeIterator), intent(in) :: b
       not_equal_to = .not. (a == b)
    end function not_equal_to
+
+   logical function verify_mapping(this) result(verify)
+      class(MappingNode), target, intent(in) :: this
+      verify = this%value%verify()
+   end function verify_mapping
+
+   ! Node methods
+   recursive subroutine clone(to, from)
+      class(MappingNode), intent(out) :: to
+      class(YAML_Node), intent(in) :: from
+
+      select type (from)
+      type is (MappingNode)
+         call clone_mapping(from=from%value, to=to%value)
+      class default
+         error stop "expected mapping node"
+      end select
+   end subroutine clone
 
 end module fy_MappingNode

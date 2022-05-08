@@ -1,14 +1,15 @@
 module fy_Mapping
    use fy_YAML_Node
 
+#define DEBUG_INSERT
+
 #define Key YAML_Node
 #define Key_polymorphic
 #define Key_LT(lhs,rhs) lhs < rhs
 #define Key_EQ(lhs,rhs) .not.(lhs<rhs .or. rhs<lhs)
-#define Key_Free(x) call x%clear()
 #define T YAML_Node
 #define T_polymorphic
-#define T_Free(x) call x%clear()
+
 
 #define OrderedMap Mapping
 #define OrderedMapIterator MappingIterator
@@ -16,9 +17,11 @@ module fy_Mapping
 
 #define Map Mapping
 #define MapIterator MappingIterator
+!#define __PAIR_COPY(a,b) Key_COPY(a%first,b%first); T_COPY(a%second,b%second)
 
+! Toggle below to use ordinary gFTL map instead of ordered_map container.
 #include "ordered_map/template.inc"
-!!$#include "map/template.inc"
+!!$#include "map/template.inc" 
 
 #undef Pair
 #undef OrderedMapIterator

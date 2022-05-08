@@ -91,6 +91,7 @@ contains
                     __FAIL2__(status)
                  end if
               endif
+
            type is (MappingNode)
               call get_mapping_item(to_mapping(config), iter%of(), found_, rc=status)
               if (status /= YAFYAML_SUCCESS) then
@@ -874,8 +875,8 @@ contains
 
    subroutine set_node_p(this, node, selectors_seq, unusable, err_msg, rc)
       use fy_KeywordEnforcer
-      use fy_SequenceNode, only: clone
-      use fy_MappingNode, only: clone
+      use fy_SequenceNode, only: clone_sequence
+      use fy_MappingNode, only: clone_mapping
       class(BaseNode), target, intent(inout) :: this
       class(YAML_Node), intent(in) :: node
       type(Sequence), target, intent(in) :: selectors_seq
@@ -902,7 +903,7 @@ contains
       __ASSERT2__(selectors_seq%size() > 0, YAFYAML_MISSING_SELECTOR)
 
       last_selector => selectors_seq%back()
-      call clone(selectors_seq, parent_selectors)
+      call clone_sequence(from=selectors_seq, to=parent_selectors)
       call parent_selectors%pop_back()
 
       !TODO: make at_vector_selector() a TBP
@@ -935,11 +936,11 @@ contains
          type is (SequenceNode)
             call map%set(last_selector, SequenceNode())
             new_node => map%at(last_selector)
-            call clone(from=qq, to=new_node)
+            call new_node%clone(qq)
          type is (MappingNode)
             call map%set(last_selector, MappingNode())
             new_node => map%at(last_selector)
-            call clone(from=qq, to=new_node)
+            call new_node%clone(qq)
          class default
             call map%set(last_selector, node)
          end select
@@ -996,6 +997,5 @@ contains
          end select
       end subroutine save_one
    end subroutine selectors_to_vector
-
 
 end submodule BaseNode_implementation

@@ -84,5 +84,5 @@ contains
       r64 = to_float(this)
 
    end subroutine assign_to_real64
-      
+
 end module fy_Nodes

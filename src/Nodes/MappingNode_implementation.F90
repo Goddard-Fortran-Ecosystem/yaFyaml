@@ -12,7 +12,7 @@ contains
    ! (bool, int, string, float, sequence, mapping)
 
    ! The innards of this algorithm should eventually migrate to gFTL algorithms.
-   module function less_than(a, b)
+   recursive module function less_than(a, b)
       logical :: less_than
       class(MappingNode), intent(in) :: a
       class(YAML_Node), intent(in) :: b
@@ -74,7 +74,7 @@ contains
 
    contains
 
-      logical function ordered_compare(first, second, swap) result(less_than)
+      recursive logical function ordered_compare(first, second, swap) result(less_than)
          class(MappingNode), target, intent(in) :: first
          class(MappingNode), target, intent(in) :: second
          logical, intent(in) :: swap
@@ -141,33 +141,13 @@ contains
 
    end function less_than
 
-   recursive module subroutine clone_mapping_node(from, to)
+   recursive module subroutine clone_mapping(to, from)
       use fy_SequenceNode
       use fy_Sequence
-      type(MappingNode), target, intent(in) :: from
-      class(YAML_Node), target, intent(out) :: to
-      
-      type(Mapping), pointer :: m_a, m_b
-      type(MappingIterator) :: iter
-      class(YAML_Node), pointer :: key, val
-      class(YAML_Node), pointer :: subobject
-
-      m_a => to_mapping(from)
-      select type (to)
-      type is (MappingNode)
-         m_b => to_mapping(to)
-         call clone(m_a, m_b)
-      class default
-         error stop "Should not be possible."
-      end select
-
-   end subroutine clone_mapping_node
-
-   recursive module subroutine clone_mapping(from, to)
-      use fy_SequenceNode
-      use fy_Sequence
-      type(Mapping), target, intent(in) :: from
+      use fy_IntNode
+      use fy_StringNode
       type(Mapping), target, intent(out) :: to
+      type(Mapping), target, intent(in) :: from
 
       type(MappingIterator) :: iter
       class(YAML_Node), pointer :: key, val
@@ -177,6 +157,12 @@ contains
         iter = beg                                                                                                                    
         do while (iter /= e)                                                                                                          
            key => iter%first()                                                                                                        
+           select type (key)
+           type is (StringNode)
+           type is (IntNode)
+           class default
+              error stop "clone_mapping needs extension for non scalar keys"
+           end select
            val => iter%second()                                                                                                       
            select type (q => val)                                                                                                     
            type is (SequenceNode)                                                                                                     
@@ -184,14 +170,14 @@ contains
               subobject => to%of(key)                                                                                                  
               select type (qq => subobject)                                                                                           
               type is (SequenceNode) ! guaranteed                                                                                     
-                 call clone(q, qq)                                                                                                    
+                 call qq%clone(q)
               end select                                                                                                              
            type is (MappingNode)
               call to%insert(key, MappingNode())
               subobject => to%of(key)
               select type (qq => subobject)
               type is (MappingNode) ! guaranteed
-                 call clone(q, qq)              
+                 call qq%clone(q)
               end select
            class default ! scalar
               call to%insert(key, val)

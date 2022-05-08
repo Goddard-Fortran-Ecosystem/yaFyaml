@@ -1,10 +1,9 @@
 module fy_Sequence
-  use fy_YAML_Node
+   use fy_YAML_Node
 
 #define T YAML_Node
 #define T_polymorphic
-#define T_Free(x) call x%clear()
-#define T_Copy(x,y) call y%clone(x)
+!#define T_COPY(x,y) x=y
 #define Vector Sequence
 #define VectorIterator SequenceIterator
 

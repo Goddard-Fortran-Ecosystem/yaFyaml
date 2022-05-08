@@ -28,6 +28,9 @@ module fy_BoolNode
 
       procedure :: begin
       procedure :: end
+
+      procedure :: verify => verify_bool
+      procedure :: clone
    end type BoolNode
 
    interface
@@ -99,12 +102,18 @@ contains
       
    end subroutine write_node_formatted
 
-!!$   subroutine clone(this, other)
-!!$      class(BoolNode), intent(in) :: this
-!!$      class(BoolNode), intent(out)  :: other
-!!$
-!!$      other = this
-!!$   end subroutine clone
+   subroutine clone(to, from)
+      class(BoolNode), intent(out) :: to
+      class(YAML_Node), intent(in)  :: from
+
+      select type(from)
+      type is (BoolNode)
+         to%value = from%value
+      class default
+         error stop "expected bool node"
+      end select
+
+   end subroutine clone
 
 
    subroutine clear(this)
@@ -134,5 +143,11 @@ contains
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
    end function end
+
+   logical function verify_bool(this) result(verify)
+      class(BoolNode), target, intent(in) :: this
+      verify = .true.
+   end function verify_bool
+
 
 end module fy_BoolNode

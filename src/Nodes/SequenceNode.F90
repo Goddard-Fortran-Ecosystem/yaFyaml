@@ -14,15 +14,14 @@ module fy_SequenceNode
 
    public :: SequenceNode
    public :: to_sequence
-   public :: clone
-
+   public :: clone_sequence
    public :: SequenceNodeIterator
    public :: operator(==)
    public :: operator(/=)
-   
+
    type, extends(BaseNode) :: SequenceNode
       private
-      type(Sequence) :: value
+      type(sequence) :: value
    contains
       procedure :: size
       procedure, pass(this) :: assign_to_sequence
@@ -30,11 +29,16 @@ module fy_SequenceNode
       procedure :: less_than
       procedure :: write_node_formatted
 
+#ifdef __GFORTRAN__
       final :: clear_final
+#endif
       procedure :: clear
 
       procedure :: begin => begin_sequence
       procedure :: end   => end_sequence
+
+      procedure :: verify => verify_sequence
+      procedure :: clone
    end type SequenceNode
 
 
@@ -60,7 +64,7 @@ module fy_SequenceNode
    type(Sequence), target :: DEFAULT_SEQUENCE
 
    interface
-      module function less_than(a,b)
+      recursive module function less_than(a,b)
          implicit none
          logical :: less_than
          class(SequenceNode), intent(in) :: a
@@ -73,22 +77,7 @@ module fy_SequenceNode
       module procedure new_SequenceNode
    end interface SequenceNode
    
-   interface clone                                                                                                                    
-      module procedure clone_sequence_node                                                                                            
-      module procedure clone_sequence                                                                                                 
-   end interface clone                                                                                                                
-
    interface
-      ! Node methods
-      recursive module subroutine clone_sequence_node(from, to)
-         type(SequenceNode), target, intent(in) :: from
-         class(YAML_Node), target, intent(out) :: to
-      end subroutine clone_sequence_node
-      recursive module subroutine clone_sequence(from, to)
-         type(Sequence), target, intent(in) :: from
-         type(Sequence), target, intent(out) :: to
-      end subroutine clone_sequence
-
  
       module function at(this, unusable, err_msg, rc) result(ptr)
          class(YAML_Node), pointer :: ptr
@@ -97,6 +86,11 @@ module fy_SequenceNode
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
       end function at
+
+      recursive module subroutine clone_sequence(to, from)
+         type(sequence), target, intent(out) :: to
+         type(sequence), target, intent(in) :: from
+      end subroutine clone_sequence
 
    end interface
 
@@ -112,11 +106,8 @@ contains
       type(SequenceNode) :: node
       type(sequence), intent(in) :: s
 
-      call clone(s, node%value)
-
+      call clone_sequence(to=node%value, from=s)
    end function new_SequenceNode
-
-
 
    function to_sequence(this, unusable, err_msg, rc) result(ptr)
       type(Sequence), pointer :: ptr
@@ -192,16 +183,12 @@ contains
 
       type(SequenceIterator) :: iter
       class(YAML_Node), pointer :: item
+      integer, save :: depth = 0
 
-        associate (b => this%value%begin(), e=> this%value%end())
-          iter = b
-          do while (iter /= e)
-             item => iter%of()
-             call item%clear()
-             call iter%next()
-          end do
-        end associate
-        call this%value%clear()
+      depth = depth + 1
+      call this%value%clear()
+
+        depth = depth - 1
 
    end subroutine clear
 
@@ -280,6 +267,29 @@ contains
       __UNUSED_DUMMY__(unusable)
    end function first
 
+   logical function verify_sequence(this) result(verify)
+      class(SequenceNode), target, intent(in) :: this
+      verify = .true.
+   end function verify_sequence
+
+
+   ! Node methods
+   recursive subroutine clone(to, from)
+      class(SequenceNode), intent(out) :: to
+      class(YAML_Node), intent(in) :: from
+      
+      integer, save :: depth = 0
+
+      depth = depth + 1
+      select type (from)
+      type is (SequenceNode)
+         call clone_sequence(from=from%value, to=to%value)
+      class default
+         error stop "expected sequence node"
+      end select
+
+      depth = depth - 1
+   end subroutine clone
 
 end module fy_SequenceNode
 

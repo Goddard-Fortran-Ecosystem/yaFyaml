@@ -1,5 +1,6 @@
 module yafyaml
    use fy_YAML_Node
+   use fy_BaseNode
    use fy_Parser
    use fy_ErrorCodes
    use fy_Nodes

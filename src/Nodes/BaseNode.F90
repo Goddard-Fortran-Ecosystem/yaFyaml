@@ -8,6 +8,9 @@ module fy_BaseNode
    private
 
    public :: BaseNode
+!!$#ifdef __GFORTRAN__
+!!$   public :: assignment(=)
+!!$#endif
 
    type, abstract, extends(YAML_Node) :: BaseNode
       private
@@ -332,6 +335,7 @@ module fy_BaseNode
 
    end interface
 
+
 contains
 
 
@@ -435,5 +439,5 @@ contains
       call this%write_node_formatted(unit, iotype, v_list, iostat, iomsg)
       
    end subroutine write_formatted
-   
+
 end module fy_BaseNode

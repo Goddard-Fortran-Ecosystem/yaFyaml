@@ -11,7 +11,7 @@ contains
    ! (bool, int, string, float, sequence, mapping)
 
    ! The innards of this algorithm should eventually migrate to gFTL algorithms.
-   module function less_than(a, b)
+   recursive module function less_than(a, b)
       logical :: less_than
       class(SequenceNode), intent(in) :: a
       class(YAML_Node), intent(in) :: b
@@ -42,57 +42,39 @@ contains
 
    end function less_than
 
-   recursive module subroutine clone_sequence_node(from, to)
-      type(SequenceNode), target, intent(in) :: from
-      class(YAML_Node), target, intent(out) :: to
-
-      type(sequence), pointer :: s_a, s_b
-
-      s_a => to_sequence(from)
-      select type(to)
-      type is (SequenceNode)
-         s_b => to_sequence(to)
-         call clone(s_a, s_b)
-      class default
-         error stop "Should not happen."
-      end select
-
-   end subroutine clone_sequence_node
-
-
-   recursive module subroutine clone_sequence(from, to)
-      type(Sequence), target, intent(in) :: from
+   recursive module subroutine clone_sequence(to, from)
       type(Sequence), target, intent(out) :: to
+      type(Sequence), target, intent(in) :: from
 
       type(SequenceIterator) :: iter
       class(YAML_Node), pointer :: item
       class(YAML_Node), pointer :: subobject
 
+      integer, save :: depth = 0
+
+      depth = depth + 1
+
       associate (beg => from%begin(), e => from%end())                                                                                      
-        iter = beg                                                                                                                    
-        do while (iter /= e)                                                                                                          
-           item => iter%of()                                                                                                          
-           select type (q => item)                                                                                                    
-           type is (SequenceNode)                                                                                                     
-              call to%push_back(SequenceNode())                                                                                        
-              subobject => to%back()                                                                                                   
-              select type (qq => subobject)                                                                                           
-              type is (SequenceNode) ! guaranteed                                                                                     
-                 call clone(q, qq)                                                                                                    
-              end select                                                                                                              
-           type is (MappingNode)                                                                                                      
-              call to%push_back(MappingNode())                                                                                         
-              subobject => to%back()                                                                                                   
-              select type (qq => subobject)                                                                                           
-              type is (MappingNode) ! guaranteed                                                                                      
-                 call clone(q, qq)                                                                                                    
-              end select                                                                                                              
-           class default ! scalar                                                                                                     
-              call to%push_back(item)                                                                                                  
-           end select                                                                                                                 
-           call iter%next()                                                                                                           
-        end do                                                                                                                        
-      end associate                                                                                                                   
+        iter = beg
+        do while (iter /= e)
+           item => iter%of()
+           select type (q => item)
+           type is (SequenceNode)
+              call to%push_back(SequenceNode())
+              subobject => to%back()
+              call subobject%clone(q)
+           type is (MappingNode)
+              call to%push_back(MappingNode())
+              subobject => to%back()
+              call subobject%clone(q)
+           class default ! scalar
+              call to%push_back(item)
+           end select
+           call iter%next()
+        end do
+      end associate
+
+      depth = depth - 1
    end subroutine clone_sequence
 
    module function at(this, unusable, err_msg, rc) result(ptr)

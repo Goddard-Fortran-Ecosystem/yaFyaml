@@ -27,6 +27,7 @@ module fy_Parser
    use fy_FailsafeSchema
    use fy_JSONSchema
    use fy_CoreSchema
+   use iso_fortran_env, only: OUTPUT_UNIT
    implicit none
    private
 
@@ -36,15 +37,18 @@ module fy_Parser
       private
       class(AbstractSchema), allocatable :: schema
       type (StringNodeMap) :: anchors
-      
    contains
       procedure :: load_from_file
       procedure :: load_from_stream
       generic   :: load => load_from_file, load_from_stream
+      procedure :: load_file
+      procedure :: load_stream
       procedure :: top
+      procedure :: top_load
       procedure :: process_sequence
-      procedure :: process_sequencen
       procedure :: process_mapping
+      procedure :: process_map_key
+      procedure :: process_value
       procedure :: interpret
    end type Parser
 
@@ -114,13 +118,43 @@ contains
 
    end function load_from_file
 
+   subroutine load_stream(this, stream, node)
+      class(YAML_Node), allocatable, intent(out) :: node
+      class(Parser), intent(inout) :: this
+      class(AbstractTextStream), intent(in) :: stream
+
+      type(Lexer) :: lexr
+
+      lexr = Lexer(Reader(stream))
+      call this%top_load(lexr, node)
+
+   end subroutine load_stream
+
+   subroutine load_file(this, fname, node)
+      class(YAML_Node), allocatable, intent(out) :: node
+      class(Parser), intent(inout) :: this
+      character(len=*), intent(in) :: fname
+
+      call this%load_stream(FileStream(fname), node)
+
+   end subroutine load_file
+
    function top(this, lexr) result(node)
       class(YAML_Node), target, allocatable :: node
       class(Parser), intent(inout) :: this
       type(Lexer), intent(inout) :: lexr
 
-      class(AbstractToken), allocatable :: token
+      call this%top_load(lexr, node)
+
+   end function top
+
+   subroutine top_load(this, lexr, node)
+      class(YAML_Node), target, allocatable, intent(out) :: node
+      class(Parser), intent(inout) :: this
+      type(Lexer), intent(inout) :: lexr
+
       logical :: done
+      class(AbstractToken), allocatable :: token
       type(mapping), pointer :: map
       type(sequence), pointer :: seq
 
@@ -155,12 +189,12 @@ contains
          type is (BlockMappingStartToken)
             node = mappingNode()
             map => to_mapping(node)
-            call this%process_mapping(lexr, map)
+            call this%process_mapping(lexr, map, node)
             done = .true.
          type is (FlowMappingStartToken)
             node = mappingNode()
             map => to_mapping(node)
-            call this%process_mapping(lexr, map)
+            call this%process_mapping(lexr, map, node)
             done = .true. 
          class default
             error stop 'unsupported token type in top'
@@ -170,7 +204,7 @@ contains
 
       if (.not. done) error stop 'not done'
 
-   end function top
+   end subroutine top_load
 
 
    recursive subroutine process_sequence(this, lexr, seq)
@@ -185,9 +219,9 @@ contains
       class(YAML_Node), pointer :: subnode
       type(Sequence), pointer :: subseq
 
-      integer :: depth = 0
+!!$      integer :: depth = 0
+!!$      depth = depth + 1
 
-      depth = depth + 1
       expect_another = .false.
 
       do
@@ -253,106 +287,19 @@ contains
          end if
 
       end do
-      depth = depth - 1
+!!$      depth = depth - 1
 
    end subroutine process_sequence
 
-   recursive subroutine process_sequencen(this, lexr, snode)
-      class(Parser), target, intent(inout) :: this
-      type(Lexer), intent(inout) :: lexr 
-      type(SequenceNode), target, intent(inout) :: snode
 
-      class(AbstractToken), allocatable :: token, token_2
-      logical :: expect_another
-      character(:), allocatable :: anchor
-      type(mapping), pointer :: map
-      class(YAML_Node), pointer :: subnode
-      type(Sequence), pointer :: seq
-      type(Sequence), pointer :: subseq
-
-      integer :: depth = 0
-
-      depth = depth + 1
-
-      seq => to_sequence(snode)
-
-      expect_another = .false.
-      do
-
-         token = lexr%get_token()
-
-         select type(q => token)
-         type is (AnchorToken)
-            anchor = q%value
-            deallocate(token)
-            token = lexr%get_token()
-         type is (AliasToken)
-            error stop 'improper AliasToken'
-         end select
-
-         select type (token)
-         type is (ScalarToken)
-            call seq%push_back(this%interpret(token))
-         type is (BlockSequenceStartToken)
-            call seq%push_back(SequenceNode())
-            subnode => seq%back()
-            subseq => to_sequence(subnode)
-            call this%process_sequence(lexr, subseq)
-         type is (FlowSequenceStartToken)
-            call seq%push_back(SequenceNode())
-            subnode => seq%back()
-            subseq => to_sequence(subnode)
-            call this%process_sequence(lexr, subseq)
-         type is (FlowNextEntryToken)
-            expect_another = .true.
-         type is (BlockNextEntryToken)
-            expect_another = .true.
-         type is (FlowSequenceEndToken)
-            ! TODO must match block/flow 
-  !           if (expect_another) then
-  !              __ASSERT__("dangling comma in flow sequence", expect_another)
-  !           else
-  !              exit
-  !           end if
-            exit
-         type is (BlockEndToken)
-            ! TODO must match block/flow 
-            exit
-         type is (FlowMappingStartToken)
-            call seq%push_back(mappingNode())
-            subnode => seq%back()
-            map => to_mapping(subnode)
-            call this%process_mapping(lexr, map)
-         type is (BlockMappingStartToken)
-            call seq%push_back(mappingNode())
-            subnode => seq%back()
-            map => to_mapping(subnode)
-            call this%process_mapping(lexr, map)
-         class default
-            error stop 'illegal token encountered A'
-         end select
-         deallocate(token)
-
-         if (allocated(anchor)) then
-            call this%anchors%insert(anchor, seq%back())
-            deallocate(anchor)
-         end if
-
-      end do
-      depth = depth - 1
-
-   end subroutine process_sequencen
-
-
-
-   recursive subroutine process_mapping(this, lexr, map)
+   recursive subroutine process_mapping(this, lexr, map, mnode)
       type(mapping), intent(inout) :: map
       class(Parser), target, intent(inout) :: this
       type(Lexer), intent(inout) :: lexr
+      class(YAML_Node), optional, intent(inout) :: mnode
 
-      integer :: depth = 0
-
-      depth = depth + 1
+!!$      integer :: depth = 0
+!!$      depth = depth + 1
 
       map = mapping()
       do
@@ -361,7 +308,7 @@ contains
            type is (ScalarToken)
               ! no-op
            type is (KeyToken)
-              call process_map_key(this, lexr, map)
+              call this%process_map_key(lexr, map, mnode)
            type is (FlowNextEntryToken)
               ! no-op
            type is (FlowMappingEndToken)
@@ -375,29 +322,37 @@ contains
 
       end do
 
-      depth = depth - 1
+!!$      depth = depth - 1
    end subroutine process_mapping
 
-   recursive subroutine process_map_key(this, lexr, map)
+   recursive subroutine process_map_key(this, lexr, map, mnode)
       class(Parser), intent(inout) :: this
       type(Lexer), intent(inout) :: lexr
       type(mapping), intent(inout) :: map
+      class(YAML_Node), optional, intent(inout) :: mnode
 
       character(:), allocatable :: anchor, alias
       character(:), allocatable :: key_str
       type(mapping), pointer :: anchor_mapping
       class(AbstractToken), allocatable :: token_2, token_3, token_4
 
-      type(sequence), save :: keys, values
-      integer :: depth = 0
-      class(YAML_Node), allocatable :: val
-      class(YAML_Node), pointer :: curr_key
-      class(YAML_Node), pointer :: curr_value
+      ! Wrapper is needed here as a workaround for GFortran (11.2) problem
+      ! with recursions and local variables that are abstract & allocatable.
+      ! At least that is the current theory.  Hard to pin down.
+      type :: Wrapper
+         class(YAML_Node), allocatable :: node
+      end type Wrapper
+      type(Wrapper) :: key_wrap
+      type(Wrapper) :: value_wrap
+      
+!!$      integer :: depth = 0
+!!$      depth = depth + 1
 
-      depth = depth + 1
 
       associate (token => lexr%get_token())
-        call keys%push_back(get_key(this, token, key_str))
+
+          key_wrap%node = get_key(this, token, key_str)
+
           associate (value_token => lexr%get_token())
             if (value_token%get_id() /= VALUE_INDICATOR) then
                error stop 'expected ValueToken'
@@ -419,7 +374,7 @@ contains
                    anchor_mapping => to_mapping(this%anchors%of(alias))
                    call merge(map, anchor_mapping)
                 else
-                   call map%insert(keys%back(), this%anchors%of(alias))
+                   call map%insert(key_wrap%node, this%anchors%of(alias))
                 end if
                 deallocate(alias)
                 return
@@ -429,28 +384,23 @@ contains
           class default
              token_3 = token_2
           end select
-          curr_key => keys%back()
-          call process_value(this, keys%back(), token_3, lexr, values)
-          curr_key => keys%back()
-          curr_value => values%back()
 
-            call map%insert(keys%back(), curr_value)
+          call this%process_value(token_3, lexr, value_wrap%node)
 
-          curr_key => keys%back()
+          call map%insert(key_wrap%node, value_wrap%node)
+
           if (allocated(anchor)) then
-             call this%anchors%insert(anchor, map%of(curr_key))
+             call this%anchors%insert(anchor, value_wrap%node)
              deallocate(anchor)
           end if
 
-          call keys%pop_back()
-          call values%pop_back()
      end associate
 
-      depth = depth - 1
+!!$      depth = depth - 1
 
    contains
 
-      subroutine merge(m1, m2)
+      recursive subroutine merge(m1, m2)
          use fy_String
          use gftl_UnlimitedVector
          type(mapping), intent(inout) :: m1
@@ -491,50 +441,42 @@ contains
    end function get_key
 
 
-   recursive subroutine process_value(this, key, token, lexr, values)
+   recursive subroutine process_value(this, token, lexr, value)
       class(Parser), intent(inout) :: this
-      class(YAML_Node), intent(in) :: key
       class(AbstractToken), intent(in) :: token
       type(Lexer), intent(inout) :: lexr
-      type(sequence), intent(inout) :: values
+      class(YAML_Node), allocatable, target, intent(out) :: value
 
       type(mapping), pointer :: map
       type(sequence), pointer :: seq
-      integer :: depth =0
 
-      class(YAML_Node), pointer :: subnode
+!!$      integer, save :: depth =0
+!!$      depth = depth + 1
 
-      depth = depth + 1
       select type(token)
       type is (ScalarToken)
-         call values%push_back(this%interpret(token))
+         value = this%interpret(token)
       type is (FlowSequenceStartToken)
-         call values%push_back(SequenceNode())
-         subnode => values%back()
-         seq => to_sequence(subnode)
+         value = SequenceNode()
+         seq => to_sequence(value)
          call this%process_sequence(lexr, seq)
       type is (BlockSequenceStartToken)
-         call values%push_back(SequenceNode())
-         subnode => values%back()
-         seq => to_sequence(subnode)
+         value = SequenceNode()
+         seq => to_sequence(value)
          call this%process_sequence(lexr, seq)
       type is (FlowMappingStartToken)
-         call values%push_back(mappingNode())
-         subnode => values%back()
-         map => to_mapping(subnode)
-         call this%process_mapping(lexr, map)
-         subnode => values%back()
+         value = MappingNode()
+         map => to_mapping(value)
+         call this%process_mapping(lexr, map, value)
       type is (BlockMappingStartToken)
-         call values%push_back(mappingNode())
-         subnode => values%back()
-         map => to_mapping(subnode)
-         call this%process_mapping(lexr, map)
+         value = MappingNode()
+         map => to_mapping(value)
+         call this%process_mapping(lexr, map, value)
       class default
          error stop 'illegal token encountered C'
       end select
 
-      subnode => values%back()
-      depth = depth - 1
+!!$      depth = depth - 1
       return
    end subroutine process_value
 

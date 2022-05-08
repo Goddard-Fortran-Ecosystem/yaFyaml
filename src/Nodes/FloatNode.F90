@@ -28,6 +28,9 @@ module fy_FloatNode
 
       procedure :: begin
       procedure :: end
+
+      procedure :: verify => verify_float
+      procedure :: clone
    end type FloatNode
 
    interface
@@ -126,4 +129,22 @@ contains
       __UNUSED_DUMMY__(unusable)
    end function end
    
+   logical function verify_float(this) result(verify)
+      class(FloatNode), target, intent(in) :: this
+      verify = .true.
+   end function verify_float
+
+   subroutine clone(to, from)
+      class(FloatNode), intent(out) :: to
+      class(YAML_Node), intent(in)  :: from
+
+      select type(from)
+      type is (FloatNode)
+         to%value = from%value
+      class default
+         error stop "expected float node"
+      end select
+
+   end subroutine clone
+
 end module fy_FloatNode

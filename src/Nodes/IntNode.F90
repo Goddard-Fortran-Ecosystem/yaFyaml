@@ -28,6 +28,9 @@ module fy_IntNode
 
       procedure :: begin
       procedure :: end
+
+      procedure :: verify => verify_int
+      procedure :: clone
    end type IntNode
 
    interface
@@ -125,4 +128,23 @@ contains
       __UNUSED_DUMMY__(unusable)
    end function end
    
+   logical function verify_int(this) result(verify)
+      class(IntNode), target, intent(in) :: this
+      verify = .true.
+   end function verify_int
+
+   subroutine clone(to, from)
+      class(IntNode), intent(out) :: to
+      class(YAML_Node), intent(in)  :: from
+
+      select type(from)
+      type is (IntNode)
+         to%value = from%value
+      class default
+         error stop "expected int node"
+      end select
+
+   end subroutine clone
+
+
 end module fy_IntNode

@@ -174,7 +174,6 @@ contains
       integer :: counter
 
       depth = depth + 1
-      write(10,*) depth, __FILE__,__LINE__
       iostat = 0
       write(unit,'("{")', iostat=iostat)
       if (iostat /= 0) return
@@ -183,15 +182,9 @@ contains
         associate ( b => m%begin(), e => m%end() )
           iter = b
           counter = 0
-          write(10,*) depth, counter, __FILE__,__LINE__
           do while (iter /= e)
              counter = counter + 1
-             write(10,*) depth, counter, __FILE__,__LINE__
              key => iter%first()
-             block
-               use fy_stringNode
-               write(10,*) depth, counter, __FILE__,__LINE__, to_string(key)
-             end block
              call key%write_node_formatted(unit, iotype, v_list, iostat, iomsg)
              if (iostat /= 0) return
              write(unit,'(": ")', iostat=iostat)

@@ -35,7 +35,7 @@ contains
       type(Mapping) :: m
 
       call m%insert(StringNode('a'), IntNode(1))
-      node = MappingNode(m)
+      allocate(node, source=MappingNode(m))
 
       call node%set(.true., 'a', rc=status)
       @assert_that(status, is(YAFYAML_SUCCESS))
@@ -63,7 +63,7 @@ contains
       call s%push_back(FloatNode(3.14159))
       call m%insert(StringNode('b'), SequenceNode(s))
 
-      node = MappingNode(m)
+      allocate(node, source=MappingNode(m))
 
       
       call node%set(3, 'b', 2, rc=status)
@@ -162,7 +162,7 @@ contains
       type(Mapping) :: m
 
       call m%insert(StringNode('a'), IntNode(1))
-      node = MappingNode(m)
+      allocate(node, source = MappingNode(m))
 
       call node%set([.true.,.false.,.true.], 'a', rc=status)
       @assert_that(status, is(YAFYAML_SUCCESS))
@@ -193,13 +193,15 @@ contains
       real :: x
 
       call m1%insert(StringNode('a'), IntNode(1))
-      node = MappingNode(m1)
+      allocate(node, source = MappingNode(m1))
 
       mnode = MappingNode()
+
       m2 => to_mapping(mnode)
       call m2%insert(StringNode('zero'), IntNode(0))
       call m2%insert(StringNode('pi'), FloatNode(3.14159))
-      subnode1 = mnode
+
+      allocate(subnode1, source=mnode)
       call node%set(subnode1, 'b', rc=status)
       @assert_that(status, is(YAFYAML_SUCCESS))
 

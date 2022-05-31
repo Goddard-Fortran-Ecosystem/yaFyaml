@@ -12,12 +12,14 @@ module fy_Tokens
   public :: DocumentStartToken
   public :: DocumentEndToken
 
+  public :: SequenceStartToken
   public :: FlowSequenceStartToken
   public :: FlowSequenceEndToken
   public :: FlowMappingStartToken
   public :: FlowMappingEndToken
   public :: FlowNextEntryToken
 
+  public :: MappingStartToken
   public :: BlockMappingStartToken
   public :: BlockSequenceStartToken
   public :: BlockNextEntryToken
@@ -65,7 +67,10 @@ module fy_Tokens
      module procedure new_ScalarToken
   end interface ScalarToken
 
-  type, extends(AbstractToken) :: BlockSequenceStartToken
+  type, abstract, extends(AbstractToken) :: SequenceStartToken
+  end type SequenceStartToken
+
+  type, extends(SequenceStartToken) :: BlockSequenceStartToken
   end type BlockSequenceStartToken
 
   interface BlockSequenceStartToken
@@ -105,13 +110,16 @@ module fy_Tokens
   type, extends(DocumentBoundaryToken) :: DocumentEndToken
   end type DocumentEndToken
 
-  type, extends(AbstractToken) :: FlowSequenceStartToken
+  type, extends(SequenceStartToken) :: FlowSequenceStartToken
   end type FlowSequenceStartToken
 
   type, extends(AbstractToken) :: FlowSequenceEndToken
   end type FlowSequenceEndToken
 
-  type, extends(AbstractToken) :: FlowMappingStartToken
+  type, abstract, extends(AbstractToken) :: MappingStartToken
+  end type MappingStartToken
+
+  type, extends(MappingStartToken) :: FlowMappingStartToken
   end type FlowMappingStartToken
 
   type, extends(AbstractToken) :: FlowMappingEndToken
@@ -165,7 +173,7 @@ module fy_Tokens
   end interface ValueToken
   
 
-  type, extends(AbstractToken) :: BlockMappingStartToken
+  type, extends(MappingStartToken) :: BlockMappingStartToken
   end type BlockMappingStartToken
 
   interface BlockMappingStartToken

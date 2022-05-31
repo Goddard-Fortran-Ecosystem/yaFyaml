@@ -42,20 +42,19 @@ contains
       type(Mapping), pointer :: ma, mb, mc
       type(MappingNode) :: mn
       
-      a = MappingNode()
+      allocate(a,source = MappingNode())
       ma => to_mapping(a)
       call ma%insert(StringNode('cat'), IntNode(1))
 
-      b = MappingNode()
+      allocate(b, source=MappingNode())
       mb => to_mapping(b)
-!!$      call ma%insert(StringNode('cat'), IntNode(1))
-!!$      call ma%insert(IntNode(2), IntNode(1))
+      call ma%insert(IntNode(2), IntNode(1))
       call mb%insert(IntNode(2), a)
 
       
-!!$      c = a
-!!$      mc => to_mapping(c)
-!!$      @assert_that(mc%size(), is(1_INT64))
+      c = a
+      mc => to_mapping(c)
+      @assert_that(mc%size(), is(2_INT64))
 
       call mb%clear()
 
@@ -67,7 +66,7 @@ contains
       type(Mapping), pointer :: m
       class(YAML_Node), allocatable :: key
       
-      a = MappingNode()
+      allocate(a, source = MappingNode())
       m => to_mapping(a)
 
       key = StringNode('mapping')

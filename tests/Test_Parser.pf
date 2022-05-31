@@ -142,6 +142,23 @@ end subroutine test_nested_block_sequence
    end subroutine test_nested_block_mapping_sequence
 
    @test
+   ! This test exposes an isuse with using 7.1 and deeply nested YAML
+   ! objects.
+   subroutine test_deeply_nested_nag_7p1()
+      type(Parser) :: p
+      class(YAML_Node), target, allocatable :: node
+
+
+      p = Parser()
+      node = p%load(EscapedTextStream("---\n 1: { 2: {3: {4: {5: 6}}}} \n ..."))
+      deallocate(node)
+
+      node = p%load(EscapedTextStream("---\n 1: { 2: {3: {4: {5: 6}}}} \n ..."))
+
+   end subroutine test_deeply_nested_nag_7p1
+
+
+   @test
    subroutine test_nested_mapping_block_flow()
       type(Parser) :: p
       class(YAML_Node), target, allocatable :: node
@@ -150,7 +167,7 @@ end subroutine test_nested_block_sequence
       integer :: v1, v2
 
       p = Parser()
-      node = p%load(EscapedTextStream("---\n mapping: { v1: 7, v2: 8 } \n..."))
+      node  = p%load(EscapedTextStream("---\n mapping: { v1: 7, v2: 8 } \n..."))
 
       ! Reproducer for related issue found in pflogger
       associate (b => node%begin(), e => node%end())
@@ -158,25 +175,26 @@ end subroutine test_nested_block_sequence
       end associate
 
       sub => node%at('mapping')
-
       call sub%get(v1, 'v1')
       @assert_that(v1, is(equal_to(7)))
 
       call sub%get(v2, 'v2')
       @assert_that(v2, is(equal_to(8)))
 
-
    end subroutine test_nested_mapping_block_flow
 
    @test
-   subroutine test_pflogger_reproducer()
+   subroutine test_pflogger_reproducer1()
       type(Parser) :: p
       class(YAML_Node), allocatable :: node
 
-      p = Parser()
-      node = p%load(EscapedTextStream("format: --- \n"))
+      type(EscapedTextStream) :: s
 
-   end subroutine test_pflogger_reproducer
+      p = Parser()
+      s = EscapedTextStream("format: --- \n")
+      node = p%load(s)
+
+   end subroutine test_pflogger_reproducer1
 
 
    @test
@@ -196,19 +214,18 @@ end subroutine test_nested_block_sequence
    @test
    subroutine test_simple_anchor()
       type(Parser) :: p
-!!$      class(YAML_Node), target, allocatable :: node
-      class(YAML_Node), pointer :: node
+      class(YAML_Node), allocatable :: node
       class(YAML_Node), allocatable :: sub
 
       integer :: i_a, i_b
 
       p = Parser()
-      allocate(node, source=p%load(EscapedTextStream( &
+      node = p%load(EscapedTextStream( &
            & "---\n" // &
            & " A: &anchor \n" // &
            & "    i: 1 \n" // &
            & " B: *anchor \n" // &
-           & "...")))
+           & "..."))
 
       call node%get(i_a, 'A', 'i')
       @assert_that(i_a, is(equal_to(1)))
@@ -293,6 +310,7 @@ end subroutine test_nested_block_sequence
       class(NodeIterator), allocatable :: iter
       character(:), pointer :: name
       class(YAML_Node), pointer :: subnode, subnode_copy
+
       p = Parser()
 
       node = p%load(EscapedTextStream( &

@@ -69,7 +69,7 @@ contains
       class(YAML_Node), allocatable, target :: m_node
       type(Mapping), pointer :: m
 
-      m_node = MappingNode()
+      allocate(m_node, source=MappingNode())
       m => to_mapping(m_node)
       call m%insert(IntNode(1_INT32), BoolNode(.true.))
       call m%insert(StringNode('cat'), FloatNode(1.32))

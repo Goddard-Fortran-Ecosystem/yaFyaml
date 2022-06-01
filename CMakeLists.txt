@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 project (YAFYAML
-  VERSION 1.0.1
+  VERSION 1.0.2
   LANGUAGES Fortran)
 
 # Most users of this software do not (should not?) have permissions to
@@ -38,7 +38,7 @@ if (NOT TARGET tests)
     COMMAND ${CMAKE_CTEST_COMMAND}
     EXCLUDE_FROM_ALL)
 endif ()
-if (NOT TARGET (build-tests))
+if (NOT TARGET build-tests)
   add_custom_target(build-tests)
   add_dependencies(tests build-tests)
 endif ()

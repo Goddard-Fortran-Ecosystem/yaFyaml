@@ -72,11 +72,11 @@ jobs:
           mkdir -p build
           cd build
           cmake .. -DCMAKE_Fortran_COMPILER=${FC} -DCMAKE_INSTALL_PREFIX=${HOME}/Software/yaFyaml -DCMAKE_PREFIX_PATH=${HOME}/Software/GFE
-          make -j$(nproc)
+          make -j 2
       - name: Build Tests
         run: |
           cd build
-          make -j$(nproc) tests
+          make -j 2 tests
       - name: Run Tests
         run: |
           cd build

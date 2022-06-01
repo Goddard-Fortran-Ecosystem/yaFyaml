@@ -5,6 +5,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixes for macOS 12 CI
 
 ## [1.0.1] 2022-05-31
 
@@ -12,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Found various workarounds to issues with NAG 7.1 (7110) compiler.
 
-## Changed
+### Changed
 
 - Updated GitHub Actions
   - OSs

@@ -5,6 +5,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] 2022-06-01
+
+### Fixed
+
+- Small problem in CMake logic exposed in some combinations with other GFE projects.
 
 ## [1.0.1] 2022-05-31
 

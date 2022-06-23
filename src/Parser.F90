@@ -6,6 +6,7 @@
 #  define _KEY key
 #  define _VALUE value
 #endif
+#include "error_handling.h"
 
 !!! The Parser imports a sequence of tokens and constructs an object
 !!! that is a subclass of YAML_Node. I naively expect this to be
@@ -33,6 +34,10 @@ module fy_Parser
    use fy_FailsafeSchema
    use fy_JSONSchema
    use fy_CoreSchema
+   use fy_ErrorCodes
+   use fy_ErrorHandling
+   use fy_KeywordEnforcer
+
    use iso_fortran_env, only: OUTPUT_UNIT
    implicit none
    private
@@ -47,8 +52,6 @@ module fy_Parser
       procedure :: load_from_file
       procedure :: load_from_stream
       generic   :: load => load_from_file, load_from_stream
-      procedure :: load_file
-      procedure :: load_stream
       procedure :: top
       procedure :: top_load
       procedure :: process_sequence
@@ -85,9 +88,11 @@ contains
 
    end function new_Parser_schema
 
-   function new_Parser_schema_name(schema_name) result(p)
+   function new_Parser_schema_name(schema_name,unusable,rc) result(p)
       type(Parser) :: p
       character(*), intent(in) :: schema_name
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
 
       select case (schema_name)
       case ('json','JSON')
@@ -97,72 +102,74 @@ contains
       case ('failsafe','Failsafe')
          p = Parser(FailsafeSchema())
       case default
-         error stop "Unknown schema"
+         __FAIL__(YAFYAML_PARSER_ERROR)
       end select
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
 
    end function new_Parser_schema_name
 
-   function load_from_stream(this, stream) result(node)
+   function load_from_stream(this, stream, unusable, rc) result(node)
       class(YAML_Node), allocatable :: node
       class(Parser), intent(inout) :: this
       class(AbstractTextStream), intent(in) :: stream
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
 
       type(Lexer) :: lexr
+      integer :: status
 
       lexr = Lexer(Reader(stream))
-      node = this%top(lexr)
+      node = this%top(lexr,rc=status)
+      __VERIFY__(status)
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
 
    end function load_from_stream
 
-
-   function load_from_file(this, fname) result(node)
+   function load_from_file(this, fname, unusable, rc) result(node)
       class(YAML_Node), allocatable :: node
       class(Parser), intent(inout) :: this
       character(len=*), intent(in) :: fname
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
 
-      node = this%load(FileStream(fname))
+      integer :: status
+      node = this%load(FileStream(fname),rc=status)
+      __VERIFY__(status)
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
 
    end function load_from_file
 
-   subroutine load_stream(this, stream, node)
-      class(YAML_Node), allocatable, intent(out) :: node
-      class(Parser), intent(inout) :: this
-      class(AbstractTextStream), intent(in) :: stream
-
-      type(Lexer) :: lexr
-
-      lexr = Lexer(Reader(stream))
-      call this%top_load(lexr, node)
-
-   end subroutine load_stream
-
-   subroutine load_file(this, fname, node)
-      class(YAML_Node), allocatable, intent(out) :: node
-      class(Parser), intent(inout) :: this
-      character(len=*), intent(in) :: fname
-
-      call this%load_stream(FileStream(fname), node)
-
-   end subroutine load_file
-
-   function top(this, lexr) result(node)
+   function top(this, lexr, unusable, rc) result(node)
       class(YAML_Node), target, allocatable :: node
       class(Parser), intent(inout) :: this
       type(Lexer), intent(inout) :: lexr
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
+  
+      integer :: status
 
-      call this%top_load(lexr, node)
+      call this%top_load(lexr, node, rc=status)
+      __VERIFY__(status)
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)     
 
    end function top
 
-   subroutine top_load(this, lexr, node)
+   subroutine top_load(this, lexr, node, unusable, rc)
       class(YAML_Node), target, allocatable, intent(out) :: node
       class(Parser), intent(inout) :: this
       type(Lexer), intent(inout) :: lexr
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
 
       logical :: done
       class(AbstractToken), allocatable :: token
       type(mapping), pointer :: map
       type(sequence), pointer :: seq
+      integer :: status
 
       done = .false.
 
@@ -184,28 +191,37 @@ contains
          class is (SequenceStartToken)
             node = SequenceNode()
             seq => to_sequence(node)
-            call this%process_sequence(lexr, seq)
+            call this%process_sequence(lexr, seq, rc=status)
+            __VERIFY__(status)
             done = .true.
          class is (MappingStartToken)
             allocate(node, source=MappingNode())
             map => to_mapping(node)
-            call this%process_mapping(lexr, map)
+            call this%process_mapping(lexr, map, rc=status)
+            __VERIFY__(status)
             done = .true.
          class default
-            error stop 'unsupported token type in top'
+            __FAIL__(YAFYAML_PARSER_ERROR)
          end select
          deallocate(token)
       end do
 
-      if (.not. done) error stop 'not done'
+      if (.not. done) then
+            __FAIL__(YAFYAML_PARSER_ERROR)
+      end if
+
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
 
    end subroutine top_load
 
 
-   recursive subroutine process_sequence(this, lexr, seq)
+   recursive subroutine process_sequence(this, lexr, seq, unusable, rc)
       class(Parser), target, intent(inout) :: this
       type(Lexer), intent(inout) :: lexr 
       type(sequence), intent(inout) :: seq
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
 
       class(AbstractToken), allocatable :: token, token_2
       logical :: expect_another
@@ -231,7 +247,7 @@ contains
             deallocate(token)
             token = lexr%get_token()
          type is (AliasToken)
-            error stop 'improper AliasToken'
+            __FAIL__(YAFYAML_PARSER_ERROR)
          end select
 
          select type (token)
@@ -263,7 +279,7 @@ contains
             submap => to_mapping(subnode)
             call this%process_mapping(lexr, submap)
          class default
-            error stop 'illegal token encountered A'
+            __FAIL__(YAFYAML_PARSER_ERROR)
          end select
          deallocate(token)
 
@@ -273,15 +289,19 @@ contains
          end if
 
       end do
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
 !!$      depth = depth - 1
 
    end subroutine process_sequence
 
 
-   recursive subroutine process_mapping(this, lexr, map)
+   recursive subroutine process_mapping(this, lexr, map, unusable, rc)
       class(Parser), target, intent(inout) :: this
       type(Lexer), intent(inout) :: lexr
       type(Mapping), target, intent(inout):: map
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
 
 !!$      integer :: depth = 0
 !!$      depth = depth + 1
@@ -300,19 +320,23 @@ contains
            type is (BlockEndToken)
               exit
            class default
-              error stop 'illegal token encountered B'
+               __FAIL__(YAFYAML_PARSER_ERROR)
            end select
          end associate
 
       end do
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
 
 !!$      depth = depth - 1
    end subroutine process_mapping
 
-   recursive subroutine process_map_entry(this, lexr, map)
+   recursive subroutine process_map_entry(this, lexr, map, unusable, rc)
       class(Parser), intent(inout) :: this
       type(Lexer), intent(inout) :: lexr
       type(Mapping), target, intent(inout) :: map
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
 
       character(:), allocatable :: anchor, alias
       character(:), allocatable :: key_str
@@ -344,11 +368,12 @@ contains
 
       associate (token => lexr%get_token())
 
-        _KEY = get_key(this, token, key_str)
+        _KEY = get_key(this, token, key_str,rc=rc)
+        __VERIFY__(YAFYAML_SUCCESS)
 
         associate (value_token => lexr%get_token())
           if (value_token%get_id() /= VALUE_INDICATOR) then
-             error stop 'expected ValueToken'
+             __FAIL__(YAFYAML_PARSER_ERROR)
           end if
         end associate
 
@@ -372,9 +397,9 @@ contains
                  call map%insert(_KEY, this%anchors%of(alias))
               end if
               deallocate(alias)
-              return
+              __RETURN__(YAFYAML_SUCCESS)
            else
-              error stop "no such anchor: <"//alias//">"
+              __FAIL__(YAFYAML_PARSER_ERROR)
            end if
         class default
            token_3 = token_2
@@ -405,7 +430,7 @@ contains
            call this%process_mapping(lexr, submap)
            
         class default
-           error stop
+           __FAIL__(YAFYAML_PARSER_ERROR)
         end select
         
         if (allocated(anchor)) then
@@ -414,6 +439,10 @@ contains
         end if
         
       end associate
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+
+!!$      depth = depth - 1
       
 !!$      depth = depth - 1
 
@@ -443,29 +472,33 @@ contains
 
    end subroutine process_map_entry
 
-   function get_key(this, token, key_str) result(key)
+   function get_key(this, token, key_str, rc) result(key)
       class(YAML_Node), allocatable :: key
       class(Parser), intent(in) :: this
       class(AbstractToken), intent(in) :: token
       character(:), allocatable, intent(out) :: key_str
+      integer, optional, intent(out) :: rc
 
       select type(token)
       type is (ScalarToken)
          key_str = token%value
          key = this%interpret(token)
       class default
-         error stop 'expected ScalarToken'
+         __FAIL__(YAFYAML_PARSER_ERROR)
       end select
+      __RETURN__(YAFYAML_SUCCESS)
 
    end function get_key
 
 
    ! 
-   recursive subroutine process_value(this, token, lexr, value)
+   recursive subroutine process_value(this, token, lexr, value, unusable, rc)
       class(Parser), intent(inout) :: this
       class(AbstractToken), intent(in) :: token
       type(Lexer), intent(inout) :: lexr
       class(YAML_Node), allocatable, target, intent(out) :: value
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
 
       type(mapping), pointer :: map
       type(sequence), pointer :: seq
@@ -485,11 +518,12 @@ contains
          map => to_mapping(value)
          call this%process_mapping(lexr, map)
       class default
-         error stop 'illegal token encountered C'
+         __FAIL__(YAFYAML_PARSER_ERROR)
       end select
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
 
 !!$      depth = depth - 1
-      return
    end subroutine process_value
 
 

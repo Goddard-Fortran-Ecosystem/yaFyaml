@@ -4,6 +4,7 @@
 submodule (fy_MappingNode) MappingNode_implementation
    use fy_YAML_Node
    use fy_ErrorCodes
+   use fy_keywordEnforcer
    implicit none
 
 
@@ -74,10 +75,11 @@ contains
 
    contains
 
-      recursive logical function ordered_compare(first, second, swap) result(less_than)
+      recursive logical function ordered_compare(first, second, swap, rc) result(less_than)
          class(MappingNode), target, intent(in) :: first
          class(MappingNode), target, intent(in) :: second
          logical, intent(in) :: swap
+         integer, optional, intent(out) :: rc
          
          class(YAML_Node), pointer :: key_1, value_2
          type(MappingIterator) :: iter_1
@@ -98,7 +100,7 @@ contains
                 if (second%value%count(key_1) > 0) then
                    ! compare values
                    value_2 => second%value%at(key_1,rc=status)
-                   if (status/= YAFYAML_SUCCESS) error stop "not possible"
+                   __VERIFY__(status)
                    
                    if (iter_1%second() < value_2) then
                       if (swap) then
@@ -136,18 +138,20 @@ contains
          else
             less_than = (n1 < n2)
          end if
+         __RETURN__(YAFYAML_SUCCESS)
 
       end function ordered_compare
 
    end function less_than
 
-   recursive module subroutine clone_mapping(to, from)
+   recursive module subroutine clone_mapping(to, from, rc)
       use fy_SequenceNode
       use fy_Sequence
       use fy_IntNode
       use fy_StringNode
       type(Mapping), target, intent(out) :: to
       type(Mapping), target, intent(in) :: from
+      integer, optional, intent(out) :: rc
 
       type(MappingIterator) :: iter
       class(YAML_Node), pointer :: key, val
@@ -161,7 +165,7 @@ contains
            type is (StringNode)
            type is (IntNode)
            class default
-              error stop "clone_mapping needs extension for non scalar keys"
+              __FAIL__(YAFYAML_NONSPECIFIC_ERROR)
            end select
            val => iter%second()                                                                                                       
            select type (q => val)                                                                                                     
@@ -185,6 +189,7 @@ contains
            call iter%next()
         end do
       end associate
+      __RETURN__(YAFYAML_SUCCESS)
    end subroutine clone_mapping
 
    module function first(this, unusable, err_msg, rc) result(ptr)

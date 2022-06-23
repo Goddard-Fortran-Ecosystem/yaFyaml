@@ -1,5 +1,8 @@
+#include "error_handling.h"
 module fy_CoreSchema
   use fy_AbstractSchema
+  use fy_ErrorHandling
+  use fy_ErrorCodes
   implicit none
   private
 
@@ -268,8 +271,9 @@ contains
     
   end function matches_real
 
-  logical function to_logical(text)
+  logical function to_logical(text,rc)
     character(*), intent(in) :: text
+    integer, optional, intent(out) :: rc
 
     select case (text)
     case ('true', 'True', 'TRUE')
@@ -277,29 +281,29 @@ contains
     case ('false', 'False', 'FALSE')
        to_logical = .false.
     end select
+    __RETURN__(YAFYAML_SUCCESS) 
 
   end function to_logical
 
-  integer function to_integer(text)
+  integer function to_integer(text, rc)
     character(*), intent(in) :: text
+    integer, optional, intent(out) :: rc
 
     integer :: status
     read(text,*, iostat=status) to_integer
-    if (status /= 0) then
-       error stop 'could not convert to integer'
-    end if
-    
+    __VERIFY__(status)
+    __RETURN__(YAFYAML_SUCCESS) 
   end function to_integer
 
 
-  real function to_real(text)
+  real function to_real(text,rc)
     character(*), intent(in) :: text
+    integer, optional, intent(out) :: rc
 
     integer :: status
     read(text,*, iostat=status) to_real
-    if (status /= 0) then
-       error stop 'could not convert to real'
-    end if
+    __VERIFY__(status)
+    __RETURN__(YAFYAML_SUCCESS) 
     
   end function to_real
 

@@ -25,19 +25,22 @@ module fy_AbstractSchema
      end function matches
 
 
-     logical function to_logical(text)
+     logical function to_logical(text,rc)
        import AbstractSchema
        character(*), intent(in) :: text
+       integer, optional, intent(out) :: rc
      end function to_logical
 
-     integer function to_integer(text)
+     integer function to_integer(text,rc)
        import AbstractSchema
        character(*), intent(in) :: text
+       integer, optional, intent(out) :: rc
      end function to_integer
 
-     real function to_real(text)
+     real function to_real(text,rc)
        import AbstractSchema
        character(*), intent(in) :: text
+       integer, optional, intent(out) :: rc
      end function to_real
 
   end interface

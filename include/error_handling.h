@@ -9,8 +9,8 @@
 
 ! Assumes status is passed back in dummy called "rc"
 #define __RETURN__(a)     call return_rc(a,__FILE__,__LINE__ ___rc___(rc)); __return__
-#define __VERIFY__(a)     if(verify(a,__FILE__,__LINE__ ___rc___(rc=rc))) __return__
-#define __VERIFY2__(msg,a)     if(verify(a,__FILE__,__LINE__ ___rc2___(msg,rc))) __return__
+#define __VERIFY__(a)     if(internal_verify(a,__FILE__,__LINE__ ___rc___(rc=rc))) __return__
+#define __VERIFY2__(msg,a)     if(internal_verify(a,__FILE__,__LINE__ ___rc2___(msg,rc))) __return__
 
 #define __ASSERT_CODE_AND_LOC_AND_RC__(cond,code,file,line,rc)  if(assert(cond,code,file,line ___rc___(rc))) __return__
 #define __ASSERT_CODE_AND_LOC__(cond,code,file,line) __ASSERT_CODE_AND_LOC_AND_RC__(cond,code,file,line,rc=rc)

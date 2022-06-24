@@ -14,7 +14,7 @@ module fy_ErrorHandling
 
    public :: throw
    public :: assert
-   public :: verify
+   public :: internal_verify
    public :: return_rc
    public :: set_throw_method
 
@@ -95,7 +95,7 @@ contains
    end function assert_code
 
 
-   logical function verify(status, filename, line, unusable, err_msg, rc) result(fail)
+   logical function internal_verify(status, filename, line, unusable, err_msg, rc) result(fail)
       integer, intent(in) :: status
       character(*), intent(in) :: filename
       integer, intent(in) :: line
@@ -119,7 +119,7 @@ contains
       end if
 
       __UNUSED_DUMMY__(unusable)
-   end function verify
+   end function internal_verify
 
 
    subroutine return_rc(status, filename, line, rc) 

@@ -83,9 +83,11 @@ module fy_MappingNode
                                                                                                                       
    interface
       ! Node methods
-      recursive module subroutine clone_mapping(to, from)
+      recursive module subroutine clone_mapping(to, from, rc)
          type(Mapping), target, intent(out) :: to
          type(Mapping), target, intent(in) :: from
+         integer, optional, intent(out) :: rc
+
       end subroutine clone_mapping
 
       ! Iterator methods
@@ -309,16 +311,20 @@ contains
    end function verify_mapping
 
    ! Node methods
-   recursive subroutine clone(to, from)
+   recursive subroutine clone(to, from, unusable, rc)
       class(MappingNode), intent(out) :: to
       class(YAML_Node), intent(in) :: from
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
 
       select type (from)
       type is (MappingNode)
          call clone_mapping(from=from%value, to=to%value)
       class default
-         error stop "expected mapping node"
+         __FAIL__(YAFYAML_TYPE_MISMATCH)
       end select
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
    end subroutine clone
 
 end module fy_MappingNode

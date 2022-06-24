@@ -21,7 +21,8 @@ contains
       flag = node%is_sequence()
       @assertTrue(flag)
 
-      node = IntNode(1_INT32)
+      deallocate(node)
+      allocate(node, source=IntNode(1_INT32))
       @assertFalse(node%is_sequence())
 
    end subroutine test_is_sequence

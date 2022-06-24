@@ -1,5 +1,9 @@
+#include "error_handling.h"
 module fy_FailsafeSchema
   use fy_AbstractSchema
+  use fy_ErrorCodes
+  use fy_ErrorHandling
+  use, intrinsic :: iso_fortran_env, only: REAL64, INT64
   implicit none
   private
 
@@ -55,19 +59,22 @@ contains
   end function matches_real
 
 
-  logical function to_logical(text)
+  logical function to_logical(text,rc)
     character(*), intent(in) :: text
-    error stop 'Failsafe schema does not support bool'
+    integer, optional, intent(out) :: rc
+    __RETURN__(YAFYAML_NONSPECIFIC_ERROR)
   end function to_logical
 
-  integer function to_integer(text)
+  integer(kind=INT64) function to_integer(text,rc)
     character(*), intent(in) :: text
-    error stop 'Failsafe schema does not support integer'
+    integer, optional, intent(out) :: rc
+    __RETURN__(YAFYAML_NONSPECIFIC_ERROR)
   end function to_integer
 
-  real function to_real(text)
+  real(kind=REAL64) function to_real(text,rc)
     character(*), intent(in) :: text
-    error stop 'Failsafe schema does not support float'
+    integer, optional, intent(out) :: rc
+    __RETURN__(YAFYAML_NONSPECIFIC_ERROR)
   end function to_real
 
 end module fy_FailsafeSchema

@@ -274,9 +274,11 @@ contains
 
 
    ! Node methods
-   recursive subroutine clone(to, from)
+   recursive subroutine clone(to, from, unusable, rc)
       class(SequenceNode), intent(out) :: to
       class(YAML_Node), intent(in) :: from
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
       
       integer, save :: depth = 0
 
@@ -285,10 +287,12 @@ contains
       type is (SequenceNode)
          call clone_sequence(from=from%value, to=to%value)
       class default
-         error stop "expected sequence node"
+         __FAIL__(YAFYAML_NONSPECIFIC_ERROR)
       end select
 
       depth = depth - 1
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
    end subroutine clone
 
 end module fy_SequenceNode

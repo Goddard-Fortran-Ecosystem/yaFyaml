@@ -102,16 +102,20 @@ contains
       
    end subroutine write_node_formatted
 
-   subroutine clone(to, from)
+   subroutine clone(to, from, unusable, rc)
       class(BoolNode), intent(out) :: to
       class(YAML_Node), intent(in)  :: from
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
 
       select type(from)
       type is (BoolNode)
          to%value = from%value
       class default
-         error stop "expected bool node"
+         __FAIL__(YAFYAML_TYPE_MISMATCH)
       end select
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
 
    end subroutine clone
 

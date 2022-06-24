@@ -19,6 +19,10 @@ contains
     r = Reader(stream)
 
 #ifdef __GFORTRAN__
+    @assertEqual('1',r%peek(offset=0))
+    @assertEqual('1',r%peek(offset=0))
+    @assertEqual('4',r%peek(offset=3))
+    @assertEqual('1',r%peek(offset=0))
 #else
     @assert_that(r%peek(offset=0), is(equal_to('1')))
     @assert_that(r%peek(offset=0), is(equal_to('1')))
@@ -40,14 +44,20 @@ contains
     r = Reader(stream)
 
 #ifdef __GFORTRAN__
+    @assertEqual('a', r%peek())
+#else
     @assert_that(r%peek(), is(equal_to('a')))
 #endif
     call r%forward(offset=1)
 #ifdef __GFORTRAN__
+    @assertEqual('b', r%peek())
+#else
     @assert_that(r%peek(), is(equal_to('b')))
 #endif
     call r%forward(offset=1)
 #ifdef __GFORTRAN__
+    @assertEqual(C_NULL_CHAR, r%peek())
+#else
     @assert_that(r%peek(), is(equal_to(C_NULL_CHAR)))
 #endif
   end subroutine test_forward

@@ -3,6 +3,7 @@ module fy_FailsafeSchema
   use fy_AbstractSchema
   use fy_ErrorCodes
   use fy_ErrorHandling
+  use, intrinsic :: iso_fortran_env, only: REAL64, INT64
   implicit none
   private
 
@@ -64,13 +65,13 @@ contains
     __RETURN__(YAFYAML_NONSPECIFIC_ERROR)
   end function to_logical
 
-  integer function to_integer(text,rc)
+  integer(kind=INT64) function to_integer(text,rc)
     character(*), intent(in) :: text
     integer, optional, intent(out) :: rc
     __RETURN__(YAFYAML_NONSPECIFIC_ERROR)
   end function to_integer
 
-  real function to_real(text,rc)
+  real(kind=REAL64) function to_real(text,rc)
     character(*), intent(in) :: text
     integer, optional, intent(out) :: rc
     __RETURN__(YAFYAML_NONSPECIFIC_ERROR)

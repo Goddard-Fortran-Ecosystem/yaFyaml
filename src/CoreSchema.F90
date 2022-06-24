@@ -3,6 +3,7 @@ module fy_CoreSchema
   use fy_AbstractSchema
   use fy_ErrorHandling
   use fy_ErrorCodes
+  use, intrinsic :: iso_fortran_env, only: REAL64, INT64
   implicit none
   private
 
@@ -280,12 +281,14 @@ contains
        to_logical = .true.
     case ('false', 'False', 'FALSE')
        to_logical = .false.
+    case default
+       __FAIL__(YAFYAML_NONSPECIFIC_ERROR)
     end select
     __RETURN__(YAFYAML_SUCCESS) 
 
   end function to_logical
 
-  integer function to_integer(text, rc)
+  integer(kind=INT64) function to_integer(text, rc)
     character(*), intent(in) :: text
     integer, optional, intent(out) :: rc
 
@@ -296,7 +299,7 @@ contains
   end function to_integer
 
 
-  real function to_real(text,rc)
+  real(kind=REAL64) function to_real(text,rc)
     character(*), intent(in) :: text
     integer, optional, intent(out) :: rc
 

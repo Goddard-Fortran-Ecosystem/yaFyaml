@@ -31,13 +31,15 @@ module fy_AbstractSchema
        integer, optional, intent(out) :: rc
      end function to_logical
 
-     integer function to_integer(text,rc)
+     integer(kind=INT64) function to_integer(text,rc)
+       use, intrinsic :: iso_fortran_env, only: INT64
        import AbstractSchema
        character(*), intent(in) :: text
        integer, optional, intent(out) :: rc
      end function to_integer
 
-     real function to_real(text,rc)
+     real(kind=REAL64) function to_real(text,rc)
+       use, intrinsic :: iso_fortran_env, only: REAL64
        import AbstractSchema
        character(*), intent(in) :: text
        integer, optional, intent(out) :: rc

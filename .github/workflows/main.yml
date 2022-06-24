@@ -98,8 +98,6 @@ jobs:
 
     name: Intel Fortran
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
       - name: Install Intel compilers
         run: |
           cd /tmp
@@ -111,21 +109,27 @@ jobs:
             intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-mpi-devel
           source /opt/intel/oneapi/setvars.sh
           printenv >> $GITHUB_ENV
-      - name: Versions
+      - name: Compiler Versions
         run: |
           ${FC} --version
-          ${CC} --version
-          mpirun --version
-      - name: Build pFUnit
+          cmake --version
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: Build GFE Prereqs
+        run: |
+          bash ./tools/ci-install-gfe.bash
+      - name: Build yaFyaml
         run: |
           mkdir -p build
           cd build
-          cmake ..
+          cmake .. -DCMAKE_Fortran_COMPILER=${FC} -DCMAKE_INSTALL_PREFIX=${HOME}/Software/yaFyaml -DCMAKE_PREFIX_PATH=${HOME}/Software/GFE
           make -j$(nproc)
       - name: Build Tests
         run: |
           cd build
-          make -j$(nproc) build-tests
+          make -j$(nproc) tests
       - name: Run Tests
         run: |
           cd build

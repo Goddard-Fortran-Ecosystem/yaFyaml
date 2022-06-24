@@ -60,6 +60,7 @@ contains
       lexr = Lexer(Reader(TextStream("a")))
       call lexr%scan_to_next_token()
 #ifdef __GFORTRAN__
+      @assertEqual('a',lexr%peek())
 #else
       @assert_that(lexr%peek(), is('a'))
 #endif
@@ -67,30 +68,35 @@ contains
       lexr = Lexer(Reader(TextStream("b")))
       call lexr%scan_to_next_token()
 #ifdef __GFORTRAN__
+      @assertEqual('b',lexr%peek())
 #else
       @assert_that(lexr%peek(), is('b'))
 #endif    
       lexr = Lexer(Reader(TextStream("  b")))
       call lexr%scan_to_next_token()
 #ifdef __GFORTRAN__
+      @assertEqual('b',lexr%peek())
 #else
       @assert_that(lexr%peek(), is('b'))
 #endif
       lexr = Lexer(Reader(EscapedTextStream("  \n  b")))
       call lexr%scan_to_next_token()
 #ifdef __GFORTRAN__
+      @assertEqual('b',lexr%peek())
 #else
       @assert_that(lexr%peek(), is('b'))
 #endif    
       lexr = Lexer(Reader(EscapedTextStream("  # comment \n  :")))
       call lexr%scan_to_next_token()
 #ifdef __GFORTRAN__
+      @assertEqual(':',lexr%peek())
 #else
       @assert_that(lexr%peek(), is(':'))
 #endif
       lexr = Lexer(Reader(EscapedTextStream("  # comment \n  \n# foo  #\n -")))
       call lexr%scan_to_next_token()
 #ifdef __GFORTRAN__
+      @assertEqual('-',lexr%peek())
 #else
       @assert_that(lexr%peek(), is('-'))
 #endif
@@ -107,6 +113,7 @@ contains
       associate (token => lexr%get_token())
         id = token%get_id()
 #ifdef __GFORTRAN__
+        @assertEqual(']', id)
 #else
         @assert_that(id, is(equal_to(']')))
 #endif
@@ -125,6 +132,7 @@ contains
       associate (token => lexr%get_token())
         id = token%get_id()
 #ifdef __GFORTRAN__
+        @assertEqual(FLOW_MAPPING_END_INDICATOR, id)
 #else
         @assert_that(id, is(equal_to(FLOW_MAPPING_END_INDICATOR)))
 #endif
@@ -143,6 +151,7 @@ contains
       associate (token => lexr%get_token())
         id = token%get_id()
 #ifdef __GFORTRAN__
+        @assertEqual(FLOW_NEXT_ENTRY_INDICATOR, id)
 #else
         @assert_that(id, is(equal_to(FLOW_NEXT_ENTRY_INDICATOR)))
 #endif
@@ -166,6 +175,7 @@ contains
       associate(token => lexr%get_token())
         id = token%get_id()
 #ifdef __GFORTRAN__
+        @assertEqual(BLOCK_NEXT_ENTRY_INDICATOR, id)
 #else
         @assert_that(id, is(equal_to(BLOCK_NEXT_ENTRY_INDICATOR)))
 #endif
@@ -186,6 +196,7 @@ contains
       associate (token => lexr%get_token())
         id = token%get_id()
 #ifdef __GFORTRAN__
+        @assertEqual(KEY_INDICATOR, id)
 #else
         @assert_that(id, is(equal_to(KEY_INDICATOR)))
 #endif
@@ -195,6 +206,7 @@ contains
       associate (token => lexr%get_token()) ! scalar token
         id = token%get_id()
 #ifdef __GFORTRAN__
+        @assertEqual(VALUE_INDICATOR, id)
 #else
         @assert_that(id, is(equal_to(VALUE_INDICATOR)))
 #endif
@@ -211,12 +223,17 @@ contains
       call lexr%skip_token() ! skip stream start
       associate(token => lexr%get_token()) ! skip stream start
         id = token%get_id()
+#ifdef __GFORTRAN__
+        @assertEqual('<scalar>', id)
+#else
         @assert_that(id, is(equal_to('<scalar>')))
+#endif
 
         select type (token)
         type is (ScalarToken)
            @assert_that(token%is_plain, is(true()))
 #ifdef __GFORTRAN__
+           @assertEqual('abc d', token%value)
 #else
            @assert_that(token%value, is(equal_to('abc d')))
 #endif
@@ -241,6 +258,7 @@ contains
       associate( token => lexr%get_token())
         id = token%get_id()
 #ifdef __GFORTRAN__
+        @assertEqual(':', id)
 #else
         @assert_that(id, is(equal_to(':')))
 #endif
@@ -253,6 +271,7 @@ contains
       associate (token => lexr%get_token()) ! "{"
         id = token%get_id()
 #ifdef __GFORTRAN__
+        @assertEqual('{', id)
 #else
         @assert_that(id, is(equal_to('{')))
 #endif
@@ -261,6 +280,7 @@ contains
       associate (token => lexr%get_token()) ! key marker
         id = token%get_id()
 #ifdef __GFORTRAN__
+        @assertEqual('?', id)
 #else
         @assert_that(id, is(equal_to('?')))
 #endif
@@ -269,6 +289,7 @@ contains
       associate (token => lexr%get_token()) ! a
         id = token%get_id()
 #ifdef __GFORTRAN__
+        @assertEqual('<scalar>', id)
 #else
         @assert_that(id, is(equal_to('<scalar>')))
 #endif
@@ -277,6 +298,7 @@ contains
       associate (token => lexr%get_token()) ! a
         id = token%get_id()
 #ifdef __GFORTRAN__
+        @assertEqual(':', id)
 #else
         @assert_that(id, is(equal_to(':')))
 #endif
@@ -296,6 +318,7 @@ contains
         id = token%get_id()
 
 #ifdef __GFORTRAN__
+        @assertEqual('<anchor>', id)
 #else
         @assert_that(id, is(equal_to('<anchor>')))
 #endif
@@ -316,6 +339,7 @@ contains
         id = token%get_id()
 
 #ifdef __GFORTRAN__
+        @assertEqual('<alias>', id)
 #else
         @assert_that(id, is(equal_to('<alias>')))
 #endif

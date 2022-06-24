@@ -43,6 +43,7 @@ contains
     call f%close()
 
 #ifdef __GFORTRAN__
+    @assertEqual('1',line)
 #else
     @assert_that(line,is(equal_to('1')))
 #endif
@@ -62,18 +63,21 @@ contains
     f = File(TMP_FILE, mode='r')
     line = f%read_line()
 #ifdef __GFORTRAN__
+    @assertEqual('1',line)
 #else
     @assert_that(line,is(equal_to('1')))
 #endif
     ! Check for trailing blanks - should be preserved!
     line = f%read_line()
 #ifdef __GFORTRAN__
+    @assertEqual('a b c ',line)
 #else
     @assert_that(line,is(equal_to('a b c ')))
 #endif
     ! all blanks
     line = f%read_line()
 #ifdef __GFORTRAN__
+    @assertEqual('   ',line)
 #else
     @assert_that(line,is(equal_to('   ')))
 #endif
@@ -93,7 +97,7 @@ contains
     f = File(TMP_FILE, mode='r')
     line = f%read_line()
 #ifdef __GFORTRAN__
-    @assert_that(line == '', is(true()))
+    @assertEqual('',line)
 #else
     @assert_that(line,is(equal_to('')))
 #endif

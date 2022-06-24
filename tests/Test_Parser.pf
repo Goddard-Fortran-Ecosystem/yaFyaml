@@ -382,18 +382,18 @@ end subroutine test_nested_block_sequence
       character(:), allocatable :: s
 
       p = Parser()
-      node = p%load(EscapedTextStream("---\nanimal noises: \n  - {dog: woof}\n  - {cat: pur}\n..."),rc=rc)
+      node = p%load(EscapedTextStream("---\nanimal noises: \n  - {dog: woof}\n  - {cat: purr}\n..."),rc=rc)
       @assert_that(rc, is(equal_to(YAFYAML_SUCCESS)))
 
       sub => node%of('animal noises')
       sub1 => sub%of(1)
 
       call sub1%get(s, "dog")
-      @assert_that(s, is("woof"))
+      @assertEqual("woof",s)
 
       sub1 => sub%of(2)
       call sub1%get(s, "cat")
-      @assert_that(s, is("pur"))
+      @assertEqual("purr",s)
 
    end subroutine test_block_list_of_flow_mappings
 

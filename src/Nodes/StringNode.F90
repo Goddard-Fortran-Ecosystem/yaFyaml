@@ -131,16 +131,20 @@ contains
       verify = .true.
    end function verify_string
 
-   subroutine clone(to, from)
+   subroutine clone(to, from, unusable, rc)
       class(StringNode), intent(out) :: to
       class(YAML_Node), intent(in)  :: from
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      integer, optional, intent(out) :: rc
 
       select type(from)
       type is (StringNode)
          to%value = from%value
       class default
-         error stop "expected string node"
+         __FAIL__(YAFYAML_TYPE_MISMATCH)
       end select
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
 
    end subroutine clone
 

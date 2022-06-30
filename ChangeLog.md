@@ -5,11 +5,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.3] 2022-06-15
+## [1.0.4] 2022-06-30
 
 ### Fixed
 
 - Fixed bug in Parser.F90 for using alias in a sequence.  Isolating test added to test suite.
+
+## [1.0.3] 2022-06-30
+
+### Fixed
+- Removed all stop statements and replaced with proper error handling and return codes
+- Fixed schemas "to" calls to produce INT64 and REAL64 rather than plain integer and real
+- Implemented workarounds for GNU in some unit tests
 
 ## [1.0.2] 2022-06-01
 

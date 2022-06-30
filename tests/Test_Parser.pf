@@ -356,5 +356,61 @@ end subroutine test_nested_block_sequence
    end subroutine test_pflogger_reproducer4
 
 
+   @test
+   subroutine test_scalar_anchor_in_mapping()
+      type(Parser) :: p
+      class(YAML_Node), allocatable :: node
+      class(YAML_Node), allocatable :: sub
+
+      integer :: i_a, i_b, i_d
+
+      p = Parser()
+      node = p%load(EscapedTextStream( &
+           & "---\n" // &
+           & " A: &anchor 2\n" // &
+           & " B: *anchor \n" // &
+           & " C: &anchor2 3\n" // &
+           & " D: *anchor2 \n" // &
+           & "..."))
+
+      call node%get(i_a, 'A')
+      @assert_that(i_a, is(equal_to(2)))
+      
+      call node%get(i_b, 'B')
+      @assert_that(i_b, is(equal_to(2)))
+
+      call node%get(i_d, 'D')
+      @assert_that(i_d, is(equal_to(3)))
+
+   end subroutine test_scalar_anchor_in_mapping
+
+   @test
+   subroutine test_scalar_anchor_in_sequence()
+      type(Parser) :: p
+      class(YAML_Node), allocatable :: node
+      class(YAML_Node), allocatable :: sub
+
+      integer :: i_a, i_b, i_d
+
+      p = Parser()
+      node = p%load(EscapedTextStream( &
+           & "---\n" // &
+           & " - &anchor 2\n" // &
+           & " - *anchor\n" // &
+           & " - &anchor2 3\n" // &
+           & " - *anchor2 \n" // &
+           & "..."))
+
+      call node%get(i_a, 1)
+      @assert_that(i_a, is(equal_to(2)))
+      
+      call node%get(i_b, 2)
+      @assert_that(i_b, is(equal_to(2)))
+
+      call node%get(i_d, 4)
+      @assert_that(i_d, is(equal_to(3)))
+
+   end subroutine test_scalar_anchor_in_sequence
+
 end module Test_Parser
 

@@ -5,6 +5,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] 2022-06-15
+
+### Fixed
+
+- Fixed bug in Parser.F90 for using alias in a sequence.  Isolating test added to test suite.
+
 ## [1.0.2] 2022-06-01
 
 ### Fixed

@@ -168,7 +168,6 @@ contains
 
       do
          token = lexr%get_token()
-
          select type (token)
          type is (StreamStartToken)
             ! no-op
@@ -209,7 +208,7 @@ contains
 
       class(AbstractToken), allocatable :: token, token_2
       logical :: expect_another
-      character(:), allocatable :: anchor
+      character(:), allocatable :: anchor, alias
       type(mapping), pointer :: map
       class(YAML_Node), pointer :: subnode
       type(Sequence), pointer :: subseq
@@ -231,7 +230,17 @@ contains
             deallocate(token)
             token = lexr%get_token()
          type is (AliasToken)
-            error stop 'improper AliasToken'
+            alias = q%value
+            if (this%anchors%count(alias) > 0) then
+!!$              if (key_str == MERGE_KEY) then
+!!$                 !TODO - should throw exception if not mapping ...
+!!$                 anchor_mapping => to_mapping(this%anchors%of(alias))
+!!$                 call merge(map, anchor_mapping)
+!!$              else ! scalar
+               call seq%push_back(this%anchors%of(alias))
+           end if
+           deallocate(alias)
+           cycle
          end select
 
          select type (token)
@@ -368,7 +377,7 @@ contains
                  !TODO - should throw exception if not mapping ...
                  anchor_mapping => to_mapping(this%anchors%of(alias))
                  call merge(map, anchor_mapping)
-              else
+              else ! scalar
                  call map%insert(_KEY, this%anchors%of(alias))
               end if
               deallocate(alias)

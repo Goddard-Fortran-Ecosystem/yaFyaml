@@ -77,7 +77,7 @@ contains
       depth = depth - 1
    end subroutine clone_sequence
 
-   module function at(this, unusable, err_msg, rc) result(ptr)
+   module function at_SequenceNode(this, unusable, err_msg, rc) result(ptr)
       use fy_keywordenforcer, only: KE => KeywordEnforcer
       class(YAML_Node), pointer :: ptr
       class(SequenceNodeIterator), intent(in) :: this
@@ -89,7 +89,7 @@ contains
 
       ptr => this%seq_iter%of()
       __RETURN__(YAFYAML_SUCCESS)
-   end function at
+   end function at_SequenceNode
 
 
 end submodule SequenceNode_implementation

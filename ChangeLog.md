@@ -5,6 +5,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.5] - 2023-01-23
+
+### Fixed
+
+- Fixes for GNU Make builds
+
 ## [1.0.4] 2022-06-30
 
 ### Fixed

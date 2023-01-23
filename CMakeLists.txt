@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 project (YAFYAML
-  VERSION 1.0.4
+  VERSION 1.0.5
   LANGUAGES Fortran)
 
 # Most users of this software do not (should not?) have permissions to
@@ -64,6 +64,11 @@ endif ()
 
 add_subdirectory (Examples EXCLUDE_FROM_ALL)
 
+# The following is needed for external projects using *nix make when
+# parent project builds gFTL-shared as a subproject.
+set (top_dir YAFYAML-${YAFYAML_VERSION_MAJOR}.${YAFYAML_VERSION_MINOR})
+set (YAFYAML_TOP_DIR "${CMAKE_INSTALL_PREFIX}/${top_dir}" CACHE PATH "")
+
 include(CMakePackageConfigHelpers)
 configure_package_config_file(YAFYAMLConfig.cmake.in YAFYAMLConfig.cmake
   INSTALL_DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/YAYFAMLConfig.cmake
@@ -73,18 +78,10 @@ write_basic_package_version_file(YAFYAMLConfig-version.cmake
   COMPATIBILITY SameMajorVersion
   )
 
-set (top_dir YAFYAML-${YAFYAML_VERSION_MAJOR}.${YAFYAML_VERSION_MINOR})
 install (
   FILES ${PROJECT_BINARY_DIR}/YAFYAMLConfig.cmake ${PROJECT_BINARY_DIR}/YAFYAMLConfig-version.cmake
   DESTINATION "${top_dir}/cmake")
 
-# The following is needed for external projects using *nix make when
-# parent project builds gFTL-shared as a subproject.
-set (YAFYAML_TOP_DIR "${CMAKE_INSTALL_PREFIX}/${top_dir}" CACHE PATH "")
-
-# The following is needed for external projects using *nix make when
-# parent project builds yafyaml as a subproject.
-set (YAFYAML_TOP_DIR "${CMAKE_INSTALL_PREFIX}/${top_dir}" CACHE PATH "")
 configure_file (YAFYAML.mk.in ${PROJECT_BINARY_DIR}/YAFYAML.mk @ONLY)
 install (
   FILES ${CMAKE_CURRENT_BINARY_DIR}/YAFYAML.mk ${CMAKE_CURRENT_BINARY_DIR}/YAFYAML.mk

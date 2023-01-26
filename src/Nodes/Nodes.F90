@@ -27,6 +27,8 @@ contains
       logical, intent(out) :: flag
       class(YAML_Node), intent(in) :: this
 
+      logical, pointer :: ptr
+
       flag = to_bool(this)
 
    end subroutine assign_to_logical

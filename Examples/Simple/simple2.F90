@@ -7,7 +7,7 @@ program Simple2
    implicit none
 
    type(Parser)           :: p
-   class(AbstractNode), allocatable :: node
+   class(YAML_Node), allocatable :: node
    character(:), allocatable :: name
    
    ! Define the parser object and load the file

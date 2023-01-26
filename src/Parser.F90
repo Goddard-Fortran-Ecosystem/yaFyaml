@@ -74,8 +74,9 @@ contains
 
    function new_Parser_default() result(p)
       type(Parser) :: p
-
-      p = Parser(CoreSchema())
+      type(CoreSchema) :: c
+      c = CoreSchema()
+      p = Parser(c)
 
    end function new_Parser_default
 
@@ -94,12 +95,16 @@ contains
       class(KeywordEnforcer), optional, intent(in) :: unusable
       integer, optional, intent(out) :: rc
 
+      print*,__FILE__,__LINE__
       select case (schema_name)
       case ('json','JSON')
+      print*,__FILE__,__LINE__
          p = Parser(JSONSchema())
       case ('core','Core')
+      print*,__FILE__,__LINE__
          p = Parser(CoreSchema())
       case ('failsafe','Failsafe')
+      print*,__FILE__,__LINE__
          p = Parser(FailsafeSchema())
       case default
          __FAIL__(YAFYAML_PARSER_ERROR)

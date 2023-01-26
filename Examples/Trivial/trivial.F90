@@ -7,7 +7,6 @@ program main
    integer :: prime
    integer :: status
    
-!!$   p = Parser('core')
    p = Parser()
    node = p%load(FileStream('trivial.yaml'))
 

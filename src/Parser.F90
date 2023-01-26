@@ -99,7 +99,6 @@ contains
       case ('json','JSON')
          p = Parser(JSONSchema())
       case ('core','Core')
-      print*,__FILE__,__LINE__
          p = Parser(CoreSchema())
       case ('failsafe','Failsafe')
          p = Parser(FailsafeSchema())

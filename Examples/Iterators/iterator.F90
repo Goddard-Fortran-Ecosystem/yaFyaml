@@ -12,7 +12,7 @@ program main
    class(YAML_Node), allocatable :: node
    integer :: status
 
-   p = Parser('core')
+   p = Parser()
    node = p%load('iterator.yaml')
    write(10,'(dt)', iostat=status) node
 

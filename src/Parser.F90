@@ -103,7 +103,6 @@ contains
       print*,__FILE__,__LINE__
          p = Parser(CoreSchema())
       case ('failsafe','Failsafe')
-      print*,__FILE__,__LINE__
          p = Parser(FailsafeSchema())
       case default
          __FAIL__(YAFYAML_PARSER_ERROR)

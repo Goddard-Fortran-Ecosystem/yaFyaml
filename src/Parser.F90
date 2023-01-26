@@ -95,7 +95,6 @@ contains
       class(KeywordEnforcer), optional, intent(in) :: unusable
       integer, optional, intent(out) :: rc
 
-      print*,__FILE__,__LINE__
       select case (schema_name)
       case ('json','JSON')
       print*,__FILE__,__LINE__

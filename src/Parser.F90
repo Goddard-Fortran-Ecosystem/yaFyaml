@@ -97,7 +97,6 @@ contains
 
       select case (schema_name)
       case ('json','JSON')
-      print*,__FILE__,__LINE__
          p = Parser(JSONSchema())
       case ('core','Core')
       print*,__FILE__,__LINE__

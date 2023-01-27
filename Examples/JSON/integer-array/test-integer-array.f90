@@ -6,7 +6,7 @@ program main
    class(YAML_Node), allocatable :: c
    integer, allocatable :: nodes(:)
 
-   p = Parser('core')
+   p = Parser()
    c = p%load('integer-array.json')
    call c%get(nodes, 'nodes')
 

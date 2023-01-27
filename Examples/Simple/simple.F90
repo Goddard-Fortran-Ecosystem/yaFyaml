@@ -5,8 +5,8 @@ program main
    implicit none
 
    type(Parser) :: p
-   class(AbstractNode), allocatable :: node
-   class(AbstractNode), pointer :: subnode
+   class(YAML_Node), allocatable :: node
+   class(YAML_Node), pointer :: subnode
 
    real :: x
    character(:), allocatable :: name

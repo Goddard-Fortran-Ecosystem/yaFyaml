@@ -5,6 +5,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.6] - 2023-01-26
+
+### Fixed
+
+- Workarounds for Intel 2021.7
+- Out of date examples have been updated
+
 ## [1.0.5] - 2023-01-23
 
 ### Fixed

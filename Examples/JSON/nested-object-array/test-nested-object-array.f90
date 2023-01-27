@@ -18,7 +18,7 @@ program main
 
   integer :: i, j, status
 
-  p = Parser('core')
+  p = Parser()
   c = p%load('nested-object-array.json')
   dag_vertices => c%at('dag', 'vertices', rc=status)
   if (status /= YAFYAML_SUCCESS) error stop "did not find 'dag' 'vertices'"

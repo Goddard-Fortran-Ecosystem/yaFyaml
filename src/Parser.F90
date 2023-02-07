@@ -74,8 +74,9 @@ contains
 
    function new_Parser_default() result(p)
       type(Parser) :: p
-
-      p = Parser(CoreSchema())
+      type(CoreSchema) :: c
+      c = CoreSchema()
+      p = Parser(c)
 
    end function new_Parser_default
 

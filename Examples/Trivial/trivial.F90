@@ -3,11 +3,11 @@ program main
    implicit none
    
    type(Parser) :: p
-   class(AbstractNode), allocatable :: node
+   class(YAML_Node), allocatable :: node
    integer :: prime
    integer :: status
    
-   p = Parser('core')
+   p = Parser()
    node = p%load(FileStream('trivial.yaml'))
 
    prime = node%of('prime')

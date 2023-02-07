@@ -54,7 +54,7 @@ module fy_SequenceNode
       procedure :: equal_to
       procedure :: not_equal_to
 
-      procedure :: at
+      procedure :: at => at_SequenceNode
       procedure :: first
       procedure :: second => first
 
@@ -79,13 +79,13 @@ module fy_SequenceNode
    
    interface
  
-      module function at(this, unusable, err_msg, rc) result(ptr)
+      module function at_SequenceNode(this, unusable, err_msg, rc) result(ptr)
          class(YAML_Node), pointer :: ptr
          class(SequenceNodeIterator), intent(in) :: this
          class(KeywordEnforcer), optional, intent(in) :: unusable
          STRING_DUMMY, optional, intent(inout) :: err_msg
          integer, optional, intent(out) :: rc
-      end function at
+       end function at_SequenceNode
 
       recursive module subroutine clone_sequence(to, from)
          type(sequence), target, intent(out) :: to

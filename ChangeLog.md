@@ -5,6 +5,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.7] - 2023-02-07
+
+### Fixed
+
+- Workaround for NVIDIA compiler
+
+### Added
+
+- Added gfortran-12 test for macos-12
+
 ## [1.0.6] - 2023-01-26
 
 ### Fixed

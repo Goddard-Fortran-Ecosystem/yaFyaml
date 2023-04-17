@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `IntelLLVM.cmake` file as a copy of `Intel.cmake` to support the LLVM Intel compiler frontends
 
+## [1.0.7] - 2023-02-07
+
+### Fixed
+
+- Workaround for NVIDIA compiler
+
+### Added
+
+- Added gfortran-12 test for macos-12
+
+## [1.0.6] - 2023-01-26
+
+### Fixed
+
+- Workarounds for Intel 2021.7
+- Out of date examples have been updated
+
+## [1.0.5] - 2023-01-23
+
+### Fixed
+
+- Fixes for GNU Make builds
+
 ## [1.0.4] 2022-06-30
 
 ### Fixed

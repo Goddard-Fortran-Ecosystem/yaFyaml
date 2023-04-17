@@ -9,10 +9,10 @@ program main
    implicit none
 
    type(Parser) :: p
-   class(AbstractNode), allocatable :: node
+   class(YAML_Node), allocatable :: node
    integer :: status
 
-   p = Parser('core')
+   p = Parser()
    node = p%load('iterator.yaml')
    write(10,'(dt)', iostat=status) node
 
@@ -24,11 +24,11 @@ contains
    ! This procedure does not check any potential errors
    ! but is easier to follow as a result.
    subroutine optimistic(node)
-      class(AbstractNode), intent(in) :: node
+      class(YAML_Node), intent(in) :: node
 
       integer :: i
       integer :: prime
-      class(AbstractNode), pointer :: subcfg, subsubcfg
+      class(YAML_Node), pointer :: subcfg, subsubcfg
       class(NodeIterator), allocatable :: iter
       character(:), pointer :: shape
       integer :: n_edges
@@ -58,11 +58,11 @@ contains
    
    ! This procedure carefully checks all return codes.
    subroutine pessimistic(node)
-      class(AbstractNode), intent(in) :: node
+      class(YAML_Node), intent(in) :: node
 
       integer :: i
       integer :: prime
-      class(AbstractNode), pointer :: subcfg, subsubcfg
+      class(YAML_Node), pointer :: subcfg, subsubcfg
       class(NodeIterator), allocatable :: iter
       character(:), pointer :: shape, key
       integer :: n_edges

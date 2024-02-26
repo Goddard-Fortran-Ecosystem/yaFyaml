@@ -9,7 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fujitsu compiler support
 
-## [1.2.0] - 2023-11-29
+### Changed
+
+- Updated CI
+  - Fix NVIDIA CI
+  - Add Intel
+  - Remove gcc 9 from macos
+
+# [1.2.0] - 2023-11-29
 
 ### Fixed
 

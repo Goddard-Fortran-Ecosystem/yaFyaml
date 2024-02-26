@@ -5,6 +5,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Fujitsu compiler support
+
 ## [1.2.0] - 2023-11-29
 
 ### Fixed

@@ -52,6 +52,10 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Set all directories as git safe
+        run: |
+          git config --global --add safe.directory '*'
+
       - name: Build GFE Prereqs
         run: |
           bash ./tools/ci-install-gfe.bash
@@ -92,6 +96,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set all directories as git safe
+        run: |
+          git config --global --add safe.directory '*'
 
       - name: Setup Intel oneAPI repository
         run: |
@@ -104,6 +114,11 @@ jobs:
         timeout-minutes: 5
         run: sudo apt-get install intel-oneapi-compiler-fortran intel-oneapi-compiler-dpcpp-cpp
 
+      # optional
+      - name: Install Intel MPI
+        timeout-minutes: 5
+        run: sudo apt-get install intel-oneapi-mpi intel-oneapi-mpi-devel
+
       - name: Setup Intel oneAPI environment
         run: |
           source /opt/intel/oneapi/setvars.sh
@@ -114,6 +129,7 @@ jobs:
         run: |
           ${FC} --version
           ${CC} --version
+          mpirun --version
           cmake --version
 
       - name: Build GFE Prereqs

@@ -11,13 +11,11 @@ contains
 
    @test
    subroutine test_single_scalar()
-      type(Parser) :: p
       class(YAML_Node), allocatable :: node
       character(:), allocatable :: scalar
       integer :: rc
 
-      p = Parser()
-      node = p%load(EscapedTextStream("--- a\n..."),rc=rc)
+      call load(node, EscapedTextStream("--- a\n..."), rc=rc)
       @assert_that(rc, is(equal_to(YAFYAML_SUCCESS)))
       scalar = node
 
@@ -31,18 +29,15 @@ contains
 
    @test
    subroutine test_single_flow_sequence()
-      type(Parser) :: p
       class(YAML_Node), allocatable :: node
       logical :: flag
       integer :: rc
 
-      p = Parser()
-      node = p%load(EscapedTextStream("---\n [true, false, true]\n..."),rc=rc)
+      call load(node, EscapedTextStream("---\n [true, false, true]\n..."),rc=rc)
       @assert_that(rc, is(equal_to(YAFYAML_SUCCESS)))
 
       flag = node%of(1)
       @assert_that(flag, is(true()))
-
 
       flag = node%of(2)
       @assert_that(flag, is(false()))
@@ -53,15 +48,12 @@ contains
 
    @test
    subroutine test_single_flow_mapping()
-      type(Parser) :: p
       class(YAML_Node), allocatable :: node
       logical :: flag
       integer :: rc
 
-      p = Parser()
-      node = p%load(EscapedTextStream("---\n {a: true, b: false}\n..."),rc=rc)
+      call load(node, EscapedTextStream("---\n {a: true, b: false}\n..."), rc=rc)
       @assert_that(rc, is(equal_to(YAFYAML_SUCCESS)))
-     
       call node%get(flag, "a")
       @assert_that(flag, is(equal_to(.true.)))
 
@@ -73,17 +65,15 @@ contains
 
    @test
    subroutine test_single_block_sequence()
-      type(Parser) :: p
       class(YAML_Node), allocatable :: node
       logical :: flag
       integer :: rc
 
-      p = Parser()
-      node =p%load(EscapedTextStream("---\n - true \n - false \n - true \n..."),rc=rc)
+      call load(node, EscapedTextStream("---\n - true \n - false \n - true \n..."),rc=rc)
       @assert_that(rc, is(equal_to(YAFYAML_SUCCESS)))
 
       @assert_that(int(node%size()), is(3))
-      
+
       call node%get(flag, 1)
       @assert_that(flag, is(.true.))
       call node%get(flag, 2)
@@ -95,15 +85,13 @@ contains
 
    @test
    subroutine test_nested_block_sequence()
-      type(Parser) :: p
       class(YAML_Node), target, allocatable :: node
       class(YAML_Node), pointer :: sub
 
       integer :: i, n, rc
 
-      p = Parser()
-      node = p%load(EscapedTextStream("---\n - \n    - 1 \n    - 2 \n - \n    - 3 \n    - 4 \n..."),rc=rc)
-      !                                0123 0123 012345678 012345678 0123 012345678 012345678 012
+      call load(node, EscapedTextStream("---\n - \n    - 1 \n    - 2 \n - \n    - 3 \n    - 4 \n..."),rc=rc)
+      !                                  0123 0123 012345678 012345678 0123 012345678 012345678 012
       @assert_that(rc, is(equal_to(YAFYAML_SUCCESS)))
 
       sub => node%at(1)
@@ -124,18 +112,16 @@ contains
       call node%get(n, 1, 2)
       @assert_that(n, is(2))
 
-end subroutine test_nested_block_sequence
+   end subroutine test_nested_block_sequence
 
    @test
    subroutine test_nested_block_mapping_sequence()
-      type(Parser) :: p
       class(YAML_Node), target, allocatable :: node
       class(YAML_Node), pointer :: sub
       integer :: n, rc
 
-      p = Parser()
-      node = p%load(EscapedTextStream("---\n cat: \n    - 1 \n    - 2 \n dog: \n    - 3 \n    - 4 \n..."),rc=rc)
-      !                                0123 0123456 012345678 012345678 0123567 012345678 012345678 012
+      call load(node, EscapedTextStream("---\n cat: \n    - 1 \n    - 2 \n dog: \n    - 3 \n    - 4 \n..."),rc=rc)
+      !                                  0123 0123456 012345678 012345678 0123567 012345678 012345678 012
       @assert_that(rc, is(equal_to(YAFYAML_SUCCESS)))
 
       sub => node%of('cat')
@@ -157,17 +143,15 @@ end subroutine test_nested_block_sequence
    ! This test exposes an isuse with using 7.1 and deeply nested YAML
    ! objects.
    subroutine test_deeply_nested_nag_7p1()
-      type(Parser) :: p
       class(YAML_Node), target, allocatable :: node
 
       integer :: rc
 
-      p = Parser()
-      node = p%load(EscapedTextStream("---\n 1: { 2: {3: {4: {5: 6}}}} \n ..."),rc=rc)
+      call load(node, EscapedTextStream("---\n 1: { 2: {3: {4: {5: 6}}}} \n ..."),rc=rc)
       @assert_that(rc, is(equal_to(YAFYAML_SUCCESS)))
       deallocate(node)
 
-      node = p%load(EscapedTextStream("---\n 1: { 2: {3: {4: {5: 6}}}} \n ..."),rc=rc)
+      call load(node, EscapedTextStream("---\n 1: { 2: {3: {4: {5: 6}}}} \n ..."),rc=rc)
       @assert_that(rc, is(equal_to(YAFYAML_SUCCESS)))
 
    end subroutine test_deeply_nested_nag_7p1
@@ -175,14 +159,12 @@ end subroutine test_nested_block_sequence
 
    @test
    subroutine test_nested_mapping_block_flow()
-      type(Parser) :: p
       class(YAML_Node), target, allocatable :: node
       class(YAML_Node), pointer :: sub
 
       integer :: v1, v2, rc
 
-      p = Parser()
-      node  = p%load(EscapedTextStream("---\n mapping: { v1: 7, v2: 8 } \n..."),rc=rc)
+      call load(node, EscapedTextStream("---\n mapping: { v1: 7, v2: 8 } \n..."),rc=rc)
       @assert_that(rc, is(equal_to(YAFYAML_SUCCESS)))
 
       ! Reproducer for related issue found in pflogger
@@ -201,15 +183,12 @@ end subroutine test_nested_block_sequence
 
    @test
    subroutine test_pflogger_reproducer1()
-      type(Parser) :: p
       class(YAML_Node), allocatable :: node
-
       type(EscapedTextStream) :: s
       integer :: rc
 
-      p = Parser()
       s = EscapedTextStream("format: --- \n")
-      node = p%load(s,rc=rc)
+      call load(node, s, rc=rc)
       @assert_that(rc, is(equal_to(YAFYAML_SUCCESS)))
 
    end subroutine test_pflogger_reproducer1
@@ -217,12 +196,9 @@ end subroutine test_nested_block_sequence
 
    @test
    subroutine test_pflogger_reproducer2()
-      type(Parser) :: p
       class(YAML_Node), target, allocatable :: node
 
-      p = Parser()
-      node = p%load(EscapedTextStream( &
-           & " B: {a: '---' , b: hello}\n"))
+      call load(node, EscapedTextStream(" B: {a: '---' , b: hello}\n"))
 
    end subroutine test_pflogger_reproducer2
 
@@ -230,15 +206,30 @@ end subroutine test_nested_block_sequence
 
 
    @test
-   subroutine test_simple_anchor()
-      type(Parser) :: p
+   subroutine test_simple_anchor0()
       class(YAML_Node), allocatable :: node
-      class(YAML_Node), allocatable :: sub
+      logical :: flag
+      integer :: rc
+
+      
+      call load(node, EscapedTextStream("---\n {a: true, b: false}\n..."), rc=rc)
+      @assert_that(rc, is(equal_to(YAFYAML_SUCCESS)))
+
+      call node%get(flag, "a")
+      @assert_that(flag, is(equal_to(.true.)))
+
+      flag = node%of("b")
+      @assert_that(flag, is(equal_to(.false.)))
+
+   end subroutine test_simple_anchor0
+
+   @test
+   subroutine test_simple_anchor()
+      class(YAML_Node), allocatable :: node
 
       integer :: i_a, i_b
 
-      p = Parser()
-      node = p%load(EscapedTextStream( &
+      call load(node, EscapedTextStream( &
            & "---\n" // &
            & " A: &anchor \n" // &
            & "    i: 1 \n" // &
@@ -251,18 +242,16 @@ end subroutine test_nested_block_sequence
       call node%get(i_b, 'B', 'i')
       @assert_that(i_b, is(equal_to(1)))
 
-   end subroutine test_simple_anchor
+  end subroutine test_simple_anchor
 
    ! Reproducer for issue #13
    @test
    subroutine test_quoted_integer()
-      type(Parser) :: p
       class(YAML_Node), allocatable :: node
 
       character(:), allocatable :: s
 
-      p = Parser()
-      node = p%load(EscapedTextStream(' key1: "2004" \n'))
+      call load(node, EscapedTextStream(' key1: "2004" \n'))
       call node%get(s,"key1")
 
 #ifdef __GFORTRAN__
@@ -276,13 +265,9 @@ end subroutine test_nested_block_sequence
 
    @test
    subroutine test_pflogger_reproducer3
-      type(Parser) :: p
       class(YAML_Node), allocatable :: node
       integer :: unit
-
-      p = Parser()
-
-      node = p%load(EscapedTextStream( &
+      call load(node, EscapedTextStream( &
            & "A: \n" // &
            & "  class: StreamHandler \n" // &
            & "  unit: -129\n" // &
@@ -296,24 +281,20 @@ end subroutine test_nested_block_sequence
 
    @test
    subroutine test_nested_hard_1()
-      type(Parser) :: p
       class(YAML_Node), target, allocatable :: node
       class(YAML_Node), pointer :: sub
       integer :: n
 
-      p = Parser()
-      node = p%load(EscapedTextStream("---\n cat: [1 2] \n dog: [3, 4, [5, [6, 7], 8]] \n ..."))
+      call load(node, EscapedTextStream("---\n cat: [1 2] \n dog: [3, 4, [5, [6, 7], 8]] \n ..."))
 
    end subroutine test_nested_hard_1
 
 
    @test
    subroutine test_mapl_reproducer()
-      type(Parser) :: p
       class(YAML_Node), target, allocatable :: node
 
-      p = Parser()
-      node = p%load(TextStream('{A: {setServices: {sharedObj: libA}}}'))
+      call load(node, TextStream('{A: {setServices: {sharedObj: libA}}}'))
       associate (b => node%begin(), e => node%end())
         @assert_that((b == e), is(false()))
       end associate
@@ -322,16 +303,13 @@ end subroutine test_nested_block_sequence
 
    @test
    subroutine test_pflogger_reproducer4
-      type(Parser) :: p
       class(YAML_Node), allocatable :: node, node_copy
       integer :: counter
       class(NodeIterator), allocatable :: iter
       character(:), pointer :: name
       class(YAML_Node), pointer :: subnode, subnode_copy
 
-      p = Parser()
-
-      node = p%load(EscapedTextStream( &
+      call load(node, EscapedTextStream( &
            & " A: {format: '---'}\n" // &
            & " B: {format: '---', datefmt: hello }\n"))
 
@@ -375,14 +353,12 @@ end subroutine test_nested_block_sequence
 
    @test
    subroutine test_block_list_of_flow_mappings()
-      type(Parser) :: p
-      class(YAML_Node), target, allocatable :: node
+       class(YAML_Node), target, allocatable :: node
       class(YAML_Node), pointer :: sub, sub1
       integer :: n, rc
       character(:), allocatable :: s
 
-      p = Parser()
-      node = p%load(EscapedTextStream("---\nanimal noises: \n  - {dog: woof}\n  - {cat: purr}\n..."),rc=rc)
+      call load(node, EscapedTextStream("---\nanimal noises: \n  - {dog: woof}\n  - {cat: purr}\n..."),rc=rc)
       @assert_that(rc, is(equal_to(YAFYAML_SUCCESS)))
 
       sub => node%of('animal noises')
@@ -399,14 +375,12 @@ end subroutine test_nested_block_sequence
 
    @test
    subroutine test_scalar_anchor_in_mapping()
-      type(Parser) :: p
-      class(YAML_Node), allocatable :: node
+       class(YAML_Node), allocatable :: node
       class(YAML_Node), allocatable :: sub
 
       integer :: i_a, i_b, i_d
 
-      p = Parser()
-      node = p%load(EscapedTextStream( &
+      call load(node, EscapedTextStream( &
            & "---\n" // &
            & " A: &anchor 2\n" // &
            & " B: *anchor \n" // &
@@ -416,7 +390,7 @@ end subroutine test_nested_block_sequence
 
       call node%get(i_a, 'A')
       @assert_that(i_a, is(equal_to(2)))
-      
+
       call node%get(i_b, 'B')
       @assert_that(i_b, is(equal_to(2)))
 
@@ -427,14 +401,12 @@ end subroutine test_nested_block_sequence
 
    @test
    subroutine test_scalar_anchor_in_sequence()
-      type(Parser) :: p
       class(YAML_Node), allocatable :: node
       class(YAML_Node), allocatable :: sub
 
       integer :: i_a, i_b, i_d
 
-      p = Parser()
-      node = p%load(EscapedTextStream( &
+      call load(node, EscapedTextStream( &
            & "---\n" // &
            & " - &anchor 2\n" // &
            & " - *anchor\n" // &
@@ -444,7 +416,7 @@ end subroutine test_nested_block_sequence
 
       call node%get(i_a, 1)
       @assert_that(i_a, is(equal_to(2)))
-      
+
       call node%get(i_b, 2)
       @assert_that(i_b, is(equal_to(2)))
 

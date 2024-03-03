@@ -97,10 +97,8 @@ contains
       class(YAML_Node), target, allocatable :: node
       type(Mapping), pointer :: m
       class(NodeIterator), allocatable :: b, e
-      type(Parser) :: p
 
-      p = Parser()
-      node = p%load(EscapedTextStream( &
+      call load(node, EscapedTextStream( &
            & " B: {A: 3} \n A: 5"))
 
       ! Note: GFortran needs the extra parens around (b /= e)

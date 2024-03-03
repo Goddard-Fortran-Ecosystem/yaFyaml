@@ -62,17 +62,21 @@ module fy_Parser
       procedure :: interpret
    end type Parser
 
-
    interface Parser
       module procedure new_Parser_schema
       module procedure new_Parser_schema_name
    end interface Parser
 
+   interface Load
+      module procedure load_file
+      module procedure load_stream
+   end interface Load
+
    character(*), parameter :: MERGE_KEY = '<<'
 
 contains
 
-   subroutine load(node, stream, unusable, schema_name, rc)
+   subroutine load_stream(node, stream, unusable, schema_name, rc)
       class(YAML_Node), allocatable, intent(out) :: node
       class(AbstractTextStream), intent(in) :: stream
       class(KeywordEnforcer), optional, intent(in) :: unusable
@@ -93,7 +97,24 @@ contains
 
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
-   end subroutine load
+   end subroutine load_stream
+
+   subroutine load_file(node, file, unusable, schema_name, rc)
+      class(YAML_Node), allocatable, intent(out) :: node
+      character(*), intent(in) :: file
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      character(*), optional, intent(in) :: schema_name
+      integer, optional, intent(out) :: rc
+
+      integer :: status
+      type(Parser) :: p
+
+      call load_stream(node, FileStream(file), schema_name=schema_name, rc=status)
+      __VERIFY__(status)
+
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end subroutine load_file
 
    function new_Parser_schema(schema) result(p)
       type(Parser) :: p

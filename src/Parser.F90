@@ -43,6 +43,7 @@ module fy_Parser
    private
 
    public :: Parser
+   public :: load
 
    type :: Parser
       private
@@ -63,7 +64,6 @@ module fy_Parser
 
 
    interface Parser
-      module procedure new_Parser_default
       module procedure new_Parser_schema
       module procedure new_Parser_schema_name
    end interface Parser
@@ -72,19 +72,36 @@ module fy_Parser
 
 contains
 
-   function new_Parser_default() result(p)
-      type(Parser) :: p
-      type(CoreSchema) :: c
-      c = CoreSchema()
-      p = Parser(c)
+   subroutine load(node, stream, unusable, schema_name, rc)
+      class(YAML_Node), allocatable, intent(out) :: node
+      class(AbstractTextStream), intent(in) :: stream
+      class(KeywordEnforcer), optional, intent(in) :: unusable
+      character(*), optional, intent(in) :: schema_name
+      integer, optional, intent(out) :: rc
 
-   end function new_Parser_default
+      integer :: status
+      type(Parser) :: p
+
+      p = Parser(CoreSchema())
+      if (present(schema_name)) then
+         p = Parser(schema_name, rc=status)
+         __VERIFY__(status)
+      end if
+
+      allocate(node, source=p%load(stream, rc=status))
+      __VERIFY__(status)
+
+      __RETURN__(YAFYAML_SUCCESS)
+      __UNUSED_DUMMY__(unusable)
+   end subroutine load
 
    function new_Parser_schema(schema) result(p)
       type(Parser) :: p
-      class(AbstractSchema), intent(in) :: schema
+      class(AbstractSchema), optional, intent(in) :: schema
 
-      p%schema = schema
+      p%schema = CoreSchema()
+      if (present(schema)) p%schema = schema
+
       p%anchors = StringNodeMap()
 
    end function new_Parser_schema
@@ -94,6 +111,8 @@ contains
       character(*), intent(in) :: schema_name
       class(KeywordEnforcer), optional, intent(in) :: unusable
       integer, optional, intent(out) :: rc
+
+      character(:), allocatable :: schema_name_
 
       select case (schema_name)
       case ('json','JSON')
@@ -121,7 +140,9 @@ contains
       integer :: status
 
       lexr = Lexer(Reader(stream))
-      node = this%top(lexr,rc=status)
+!#      node = this%top(lexr,rc=status)
+      allocate(node, source=this%top(lexr,rc=status))
+
       __VERIFY__(status)
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)
@@ -152,7 +173,7 @@ contains
   
       integer :: status
 
-      call this%top_load(lexr, node, rc=status)
+     call this%top_load(lexr, node, rc=status)
       __VERIFY__(status)
       __RETURN__(YAFYAML_SUCCESS)
       __UNUSED_DUMMY__(unusable)     
@@ -172,10 +193,11 @@ contains
       type(sequence), pointer :: seq
       integer :: status
 
-      done = .false.
+     done = .false.
 
       do
-         token = lexr%get_token()
+         allocate(token, source=lexr%get_token())
+!#         token = lexr%get_token()
          select type (token)
          type is (StreamStartToken)
             ! no-op
@@ -231,21 +253,27 @@ contains
       type(Sequence), pointer :: subseq
       type(Mapping), pointer :: submap
 
-!!$      integer :: depth = 0
-!!$      depth = depth + 1
+      integer :: depth = 0
+      integer :: counter
+      depth = depth + 1
 
       expect_another = .false.
 
+      counter = 0
       do
+         counter = counter + 1
 
-         token = lexr%get_token()
 
+!#         token = lexr%get_token()
+         allocate(token, source=lexr%get_token())
 
          select type(q => token)
          type is (AnchorToken)
             anchor = q%value
             deallocate(token)
-            token = lexr%get_token()
+!#            token = lexr%get_token()
+         allocate(token, source=lexr%get_token())
+
          type is (AliasToken)
             alias = q%value
             if (this%anchors%count(alias) > 0) then
@@ -257,6 +285,7 @@ contains
                call seq%push_back(this%anchors%of(alias))
            end if
            deallocate(alias)
+           deallocate(token)
            cycle
          end select
 
@@ -378,7 +407,8 @@ contains
 
       associate (token => lexr%get_token())
 
-        _KEY = get_key(this, token, key_str,rc=rc)
+!#        _KEY = get_key(this, token, key_str,rc=rc)
+         allocate(_KEY, source=get_key(this, token, key_str,rc=rc))
         __VERIFY__(YAFYAML_SUCCESS)
 
         associate (value_token => lexr%get_token())
@@ -389,13 +419,16 @@ contains
 
         ! Usually, next token indicates the value type of key-value
         ! pair.
-        token_2 = lexr%get_token()  
+!#        token_2 = lexr%get_token()
+         allocate(token_2, source=lexr%get_token())
           
         ! Possible anchor or alias?
         select type(q => token_2)
         type is (AnchorToken)
-           anchor = q%value
-           token_3 = lexr%get_token()
+!#           anchor = q%value
+           allocate(anchor, source=q%value)
+!#           token_3 = lexr%get_token()
+           allocate(token_3, source=lexr%get_token())
         type is (AliasToken)
            alias = q%value
            if (this%anchors%count(alias) > 0) then

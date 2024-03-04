@@ -5,9 +5,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+# [1.3.0] - 2024-03-03
+
 ### Added
 
 - Fujitsu compiler support
+
 - Introduced new interface that circumvents gfortran-13 regression on
   polymorphic allocation.  Unfortunately this requires an interface
   change for downstream projects thta wish to use gfortran-13.
@@ -20,8 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fix NVIDIA CI
   - Add Intel
   - Remove gcc 9 from macos
-
-# [1.2.0] - 2023-11-29
 
 
 ## [1.2.0] - 2023-11-29

@@ -5,7 +5,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-# [1.3.0] - 2024-03-03
+### Changed
+
+- Add `-quiet` flag for NAG Fortran
+
+## [1.3.0] - 2024-03-03
 
 ### Added
 

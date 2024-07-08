@@ -5,7 +5,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-# [1.3.0] - 2024-03-03
+### Fixed
+
+- Workaround for weird link error in GFortran 13.3 involving
+  INTENT(OUT) arguments containing allocatable strings.
+
+## [1.3.0] - 2024-03-03
 
 ### Added
 

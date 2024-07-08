@@ -312,7 +312,7 @@ contains
 
    ! Node methods
    recursive subroutine clone(to, from, unusable, rc)
-      class(MappingNode), intent(out) :: to
+      class(MappingNode), intent(inout) :: to
       class(YAML_Node), intent(in) :: from
       class(KeywordEnforcer), optional, intent(in) :: unusable
       integer, optional, intent(out) :: rc

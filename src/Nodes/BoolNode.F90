@@ -103,7 +103,7 @@ contains
    end subroutine write_node_formatted
 
    subroutine clone(to, from, unusable, rc)
-      class(BoolNode), intent(out) :: to
+      class(BoolNode), intent(inout) :: to
       class(YAML_Node), intent(in)  :: from
       class(KeywordEnforcer), optional, intent(in) :: unusable
       integer, optional, intent(out) :: rc

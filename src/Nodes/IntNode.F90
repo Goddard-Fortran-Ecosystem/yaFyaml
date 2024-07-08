@@ -134,7 +134,7 @@ contains
    end function verify_int
 
    subroutine clone(to, from, unusable, rc)
-      class(IntNode), intent(out) :: to
+      class(IntNode), intent(inout) :: to
       class(YAML_Node), intent(in)  :: from
       class(KeywordEnforcer), optional, intent(in) :: unusable
       integer, optional, intent(out) :: rc

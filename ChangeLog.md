@@ -5,6 +5,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2024-07-10
+
 ### Fixed
 
 - Workaround for weird link error in GFortran 13.3 involving

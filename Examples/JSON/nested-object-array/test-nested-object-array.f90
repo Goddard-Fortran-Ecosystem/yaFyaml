@@ -1,6 +1,6 @@
 program main
   !! Test the reading of a JSON file with a nested array of objects
-  use yafyaml, only : Parser, YAML_Node, YAFYAML_SUCCESS, assignment(=)
+  use yafyaml
   implicit none
 
   type vertex
@@ -12,14 +12,12 @@ program main
   end type
 
   type(dag) :: d
-  type(Parser) :: p
   class(YAML_Node), allocatable :: c
   class(YAML_Node), pointer :: dag_vertices, dag_vertices_i_depends_on
 
   integer :: i, j, status
 
-  p = Parser()
-  c = p%load('nested-object-array.json')
+  call load(c, 'nested-object-array.json')
   dag_vertices => c%at('dag', 'vertices', rc=status)
   if (status /= YAFYAML_SUCCESS) error stop "did not find 'dag' 'vertices'"
 

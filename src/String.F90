@@ -82,7 +82,7 @@ contains
 
    
    subroutine copySelf(a, b)
-      class (String), intent(out) :: a
+      class (String), intent(inout) :: a
       class (String), intent(in) :: b
 
       a = b%toString()
@@ -91,7 +91,7 @@ contains
 
 
    subroutine copyFromString(a, b)
-      class (String), intent(out) :: a
+      class (String), intent(inout) :: a
       character(len=*), intent(in) :: b
 
       a%s = trim(b)

@@ -9,9 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - LLVMFlang compiler support
 
+## [1.4.0] - 2024-07-10
+
+### Fixed
+
+- Workaround for weird link error in GFortran 13.3 involving
+  INTENT(OUT) arguments containing allocatable strings.
+  
 ### Changed
 
-- Update CI to remove `macos-12`, add `macos-14`, and `ubuntu-24.04`
+- Update CI to remove `macos-12`, add `macos-14`, and `ubuntu-24.04`, add `gfortran-14`
 
 ## [1.3.0] - 2024-03-03
 

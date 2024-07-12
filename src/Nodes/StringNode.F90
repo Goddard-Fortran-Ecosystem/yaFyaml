@@ -132,7 +132,7 @@ contains
    end function verify_string
 
    subroutine clone(to, from, unusable, rc)
-      class(StringNode), intent(out) :: to
+      class(StringNode), intent(inout) :: to
       class(YAML_Node), intent(in)  :: from
       class(KeywordEnforcer), optional, intent(in) :: unusable
       integer, optional, intent(out) :: rc

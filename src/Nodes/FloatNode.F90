@@ -135,7 +135,7 @@ contains
    end function verify_float
 
    subroutine clone(to, from, unusable, rc)
-      class(FloatNode), intent(out) :: to
+      class(FloatNode), intent(inout) :: to
       class(YAML_Node), intent(in)  :: from
       class(KeywordEnforcer), optional, intent(in) :: unusable
       integer, optional, intent(out) :: rc

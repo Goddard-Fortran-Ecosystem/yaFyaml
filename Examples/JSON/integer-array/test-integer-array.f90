@@ -1,13 +1,12 @@
 program main
-   use yafyaml, only : Parser, YAML_Node
+   use yafyaml
    implicit none
 
-   type(Parser) p
    class(YAML_Node), allocatable :: c
    integer, allocatable :: nodes(:)
+   integer :: rc
 
-   p = Parser()
-   c = p%load('integer-array.json')
+   call load(c, 'integer-array.json', rc=rc)
    call c%get(nodes, 'nodes')
 
    if (any(nodes/=[1,2,3])) error stop "Test failed: wrong nodes values."

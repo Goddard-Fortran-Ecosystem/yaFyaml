@@ -595,7 +595,7 @@ module fy_YAML_Node
       subroutine I_clone(to, from, unusable, rc)
          use fy_KeywordEnforcer
          import YAML_Node
-         class(YAML_Node), intent(out) :: to
+         class(YAML_Node), intent(inout) :: to
          class(YAML_Node), intent(in) :: from
          class(KeywordEnforcer), optional, intent(in) :: unusable
          integer, optional, intent(out) :: rc

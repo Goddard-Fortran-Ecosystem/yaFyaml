@@ -313,7 +313,6 @@ contains
            & " A: {format: '---'}\n" // &
            & " B: {format: '---', datefmt: hello }\n"))
 
-      print*,__LINE__
       associate (b => node%begin(), e => node%end())
         @assert_that((b==e), is(false()))
         iter = b
@@ -328,18 +327,13 @@ contains
         @assert_that(counter, is(2))
       end associate
 
-      print*,__LINE__
-      allocate(node_copy, source=node)
-!#      node_copy = node
-      print*,__LINE__
+      node_copy = node
       call node%set(3,'A','format')
 
-      print*,__LINE__
       subnode => node%of('A','format')
       deallocate(node)
       subnode_copy => node_copy%of('A', 'format')
 
-      print*,__LINE__
       associate (b => node_copy%begin(), e => node_copy%end())
         @assert_that((b==e), is(false()))
         iter = b
@@ -353,7 +347,6 @@ contains
         end do
         @assert_that(counter, is(2))
       end associate
-      print*,__LINE__
 
 
    end subroutine test_pflogger_reproducer4

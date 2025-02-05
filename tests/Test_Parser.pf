@@ -327,7 +327,7 @@ contains
         @assert_that(counter, is(2))
       end associate
 
-      node_copy = node
+      allocate(node_copy, source=node)
       call node%set(3,'A','format')
 
       subnode => node%of('A','format')
@@ -341,7 +341,7 @@ contains
         do while (iter /= e)
            counter = counter + 1
            subnode => iter%first()
-
+ 
            name => to_string(iter%first())
            call iter%next()
         end do

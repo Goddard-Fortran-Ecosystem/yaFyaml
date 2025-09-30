@@ -5,12 +5,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2025-09-30
+
 ### Fixed
 
 - Workaround for `ifx` 2025.2 preprocessor bug
 
 ### Changed
 
+- Updated required gFTL version to v1.16.0
+- Updated required gFTL-shared version to v1.11.0
 - Remove `macos-13` from CI, add `macos-15`
 - Add `gfortran-15` to macOS CI
 - Update CMake minimal version to 3.24

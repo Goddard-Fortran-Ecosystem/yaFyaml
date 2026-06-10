@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Remove `gfortran-12` from macos runners, clean up CI
+- Update CI to match build matrix of GFE
 
 ## [1.6.0] - 2025-09-30
 

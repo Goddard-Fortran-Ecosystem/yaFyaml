@@ -180,7 +180,7 @@ contains
        end if
     end do
 
-    if (this%processed_tokens%size() >= 0) then
+    if (this%processed_tokens%size() > 0) then
        this%num_tokens_given = this%num_tokens_given + 1
        token = this%pop_token()
     else

@@ -5,6 +5,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Correct the lexer guard for an empty processed-token queue (#92).
+
 ### Changed
 
 - Remove `gfortran-12` from macos runners, clean up CI

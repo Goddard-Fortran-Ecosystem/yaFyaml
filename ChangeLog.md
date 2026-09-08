@@ -5,6 +5,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Support `ifx` and `ifort` compilers on Windows by branching debug and compiler flags (#95)
+
 ### Changed
 
 - Remove `gfortran-12` from macos runners, clean up CI

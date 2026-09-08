@@ -3,16 +3,21 @@
 if(WIN32)
   set(no_optimize "-Od")
   set(check_all "-check:all")
+  set(debug_info "-Zi")
+  set(save_temps "-Qsave-temps")
+  set(disable_warning_for_long_names "-Qdiag-disable:5462")
+  set(cpp "-fpp")
 else()
   set(no_optimize "-O0")
   set(check_all "-check all,nouninit")
+  set(debug_info "-g")
+  set(save_temps "-save-temps")
+  set(disable_warning_for_long_names "-diag-disable 5462")
+  set(cpp "-cpp")
 endif()
   
 
-set(disable_warning_for_long_names "-diag-disable 5462")
 set(traceback "-traceback")
-
-set(cpp "-cpp") # default for all other versions
 if(CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL 2025.2 AND CMAKE_Fortran_COMPILER_VERSION VERSION_LESS 2025.3)
 
   message(STATUS "Working around ifx ${CMAKE_Fortran_COMPILER_VERSION} FPP bug (using external cpp -P)")
@@ -47,8 +52,8 @@ endif()
 
 set(CMAKE_Fortran_FLAGS_DEBUG  "${no_optimize}")
 set(CMAKE_Fortran_FLAGS_RELEASE "-O3")
-set(CMAKE_Fortran_FLAGS "-g ${cpp} ${traceback} ${check_all} ${disable_warning_for_long_names} -save-temps")
-#set(CMAKE_Fortran_FLAGS "-g ${cpp} ${traceback} ${check_all} ${disable_warning_for_long_names}")
+set(CMAKE_Fortran_FLAGS "${debug_info} ${cpp} ${traceback} ${check_all} ${disable_warning_for_long_names} ${save_temps}")
+#set(CMAKE_Fortran_FLAGS "${debug_info} ${cpp} ${traceback} ${check_all} ${disable_warning_for_long_names}")
 
 add_definitions(-D_INTEL)
 add_definitions(-D__ifort_18)

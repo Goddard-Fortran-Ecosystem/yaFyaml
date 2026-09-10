@@ -44,6 +44,14 @@ module fy_Lexer
      integer :: indent = -1
      type(IntegerVector) :: level_indentations
 
+     ! Whether the current indentation level was opened by the "block
+     ! sequence as mapping value at the same column" exception (see
+     ! add_indentation()) rather than by a strictly deeper indentation.
+     ! Such a level must be unwound as soon as a sibling of its parent
+     ! mapping key is seen, even though the column has not decreased.
+     logical :: indent_is_indentless = .false.
+     type(IntegerVector) :: level_indentless_flags
+
      ! A dictionary of potential keys indexd by flow level.
      ! 
      ! A Keytoken is emitted before all keys (simple and otherwise), but
@@ -52,6 +60,16 @@ module fy_Lexer
      
      type(IntegerSimpleKeyMap) :: possible_simple_keys ! indexed by flow level
      logical :: allow_simple_key = .true.
+
+     ! Token-number of the next token to be produced, recorded right
+     ! after a mapping ValueToken is emitted.  A block sequence entry
+     ! ("-") is allowed to start at the same indentation as its parent
+     ! mapping key only when it is literally the next token produced
+     ! (i.e. this value still matches); any intervening token (a
+     ! different kind of value, a sibling sequence entry, ...) advances
+     ! the count and invalidates the exception without any extra
+     ! bookkeeping.
+     integer :: pending_value_token_number = -1
 
    contains
      ! public access
@@ -591,9 +609,18 @@ contains
     class(KeywordEnforcer), optional, intent(in) :: unusable
     integer, optional, intent(out) :: rc
 
+    logical :: is_mapping_value
+
     if (this%current_flow_level == 0) then
        __ASSERT__(this%allow_simple_key, YAFYAML_ILLEGAL_SEQUENCE_ENTRY)
-       if (this%add_indentation(this%column())) then
+       ! A block sequence that is the value of a mapping key is allowed to
+       ! start at the same indentation as that key (the common style
+       ! produced by e.g. PyYAML's default dumper).  This is only true
+       ! when this entry is literally the next token after that key's
+       ! ValueToken - a sibling entry later in the same sequence has since
+       ! advanced the token count and no longer matches.
+       is_mapping_value = (this%pending_value_token_number == this%num_tokens_given + this%processed_tokens%size())
+       if (this%add_indentation(this%column(), allow_equal=is_mapping_value)) then
           call this%processed_tokens%push_back(BlockSequenceStartToken())
        end if
     end if
@@ -609,18 +636,30 @@ contains
   end subroutine process_block_next_entry
 
 
-  logical function add_indentation(this, column)
+  logical function add_indentation(this, column, allow_equal)
     class(Lexer), intent(inout) :: this
     integer, intent(in) :: column
+    logical, optional, intent(in) :: allow_equal
 
-    add_indentation = (this%indent < column)
-    
+    logical :: allow_equal_
+    integer :: previous_indent
+
+    allow_equal_ = .false.
+    if (present(allow_equal)) allow_equal_ = allow_equal
+
+    previous_indent = this%indent
+
+    if (allow_equal_) then
+       add_indentation = (this%indent <= column)
+    else
+       add_indentation = (this%indent < column)
+    end if
+
     if (add_indentation) then
        call this%level_indentations%push_back(this%indent)
+       call this%level_indentless_flags%push_back(merge(1, 0, this%indent_is_indentless))
        this%indent = column
-       add_indentation = .true.
-    else
-       add_indentation = .false.
+       this%indent_is_indentless = (previous_indent == column)
     end if
 
   end function add_indentation
@@ -666,6 +705,9 @@ contains
              
     call this%forward()
     call this%processed_tokens%push_back(ValueToken())
+    if (this%current_flow_level == 0) then
+       this%pending_value_token_number = this%num_tokens_given + this%processed_tokens%size()
+    end if
     __RETURN__(YAFYAML_SUCCESS)
   end subroutine process_value
 
@@ -1002,15 +1044,26 @@ contains
     end if
 
     ! In a block context, we need to end each block
-    ! that is indented more than the current column
-    do while (this%indent > column)
-       associate (indents => this%level_indentations)
+    ! that is indented more than the current column.
+    !
+    ! A level opened via the "indentless" block-sequence exception (see
+    ! add_indentation()) must also close as soon as a sibling of its
+    ! parent mapping key is reached, even though the column is merely
+    ! equal rather than less than the current indentation - unless the
+    ! upcoming token is itself another "-" entry continuing that same
+    ! sequence.
+    do while (this%indent > column .or. &
+         (this%indent == column .and. this%indent_is_indentless .and. &
+         .not. (this%peek() == BLOCK_NEXT_ENTRY_INDICATOR .and. this%is_block_next_entry())))
+       associate (indents => this%level_indentations, flags => this%level_indentless_flags)
          this%indent = indents%back()
          call indents%erase(indents%end())
+         this%indent_is_indentless = (flags%back() == 1)
+         call flags%erase(flags%end())
          call this%processed_tokens%push_back(BlockEndToken())
        end associate
     end do
-       
+
   end subroutine unwind_indentation
 
   ! In block context, a leading "?" indicates a KeyToken only if it is

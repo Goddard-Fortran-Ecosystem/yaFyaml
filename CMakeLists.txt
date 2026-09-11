@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 project (YAFYAML
-  VERSION 1.7.1
+  VERSION 1.7.2
   LANGUAGES Fortran)
 
 # Most users of this software do not (should not?) have permissions to

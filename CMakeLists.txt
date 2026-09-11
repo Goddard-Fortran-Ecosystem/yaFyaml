@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 project (YAFYAML
-  VERSION 1.7.1
+  VERSION 1.7.2
   LANGUAGES Fortran)
 
 # Most users of this software do not (should not?) have permissions to
@@ -16,6 +16,10 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
 include(${CMAKE_Fortran_COMPILER_ID} RESULT_VARIABLE found)
 if(NOT found)
   message( FATAL_ERROR "Unrecognized Fortran compiler. Please use ifort, gfortran, NAG, PGI, or XL.")
+endif()
+
+if (WIN32)
+  add_compile_definitions(_WIN32)
 endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -49,12 +53,13 @@ if (PFUNIT_FOUND)
   add_subdirectory (tests EXCLUDE_FROM_ALL)
 endif ()
 
-# The following forces tests to be built when using "make ctest" even if some targets
-# are EXCLUDE_FROM_ALL
-# From https://stackoverflow.com/questions/733475/cmake-ctest-make-test-doesnt-build-tests/56448477#56448477
-build_command(CTEST_CUSTOM_PRE_TEST TARGET build-tests)
-string(CONFIGURE \"@CTEST_CUSTOM_PRE_TEST@\" CTEST_CUSTOM_PRE_TEST_QUOTED ESCAPE_QUOTES)
-file(WRITE "${CMAKE_BINARY_DIR}/CTestCustom.cmake" "set(CTEST_CUSTOM_PRE_TEST ${CTEST_CUSTOM_PRE_TEST_QUOTED})" "\n")
+if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+  build_command(CTEST_CUSTOM_PRE_TEST TARGET build-tests)
+  # Ensure forward slashes so Windows paths do not break CTestCustom.cmake syntax with unescaped backslashes
+  string(REPLACE "\\" "/" CTEST_CUSTOM_PRE_TEST "${CTEST_CUSTOM_PRE_TEST}")
+  string(CONFIGURE \"@CTEST_CUSTOM_PRE_TEST@\" CTEST_CUSTOM_PRE_TEST_QUOTED ESCAPE_QUOTES)
+  file(WRITE "${CMAKE_BINARY_DIR}/CTestCustom.cmake" "set(CTEST_CUSTOM_PRE_TEST ${CTEST_CUSTOM_PRE_TEST_QUOTED})" "\n")
+endif()
 
 if (NOT TARGET (examples))
   add_custom_target(examples

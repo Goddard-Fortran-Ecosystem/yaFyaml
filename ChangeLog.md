@@ -5,6 +5,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Windows CI workflow for MinGW `gfortran` and Intel `ifx`
+
+### Fixed
+
+- Fix CMake syntax error in `CTestCustom.cmake` on Windows caused by unescaped backslashes in `build_command()` output
+- Only generate `CTestCustom.cmake` when yaFyaml is top-level project
+
 ## [1.7.1] - 2026-09-11
 
 ### Fixed

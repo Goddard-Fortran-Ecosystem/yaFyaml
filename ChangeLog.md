@@ -5,6 +5,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-09-11
+
 ### Fixed
 
 - Block sequences are now parsed correctly when indented at the same column

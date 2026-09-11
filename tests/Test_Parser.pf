@@ -373,6 +373,73 @@ contains
 
    end subroutine test_block_list_of_flow_mappings
 
+   ! Reproducer for issue #41: a block sequence that is the value of a
+   ! mapping key is allowed to start at the same indentation as that key
+   ! (rather than requiring extra indentation), as commonly emitted by
+   ! PyYAML's default dumper.
+   @test
+   subroutine test_indentless_block_sequence()
+      class(YAML_Node), target, allocatable :: node
+      class(YAML_Node), pointer :: sub
+      integer :: n, rc
+      character(:), allocatable :: s
+
+      call load(node, EscapedTextStream( &
+           & "Enabled: \n" // &
+           & "- geosgcm_prog \n" // &
+           & "- other_item \n" // &
+           & "Version: 3 \n"), rc=rc)
+      @assert_that(rc, is(equal_to(YAFYAML_SUCCESS)))
+
+      sub => node%of('Enabled')
+      @assert_that(int(sub%size()), is(2))
+      call sub%get(s, 1)
+      @assertEqual("geosgcm_prog", s)
+      call sub%get(s, 2)
+      @assertEqual("other_item", s)
+
+      call node%get(n, 'Version')
+      @assert_that(n, is(3))
+
+   end subroutine test_indentless_block_sequence
+
+   ! Same as above, but nested one level down (sequence entry whose own
+   ! mapping value is itself an indentless sequence), and followed by a
+   ! sibling key at a shallower indentation to confirm both the
+   ! indentless sequence and its enclosing mapping are unwound correctly.
+   @test
+   subroutine test_indentless_block_sequence_nested()
+      class(YAML_Node), target, allocatable :: node
+      class(YAML_Node), pointer :: sub, item
+      integer :: rc
+      character(:), allocatable :: s
+
+      call load(node, EscapedTextStream( &
+           & "items: \n" // &
+           & "- name: foo \n" // &
+           & "  children: \n" // &
+           & "  - a \n" // &
+           & "  - b \n" // &
+           & "sibling: value \n"), rc=rc)
+      @assert_that(rc, is(equal_to(YAFYAML_SUCCESS)))
+
+      sub => node%of('items')
+      item => sub%of(1)
+      call item%get(s, 'name')
+      @assertEqual("foo", s)
+
+      sub => item%of('children')
+      @assert_that(int(sub%size()), is(2))
+      call sub%get(s, 1)
+      @assertEqual("a", s)
+      call sub%get(s, 2)
+      @assertEqual("b", s)
+
+      call node%get(s, 'sibling')
+      @assertEqual("value", s)
+
+   end subroutine test_indentless_block_sequence_nested
+
    @test
    subroutine test_scalar_anchor_in_mapping()
        class(YAML_Node), allocatable :: node

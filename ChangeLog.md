@@ -5,6 +5,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Block sequences are now parsed correctly when indented at the same column
+  as their parent mapping key (e.g. `key:` followed by `- item` with no
+  extra indentation), as commonly emitted by PyYAML's default dumper (#41)
+
 ## [1.7.0] - 2026-09-10
 
 ### Fixed

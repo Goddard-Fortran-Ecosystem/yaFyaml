@@ -1,6 +1,6 @@
-# ifx 2025.2 on Windows only (see IntelLLVM.cmake): removes the leading U+FEFF
-# and turns path backslashes into slashes in cpp's arguments; prints the new file.
-param([Parameter(ValueFromRemainingArguments = $true)] [string[]]$Rest)
+# ifx 2025.2 on Windows only (see IntelLLVM.cmake): runs cpp (first argument) on
+# its arguments with the leading U+FEFF removed and path backslashes turned into slashes.
+param([string]$Cpp, [Parameter(ValueFromRemainingArguments = $true)] [string[]]$Rest)
 
 $lines = New-Object System.Collections.Generic.List[string]
 foreach ($a in $Rest) {
@@ -11,6 +11,16 @@ foreach ($a in $Rest) {
     $lines.Add('"' + ($a.TrimStart([char]0xFEFF) -replace '\\(?!")', '/') + '"')
   }
 }
-$Out = [System.IO.Path]::GetTempFileName()   # unique name, safe for parallel builds
-[System.IO.File]::WriteAllText($Out, ($lines -join "`n"), (New-Object System.Text.UTF8Encoding($false)))
-Write-Output $Out
+$tmp = [System.IO.Path]::GetTempFileName()   # unique name, safe for parallel builds
+try {
+  [System.IO.File]::WriteAllText($tmp, ($lines -join "`n"), (New-Object System.Text.UTF8Encoding($false)))
+  $psi = New-Object System.Diagnostics.ProcessStartInfo
+  $psi.FileName = $Cpp
+  $psi.Arguments = '-P -traditional-cpp -undef @"' + $tmp + '"'
+  $psi.UseShellExecute = $false   # output is not redirected, so cpp writes straight to our stdout
+  $p = [System.Diagnostics.Process]::Start($psi)
+  $p.WaitForExit()
+  exit $p.ExitCode
+} finally {
+  Remove-Item -LiteralPath $tmp -ErrorAction SilentlyContinue
+}

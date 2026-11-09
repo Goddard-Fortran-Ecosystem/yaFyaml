@@ -35,17 +35,10 @@ if(CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL 2025.2 AND CMAKE_Fortran
 
   if(WIN32)
     # ifx passes cpp a response file with a hidden U+FEFF first character and
-    # backslash paths; clean the arguments with a PowerShell script first.
+    # backslash paths; a PowerShell script cleans them and runs cpp.
     file(WRITE "${cpp_wrapper}.bat"
 "@echo off\r
-setlocal\r
-set \"FIXED_ARGS=\"\r
-for /f \"usebackq delims=\" %%F in (`powershell -NoProfile -ExecutionPolicy Bypass -File \"${CMAKE_CURRENT_LIST_DIR}/ifx_clean_cpp_args.ps1\" %*`) do set \"FIXED_ARGS=%%F\"\r
-if /i not \"%FIXED_ARGS:~-4%\"==\".tmp\" exit /b 1\r
-\"${cpp_exe}\" -P -traditional-cpp -undef @\"%FIXED_ARGS%\"\r
-set RC=%ERRORLEVEL%\r
-del \"%FIXED_ARGS%\" 2>nul\r
-exit /b %RC%\r
+powershell -NoProfile -ExecutionPolicy Bypass -File \"${CMAKE_CURRENT_LIST_DIR}/ifx_clean_cpp_args.ps1\" \"${cpp_exe}\" %*\r
 ")
     set(cpp "-fpp-name=${cpp_wrapper}.bat")
   else()

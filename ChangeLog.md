@@ -5,6 +5,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Windows CI leg for `ifx` 2025.2
+
 ### Fixed
 
 - Support `ifx` 2025.2 on Windows by cleaning the arguments passed to the external `cpp` preprocessor workaround

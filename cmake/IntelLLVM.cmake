@@ -34,10 +34,11 @@ if(CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL 2025.2 AND CMAKE_Fortran
   file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/tools")
 
   if(WIN32)
-    # If you actually build on Windows with ifx, create a .bat wrapper
+    # ifx passes cpp a response file with a hidden U+FEFF first character and
+    # backslash paths; a PowerShell script cleans them and runs cpp.
     file(WRITE "${cpp_wrapper}.bat"
 "@echo off\r
-\"${cpp_exe}\" -P -traditional-cpp -undef %*\r
+powershell -NoProfile -ExecutionPolicy Bypass -File \"${CMAKE_CURRENT_LIST_DIR}/ifx_clean_cpp_args.ps1\" \"${cpp_exe}\" %*\r
 ")
     set(cpp "-fpp-name=${cpp_wrapper}.bat")
   else()

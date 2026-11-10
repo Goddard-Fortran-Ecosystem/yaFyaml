@@ -87,8 +87,13 @@ jobs:
             build/**/*.log
 
   Windows-Intel:
-    name: Windows / ifx
+    name: Windows / ifx ${{ matrix.ifx-version }}
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 2025.2 uses the external cpp workaround in cmake/IntelLLVM.cmake
+        ifx-version: ["2025.2.1", "2025.3.2"]
     defaults:
       run:
         shell: bash
@@ -110,7 +115,7 @@ jobs:
         uses: fortran-lang/setup-fortran@v1
         with:
           compiler: intel
-          version: "2025.3.2"
+          version: ${{ matrix.ifx-version }}
 
       - name: Set up MSVC toolchain
         uses: ilammy/msvc-dev-cmd@v1
@@ -154,6 +159,6 @@ jobs:
         uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: logfiles-Windows-Intel
+          name: logfiles-Windows-Intel-${{ matrix.ifx-version }}
           path: |
             build/**/*.log
